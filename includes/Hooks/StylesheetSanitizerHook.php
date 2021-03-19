@@ -21,9 +21,11 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
+use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use TemplateStylesMatcherFactory;
+use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 
@@ -36,7 +38,20 @@ class StylesheetSanitizerHook {
 	 * @param StylePropertySanitizer $propertySanitizer
 	 * @param TemplateStylesMatcherFactory $matcherFactory
 	 */
-	public static function onSanitize( StylesheetSanitizer $sanitizer, StylePropertySanitizer $propertySanitizer, TemplateStylesMatcherFactory $matcherFactory ): void {
+	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
+		if ( TemplateStylesExtender::getConfigValue(
+			'TemplateStylesExtenderEnablePrefersColorScheme',
+			false ) === true ) {
+			$factory = new MatcherFactoryExtender();
+
+			$newRules = $sanitizer->getRuleSanitizers();
+			$newRules['@media'] = new MediaAtRuleSanitizer( $factory->cssMediaQueryList() );
+			$newRules['@media']->setRuleSanitizers( $newRules );
+
+			$sanitizer->setRuleSanitizers( $newRules );
+
+		}
+
 		$extended = new TemplateStylesExtender();
 
 		$extender = new StylePropertySanitizerExtender( $matcherFactory );

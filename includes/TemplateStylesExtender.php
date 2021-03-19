@@ -21,9 +21,12 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
+use ConfigException;
 use InvalidArgumentException;
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
+use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\AnythingMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
@@ -41,17 +44,30 @@ class TemplateStylesExtender {
 	 */
 	public function addVarSelector( StylePropertySanitizer $propertySanitizer ): void {
 		$propertySanitizer->setCssWideKeywordsMatcher(
-			new FunctionMatcher(
-				'var',
-				new Juxtaposition( [
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-					new VarNameMatcher(),
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-                    Quantifier::optional(
-                        new KeywordMatcher(['!important'])
-                    )
-				] )
-			)
+			new Juxtaposition( [
+				Quantifier::optional(
+					new AnythingMatcher()
+				),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+				Quantifier::plus(
+					new FunctionMatcher(
+						'var',
+						new Juxtaposition( [
+							new WhitespaceMatcher( [ 'significant' => false ] ),
+							new VarNameMatcher(),
+							new WhitespaceMatcher( [ 'significant' => false ] ),
+						] )
+					),
+				),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+				Quantifier::optional(
+					new AnythingMatcher()
+				),
+				Quantifier::optional(
+					new KeywordMatcher( [ '!important' ] )
+				)
+			] ),
+
 		);
 	}
 
@@ -121,7 +137,7 @@ class TemplateStylesExtender {
 	 * @param StylePropertySanitizer $propertySanitizer
 	 * @param MatcherFactory $factory
 	 */
-	public function addScrollMarginProperties( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+	public function addScrollMarginProperties( $propertySanitizer, $factory ): void {
 		$suffixes = [
 			'margin-block-end',
 			'margin-block-start',
@@ -158,5 +174,30 @@ class TemplateStylesExtender {
 				// Fail silently
 			}
 		}
+	}
+
+	/**
+	 * Loads a config value for a given key from the main config
+	 * Returns null on if an ConfigException was thrown
+	 *
+	 * @param string $key The config key
+	 * @param null $default
+	 * @return mixed|null
+	 */
+	public static function getConfigValue( string $key, $default = null ) {
+		try {
+			$value = MediaWikiServices::getInstance()->getMainConfig()->get( $key );
+		} catch ( ConfigException $e ) {
+			wfLogWarning(
+				sprintf(
+					'Could not get config for "$wg%s". %s', $key,
+					$e->getMessage()
+				)
+			);
+
+			return $default;
+		}
+
+		return $value;
 	}
 }

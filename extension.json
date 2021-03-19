@@ -18,7 +18,10 @@
 		}
 	},
 	"config": {
-
+		"TemplateStylesExtenderEnablePrefersColorScheme": {
+			"description": "Enable the prefers-color-scheme media query. WARNING this can break things if TemplateStyles was updated upstream",
+			"value": true
+		}
 	},
 	"MessagesDirs": {
 		"TemplateStylesExtender": [

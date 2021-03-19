@@ -25,7 +25,11 @@ use TemplateStylesMatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class PropertySanitizerHook {
-	public static function onSanitize( StylePropertySanitizer $propertySanitizer, TemplateStylesMatcherFactory $matcherFactory ): void {
+	/**
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param TemplateStylesMatcherFactory $matcherFactory
+	 */
+	public static function onSanitize( $propertySanitizer, $matcherFactory ): void {
 		// Currently unused
 	}
 }
