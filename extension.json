@@ -1,0 +1,36 @@
+{
+	"name": "TemplateStylesExtender",
+	"version": "0.0.1",
+	"author": [
+		"Octfx"
+	],
+	"url": "https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender",
+	"descriptionmsg": "ext-templatestylesextender-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.35.0",
+		"platform": {
+			"php": ">=7.2.0"
+		},
+		"extensions": {
+			"TemplateStyles": ">= 1.0"
+		}
+	},
+	"config": {
+
+	},
+	"MessagesDirs": {
+		"TemplateStylesExtender": [
+			"i18n"
+		]
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\TemplateStylesExtender\\": "includes/"
+	},
+	"Hooks": {
+		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
+		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize"
+	},
+	"manifest_version": 2
+}
