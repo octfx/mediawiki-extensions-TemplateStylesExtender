@@ -35,7 +35,7 @@ class VarNameMatcher extends Matcher {
 		$len = count( $values );
 
 		for ( $i = $start; $i < $len; $i++ ) {
-			if ( preg_match( '/^\s*--[\w-]+\s*(?:![I|i]mportant)?$/', $values[$i]->value() ) === 1 ) {
+			if ( preg_match( '/^\s*--[\w-]+\s*$/', $values[$i]->value() ) === 1 ) {
 				yield $this->makeMatch( $values, $start, $this->next( $values, $start, $options ) );
 			}
 		}

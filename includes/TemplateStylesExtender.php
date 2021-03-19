@@ -28,6 +28,7 @@ use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
+use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\WhitespaceMatcher;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
@@ -46,6 +47,9 @@ class TemplateStylesExtender {
 					new WhitespaceMatcher( [ 'significant' => false ] ),
 					new VarNameMatcher(),
 					new WhitespaceMatcher( [ 'significant' => false ] ),
+                    Quantifier::optional(
+                        new KeywordMatcher(['!important'])
+                    )
 				] )
 			)
 		);
