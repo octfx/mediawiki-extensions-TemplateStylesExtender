@@ -23,19 +23,19 @@ namespace MediaWiki\Extension\TemplateStylesExtender\Matcher;
 
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Objects\ComponentValueList;
-use Wikimedia\CSS\Objects\Token;
 
 class VarNameMatcher extends Matcher {
 
 	/**
 	 * Match css var names in the format of --name-of-var
+	 * Pretty hacky...
 	 * @inheritDoc
 	 */
 	protected function generateMatches( ComponentValueList $values, $start, array $options ) {
 		$len = count( $values );
 
 		for ( $i = $start; $i < $len; $i++ ) {
-			if ( preg_match( '/^\s*--[\w-]+\s*$/', $values[$i]->value() ) === 1 ) {
+			if ( preg_match( '/^\s*--[\w-]+\s*(?:![I|i]mportant)$/', $values[$i]->value() ) === 1 ) {
 				yield $this->makeMatch( $values, $start, $this->next( $values, $start, $options ) );
 			}
 		}
