@@ -21,6 +21,7 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
+use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use TemplateStylesMatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
@@ -28,19 +29,24 @@ use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 
 class StylesheetSanitizerHook {
 
-    /**
-     * This adds new matchers
-     *
-     * @param StylesheetSanitizer $sanitizer
-     * @param StylePropertySanitizer $propertySanitizer
-     * @param TemplateStylesMatcherFactory $matcherFactory
-     */
+	/**
+	 * This adds new matchers
+	 *
+	 * @param StylesheetSanitizer $sanitizer
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param TemplateStylesMatcherFactory $matcherFactory
+	 */
 	public static function onSanitize( StylesheetSanitizer $sanitizer, StylePropertySanitizer $propertySanitizer, TemplateStylesMatcherFactory $matcherFactory ): void {
 		$extended = new TemplateStylesExtender();
 
+		$extender = new StylePropertySanitizerExtender( $matcherFactory );
+
 		$extended->addVarSelector( $propertySanitizer );
-		$extended->addImageRendering( $propertySanitizer );
-		$extended->addRuby( $propertySanitizer );
-		$extended->addScrollMarginProperties( $propertySanitizer, $matcherFactory );
+
+		$extended->addImageRendering( $extender );
+		$extended->addRuby( $extender );
+		$extended->addScrollMarginProperties( $extender, $matcherFactory );
+
+		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
 }

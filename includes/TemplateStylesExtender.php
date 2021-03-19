@@ -33,11 +33,11 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
 
-    /**
-     * Adds a css var name matcher
-     *
-     * @param StylePropertySanitizer $propertySanitizer
-     */
+	/**
+	 * Adds a css var name matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
 	public function addVarSelector( StylePropertySanitizer $propertySanitizer ): void {
 		$propertySanitizer->setCssWideKeywordsMatcher(
 			new FunctionMatcher(
@@ -51,11 +51,12 @@ class TemplateStylesExtender {
 		);
 	}
 
-    /**
-     * Adds the image-rendering matcher
-     *
-     * @param StylePropertySanitizer $propertySanitizer
-     */
+	/**
+	 * Adds the image-rendering matcher
+	 * T222678
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
 	public function addImageRendering( StylePropertySanitizer $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
@@ -73,11 +74,12 @@ class TemplateStylesExtender {
 		}
 	}
 
-    /**
-     * Adds the ruby-position and ruby-align matcher
-     *
-     * @param StylePropertySanitizer $propertySanitizer
-     */
+	/**
+	 * Adds the ruby-position and ruby-align matcher
+	 * T277755
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
 	public function addRuby( StylePropertySanitizer $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
@@ -107,13 +109,14 @@ class TemplateStylesExtender {
 		}
 	}
 
-    /**
-     * Adds scroll-margin-* and scroll-padding-* matcher
-     * This is not well tested
-     *
-     * @param StylePropertySanitizer $propertySanitizer
-     * @param MatcherFactory $factory
-     */
+	/**
+	 * Adds scroll-margin-* and scroll-padding-* matcher
+	 * TODO: This is not well tested
+	 * T271598
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param MatcherFactory $factory
+	 */
 	public function addScrollMarginProperties( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
 		$suffixes = [
 			'margin-block-end',
