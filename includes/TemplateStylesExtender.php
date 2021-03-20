@@ -71,10 +71,11 @@ class TemplateStylesExtender {
 			] )
 		);
 
-		// This is kind of ugly?
 		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
-		// The problem is, that var can be used more or less anywhere
-		// Setting ONLY var as a CssWideKeywordMatcher does not work as we are then limited to one css value
+		// The problem is, that var() can be used more or less anywhere
+		// Setting ONLY var as a CssWideKeywordMatcher would limit the matching to one property
+		// E.g.: color: var( --color-base );             would work
+		//       border: 1px var( --border-type ) black; would not
 		// So we need to construct a matcher that matches anything + var somewhere
 		$propertySanitizer->setCssWideKeywordsMatcher(
 			new Juxtaposition( [

@@ -40,7 +40,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 	private static $extendedCssMediaQuery = false;
 
 	/**
-	 * This is in reality a complete copy of the parent hook with line 49 and 91 extended
+	 * This is in reality a complete copy of the parent hook with line 68 and 110 extended
 	 * This can very easily break if there is an update upstream
 	 *
 	 * @inheritDoc
@@ -160,5 +160,4 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 		return $this->cache[$key];
 	}
-
 }
