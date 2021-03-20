@@ -26,7 +26,6 @@ use InvalidArgumentException;
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
-use Wikimedia\CSS\Grammar\AnythingMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
@@ -38,36 +37,61 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 class TemplateStylesExtender {
 
 	/**
-	 * Adds a css var name matcher
+	 * Adds a css wide keyword matcher for css variables
+	 * Matches 0-INF preceding css declarations at least one var( --content ) and 0-INF following declarations
 	 *
 	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param MatcherFactory $factory
 	 */
-	public function addVarSelector( StylePropertySanitizer $propertySanitizer ): void {
+	public function addVarSelector( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+		$anyProperty = Quantifier::star(
+			new Alternative( [
+				$factory->color(),
+				$factory->image(),
+				$factory->length(),
+				$factory->integer(),
+				$factory->percentage(),
+				$factory->number(),
+				$factory->angle(),
+				$factory->frequency(),
+				$factory->resolution(),
+				$factory->position(),
+				$factory->cssSingleTimingFunction(),
+				$factory->comma(),
+				$factory->cssWideKeywords(),
+			] )
+		);
+
+		$var = new FunctionMatcher(
+			'var',
+			new Juxtaposition( [
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+				new VarNameMatcher(),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+			] )
+		);
+
+		// This is kind of ugly?
+		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
+		// The problem is, that var can be used more or less anywhere
+		// Setting ONLY var as a CssWideKeywordMatcher does not work as we are then limited to one css value
+		// So we need to construct a matcher that matches anything + var somewhere
 		$propertySanitizer->setCssWideKeywordsMatcher(
 			new Juxtaposition( [
-				Quantifier::optional(
-					new AnythingMatcher()
-				),
+				$anyProperty,
 				new WhitespaceMatcher( [ 'significant' => false ] ),
 				Quantifier::plus(
-					new FunctionMatcher(
-						'var',
-						new Juxtaposition( [
-							new WhitespaceMatcher( [ 'significant' => false ] ),
-							new VarNameMatcher(),
-							new WhitespaceMatcher( [ 'significant' => false ] ),
-						] )
-					),
+					new Alternative( [
+						new Juxtaposition( [ $var, $anyProperty ] ),
+						new Juxtaposition( [ $anyProperty, $var ] ),
+					] )
 				),
 				new WhitespaceMatcher( [ 'significant' => false ] ),
-				Quantifier::optional(
-					new AnythingMatcher()
-				),
+				$anyProperty,
 				Quantifier::optional(
 					new KeywordMatcher( [ '!important' ] )
 				)
 			] ),
-
 		);
 	}
 
@@ -84,9 +108,6 @@ class TemplateStylesExtender {
 					'auto',
 					'crisp-edges',
 					'pixelated',
-					'inherit',
-					'initial',
-					'unset',
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
@@ -108,9 +129,6 @@ class TemplateStylesExtender {
 					'center',
 					'space-between',
 					'space-around',
-					'inherit',
-					'initial',
-					'unset',
 				] )
 			] );
 
@@ -119,9 +137,6 @@ class TemplateStylesExtender {
 					'over',
 					'under',
 					'inter-character',
-					'inherit',
-					'initial',
-					'unset',
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
