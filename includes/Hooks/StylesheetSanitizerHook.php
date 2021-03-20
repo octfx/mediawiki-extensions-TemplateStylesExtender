@@ -41,7 +41,7 @@ class StylesheetSanitizerHook {
 	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
 		if ( TemplateStylesExtender::getConfigValue(
 			'TemplateStylesExtenderEnablePrefersColorScheme',
-			false ) === true ) {
+				true ) === true ) {
 			$factory = new MatcherFactoryExtender();
 
 			$newRules = $sanitizer->getRuleSanitizers();
@@ -56,7 +56,7 @@ class StylesheetSanitizerHook {
 
 		$extender = new StylePropertySanitizerExtender( $matcherFactory );
 
-		$extended->addVarSelector( $propertySanitizer );
+		$extended->addVarSelector( $propertySanitizer, $matcherFactory );
 
 		$extended->addImageRendering( $extender );
 		$extended->addRuby( $extender );
