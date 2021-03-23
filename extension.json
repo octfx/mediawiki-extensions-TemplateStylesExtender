@@ -7,7 +7,7 @@
 	"url": "https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender",
 	"descriptionmsg": "ext-templatestylesextender-desc",
 	"license-name": "GPL-2.0-or-later",
-	"type": "other",
+	"type": "parserhook",
 	"requires": {
 		"MediaWiki": ">= 1.35.0",
 		"platform": {
