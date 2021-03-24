@@ -44,8 +44,18 @@ class TemplateStylesExtender {
 	 * @param MatcherFactory $factory
 	 */
 	public function addVarSelector( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+		$var = new FunctionMatcher(
+			'var',
+			new Juxtaposition( [
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+				new VarNameMatcher(),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
+			] )
+		);
+
 		$anyProperty = Quantifier::star(
 			new Alternative( [
+				$var,
 				$factory->color(),
 				$factory->image(),
 				$factory->length(),
@@ -59,15 +69,9 @@ class TemplateStylesExtender {
 				$factory->cssSingleTimingFunction(),
 				$factory->comma(),
 				$factory->cssWideKeywords(),
-			] )
-		);
-
-		$var = new FunctionMatcher(
-			'var',
-			new Juxtaposition( [
-				new WhitespaceMatcher( [ 'significant' => false ] ),
-				new VarNameMatcher(),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
+				new KeywordMatcher( [
+					'solid', 'double', 'dotted', 'dashed', 'wavy'
+				] )
 			] )
 		);
 
