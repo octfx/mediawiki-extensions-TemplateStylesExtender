@@ -11,7 +11,7 @@
 	"requires": {
 		"MediaWiki": ">= 1.35.0",
 		"platform": {
-			"php": ">=7.2.0"
+			"php": ">=7.3.19"
 		},
 		"extensions": {
 			"TemplateStyles": ">= 1.0"
