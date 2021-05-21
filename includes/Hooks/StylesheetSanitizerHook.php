@@ -56,10 +56,15 @@ class StylesheetSanitizerHook {
 
 		$extender = new StylePropertySanitizerExtender( $matcherFactory );
 
-		$extended->addVarSelector( $propertySanitizer, $matcherFactory );
+		if ( TemplateStylesExtender::getConfigValue(
+				'TemplateStylesExtenderEnableCssVars',
+				true ) === true ) {
+			$extended->addVarSelector( $propertySanitizer, $matcherFactory );
+		}
 
 		$extended->addImageRendering( $extender );
 		$extended->addRuby( $extender );
+		$extended->addPointerEvents( $extender );
 		$extended->addScrollMarginProperties( $extender, $matcherFactory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
