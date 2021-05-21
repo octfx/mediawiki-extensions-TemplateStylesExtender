@@ -197,6 +197,32 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the pointer-events matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
+	public function addPointerEvents( StylePropertySanitizer $propertySanitizer ): void {
+		try {
+			$propertySanitizer->addKnownProperties( [
+				'pointer-events' => new KeywordMatcher( [
+					'auto',
+					'none',
+					'visiblePainted',
+					'visibleFill',
+					'visibleStroke',
+					'visible',
+					'painted',
+					'fill',
+					'stroke',
+					'all',
+				] )
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *

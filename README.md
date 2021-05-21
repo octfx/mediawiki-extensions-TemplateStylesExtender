@@ -7,3 +7,4 @@ Extends Extension:TemplateStyles by the following new matchers:
 * `ruby-position`
 * `ruby-align`
 * `scroll-margin-*`, `scroll-padding-*`
+* `pointer-events`
