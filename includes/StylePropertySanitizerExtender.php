@@ -26,6 +26,7 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
+use Wikimedia\CSS\Objects\CSSObject;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
@@ -119,4 +120,17 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		return $props;
 	}
 
+	/**
+	 * @param CSSObject $object
+	 * @return CSSObject|\Wikimedia\CSS\Objects\Declaration|null
+	 */
+	protected function doSanitize( CSSObject $object ) {
+		$parent = parent::doSanitize( $object );
+
+		if ( substr( strtolower( $object->getName() ), 0, 2 ) === '--' ) {
+			$this->clearSanitizationErrors();
+		}
+
+		return $parent;
+	}
 }
