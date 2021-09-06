@@ -82,20 +82,23 @@ class TemplateStylesExtender {
 		//       border: 1px var( --border-type ) black; would not
 		// So we need to construct a matcher that matches anything + var somewhere
 		$propertySanitizer->setCssWideKeywordsMatcher(
-			new Juxtaposition( [
-				$anyProperty,
-				new WhitespaceMatcher( [ 'significant' => false ] ),
-				Quantifier::plus(
-					new Alternative( [
-						new Juxtaposition( [ $var, $anyProperty ] ),
-						new Juxtaposition( [ $anyProperty, $var ] ),
-					] )
-				),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
-				$anyProperty,
-				Quantifier::optional(
-					new KeywordMatcher( [ '!important' ] )
-				)
+			new Alternative( [
+				$factory->cssWideKeywords(),
+				new Juxtaposition( [
+					$anyProperty,
+					new WhitespaceMatcher( [ 'significant' => false ] ),
+					Quantifier::plus(
+						new Alternative( [
+							new Juxtaposition( [ $var, $anyProperty ] ),
+							new Juxtaposition( [ $anyProperty, $var ] ),
+						] )
+					),
+					new WhitespaceMatcher( [ 'significant' => false ] ),
+					$anyProperty,
+					Quantifier::optional(
+						new KeywordMatcher( [ '!important' ] )
+					)
+				] ),
 			] ),
 		);
 	}
