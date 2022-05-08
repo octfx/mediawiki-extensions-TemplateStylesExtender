@@ -22,8 +22,10 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
+use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\CSSObject;
@@ -35,6 +37,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	private static $extendedCssText3 = false;
 	private static $extendedCssBorderBackground = false;
+	private static $extendedCssSizingAdditions = false;
 	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
 
@@ -94,6 +97,38 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		self::$extendedCssBorderBackground = true;
 
 		return $props;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Partly implement clamp
+	 */
+	protected function getSizingAdditions( MatcherFactory $matcherFactory ) {
+		// @codeCoverageIgnoreStart
+		if ( self::$extendedCssSizingAdditions && isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+		// @codeCoverageIgnoreEnd
+
+		$props = parent::getSizingAdditions( $matcherFactory );
+
+		$props[] = new FunctionMatcher( 'clamp', Quantifier::hash( new Alternative( [
+			$matcherFactory->length(),
+			$matcherFactory->lengthPercentage(),
+			$matcherFactory->frequency(),
+			$matcherFactory->angle(),
+			$matcherFactory->anglePercentage(),
+			$matcherFactory->time(),
+			$matcherFactory->number(),
+			$matcherFactory->integer(),
+		] ), 3, 3 ) );
+
+		$this->cache[__METHOD__] = $props;
+
+		self::$extendedCssSizingAdditions = true;
+
+		return $this->cache[__METHOD__];
 	}
 
 	/**
