@@ -36,6 +36,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static $extendedCssText3 = false;
 	private static $extendedCssBorderBackground = false;
 	private static $extendedCssSizing3 = false;
+	private static $extendedCss1Masking = false;
 
 	/**
 	 * @inheritDoc
@@ -117,6 +118,28 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 		$this->cache[__METHOD__] = $props;
 		self::$extendedCssSizing3 = true;
+
+		return $props;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Add webkit prefix for mask-image
+	 */
+	protected function cssMasking1( MatcherFactory $matcherFactory ) {
+		// @codeCoverageIgnoreStart
+		if ( self::$extendedCss1Masking && isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+		// @codeCoverageIgnoreEnd
+
+		$props = parent::cssMasking1( $matcherFactory );
+
+		$props['-webkit-mask-image'] = $props['mask-image'];
+
+		$this->cache[__METHOD__] = $props;
+		self::$extendedCss1Masking = true;
 
 		return $props;
 	}
