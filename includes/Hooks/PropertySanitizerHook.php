@@ -21,8 +21,8 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
+use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
-use TemplateStylesMatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class PropertySanitizerHook {

@@ -21,10 +21,10 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
+use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
-use TemplateStylesMatcherFactory;
 use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
