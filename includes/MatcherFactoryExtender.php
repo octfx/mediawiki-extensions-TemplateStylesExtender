@@ -28,6 +28,7 @@ use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
+use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\NothingMatcher;
 use Wikimedia\CSS\Grammar\NoWhitespace;
@@ -38,6 +39,19 @@ use Wikimedia\CSS\Objects\Token;
 // phpcs:disable
 class MatcherFactoryExtender extends MatcherFactory {
 	private static $extendedCssMediaQuery = false;
+
+	/**
+	 * CSS-wide value keywords
+	 * @see https://www.w3.org/TR/2016/CR-css-values-3-20160929/#common-keywords
+	 * @return Matcher
+	 */
+	public function cssWideKeywords()
+	{
+		if ( !isset( $this->cache[__METHOD__] ) ) {
+			$this->cache[__METHOD__] = new KeywordMatcher( [ 'initial', 'inherit', 'unset', 'revert', 'revert-layer' ] );
+		}
+		return $this->cache[__METHOD__];
+	}
 
 	/**
 	 * This is in reality a complete copy of the parent hook with line 68 and 110 extended

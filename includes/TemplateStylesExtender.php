@@ -26,12 +26,14 @@ use InvalidArgumentException;
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\WhitespaceMatcher;
+use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
@@ -218,6 +220,35 @@ class TemplateStylesExtender {
 					'fill',
 					'stroke',
 					'all',
+				] )
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the aspect-ratio matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param MatcherFactory $factory
+	 */
+	public function addAspectRatio( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+		try {
+			$propertySanitizer->addKnownProperties( [
+				'aspect-ratio' => new Alternative( [
+					$factory->cssWideKeywords(),
+					new Juxtaposition([
+						$factory->number(),
+						Quantifier::optional(
+							new Juxtaposition([
+								new WhitespaceMatcher(['significant' => false]),
+								new DelimMatcher('/'),
+								new WhitespaceMatcher(['significant' => false]),
+								$factory->number()
+							])
+						)
+					]),
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {

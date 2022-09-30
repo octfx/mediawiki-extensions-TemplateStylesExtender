@@ -8,6 +8,7 @@ Extends Extension:TemplateStyles by the following new matchers:
 * `ruby-align`
 * `scroll-margin-*`, `scroll-padding-*`
 * `pointer-events`
+* `aspect-ratio`
 
 ## Installation
 Download the zip file from the [latest release](https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender/releases/latest) page.

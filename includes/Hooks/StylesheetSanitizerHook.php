@@ -66,6 +66,7 @@ class StylesheetSanitizerHook {
 		$extended->addRuby( $extender );
 		$extended->addPointerEvents( $extender );
 		$extended->addScrollMarginProperties( $extender, $matcherFactory );
+		$extended->addAspectRatio( $extender, $matcherFactory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
