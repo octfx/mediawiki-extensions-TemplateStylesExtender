@@ -1,15 +1,15 @@
 {
 	"name": "TemplateStylesExtender",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"author": [
-		"Octfx"
+		"[https://www.mediawiki.org/wiki/User:Octfx Octfx]"
 	],
 	"url": "https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender",
 	"descriptionmsg": "ext-templatestylesextender-desc",
 	"license-name": "GPL-2.0-or-later",
 	"type": "parserhook",
 	"requires": {
-		"MediaWiki": ">= 1.35.0",
+		"MediaWiki": ">= 1.39.0",
 		"platform": {
 			"php": ">=7.3.19"
 		},

@@ -55,6 +55,13 @@ class TemplateStylesExtender {
 			] )
 		);
 
+		if ( method_exists( $factory, 'cssSingleEasingFunction' ) ) {
+			// MediaWiki 1.39+ / css-sanitizer 4.0.0+
+			$cssSingleEasingFunction = $factory->cssSingleEasingFunction();
+		} else {
+			$cssSingleEasingFunction = $factory->cssSingleTimingFunction();
+		}
+
 		$anyProperty = Quantifier::star(
 			new Alternative( [
 				$var,
@@ -68,7 +75,7 @@ class TemplateStylesExtender {
 				$factory->frequency(),
 				$factory->resolution(),
 				$factory->position(),
-				$factory->cssSingleTimingFunction(),
+				$cssSingleEasingFunction,
 				$factory->comma(),
 				$factory->cssWideKeywords(),
 				new KeywordMatcher( [
