@@ -27,7 +27,7 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class PropertySanitizerHook {
 	/**
-	 * @param StylePropertySanitizer &$propertySanitizer
+	 * @param StylePropertySanitizer $propertySanitizer
 	 * @param TemplateStylesMatcherFactory $matcherFactory
 	 */
 	public static function onSanitize( &$propertySanitizer, $matcherFactory ): void {

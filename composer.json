@@ -38,5 +38,10 @@
 	},
 	"extra": {
 		"installer-name": "TemplateStylesExtender"
+	},
+	"config": {
+		"allow-plugins": {
+			"composer/installers": true
+		}
 	}
 }
