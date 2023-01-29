@@ -33,7 +33,6 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\WhitespaceMatcher;
-use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
@@ -55,13 +54,6 @@ class TemplateStylesExtender {
 			] )
 		);
 
-		if ( method_exists( $factory, 'cssSingleEasingFunction' ) ) {
-			// MediaWiki 1.39+ / css-sanitizer 4.0.0+
-			$cssSingleEasingFunction = $factory->cssSingleEasingFunction();
-		} else {
-			$cssSingleEasingFunction = $factory->cssSingleTimingFunction();
-		}
-
 		$anyProperty = Quantifier::star(
 			new Alternative( [
 				$var,
@@ -75,7 +67,7 @@ class TemplateStylesExtender {
 				$factory->frequency(),
 				$factory->resolution(),
 				$factory->position(),
-				$cssSingleEasingFunction,
+				$factory->cssSingleEasingFunction(),
 				$factory->comma(),
 				$factory->cssWideKeywords(),
 				new KeywordMatcher( [
@@ -245,17 +237,17 @@ class TemplateStylesExtender {
 			$propertySanitizer->addKnownProperties( [
 				'aspect-ratio' => new Alternative( [
 					$factory->cssWideKeywords(),
-					new Juxtaposition([
+					new Juxtaposition( [
 						$factory->number(),
 						Quantifier::optional(
-							new Juxtaposition([
-								new WhitespaceMatcher(['significant' => false]),
-								new DelimMatcher('/'),
-								new WhitespaceMatcher(['significant' => false]),
+							new Juxtaposition( [
+								new WhitespaceMatcher( [ 'significant' => false ] ),
+								new DelimMatcher( '/' ),
+								new WhitespaceMatcher( [ 'significant' => false ] ),
 								$factory->number()
-							])
+							] )
 						)
-					]),
+					] ),
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {

@@ -1,6 +1,6 @@
 {
-	"name": "mediawiki/template-styles-extender",
-	"version": "1.1.1",
+	"name": "octfx/template-styles-extender",
+	"version": "1.1.2",
 	"type": "mediawiki-extension",
 	"description": "Extends TemplateStyles with new CSS properties",
 	"homepage": "http://www.mediawiki.org/wiki/Extension:TemplateStylesExtender",
@@ -13,7 +13,7 @@
 		}
 	],
 	"require": {
-		"php": ">=7.2",
+		"php": ">=7.3.19",
 		"ext-json": "*",
 		"composer/installers": ">=1.0.1"
 	},
@@ -38,5 +38,10 @@
 	},
 	"extra": {
 		"installer-name": "TemplateStylesExtender"
+	},
+	"config": {
+		"allow-plugins": {
+			"composer/installers": true
+		}
 	}
 }
