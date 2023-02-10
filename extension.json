@@ -25,6 +25,10 @@
 		"TemplateStylesExtenderEnableCssVars": {
 			"description": "Enable the matcher for css variables",
 			"value": true
+		},
+		"TemplateStylesExtenderEnableUnscopingSupport": {
+			"description": "Allow to unscope css by changing '.mw-parser-output' to a custom class",
+			"value": false
 		}
 	},
 	"MessagesDirs": {
@@ -35,9 +39,15 @@
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\TemplateStylesExtender\\": "includes/"
 	},
+	"HookHandlers": {
+		"MainHooks": {
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks"
+		}
+	},
 	"Hooks": {
 		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
-		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize"
+		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize",
+		"ParserFirstCallInit": "MainHooks"
 	},
 	"manifest_version": 2
 }
