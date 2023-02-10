@@ -15,9 +15,9 @@ Download the zip file from the [latest release](https://github.com/octfx/mediawi
 
 Extract the folder to `extensions/TemplateStylesExtender`.  
 Add the following to `LocalSettings.php`:
-```
-wfLoadExtension( 'TemplateStyles' )
-wfLoadExtension('TemplateStylesExtender')
+```php
+wfLoadExtension( 'TemplateStyles' );
+wfLoadExtension( 'TemplateStylesExtender' );
 ```
 
 ## Configuration
@@ -28,6 +28,15 @@ Enables or disables `@media (prefers-color-scheme)` queries.
 `$wgTemplateStylesExtenderEnableCssVars`  
 Default: `true`  
 Enables or disables css variable support.
+
+`$wgTemplateStylesExtenderEnableUnscopingSupport`  
+Default: `false`  
+Allows users with `editinterface` permissions to unscope css by setting a `wrapclass` attribute.
+
+Example:
+`<templatestyles src="Foo/style.css" wrapclass="mediawiki" />` results in the css being scoped to `.mediawiki` instead of `.mw-parser-output`.
+
+**Note**: Including such a call in a page essentially limits editing to users with the `editinterface` right. You can alternatively include a call to a template that includes the styles. 
 
 ## Notes on CSS vars
 Currently using `:root` selectors won't work due to template styles prepending `.mw-parser-output`.
