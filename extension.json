@@ -1,6 +1,6 @@
 {
 	"name": "TemplateStylesExtender",
-	"version": "1.1.5",
+	"version": "1.1.6",
 	"author": [
 		"[https://www.mediawiki.org/wiki/User:Octfx Octfx]"
 	],
@@ -47,7 +47,8 @@
 	"Hooks": {
 		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
 		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize",
-		"ParserFirstCallInit": "MainHooks"
+		"ParserFirstCallInit": "MainHooks",
+		"EditPage::attemptSave": "MainHooks"
 	},
 	"manifest_version": 2
 }
