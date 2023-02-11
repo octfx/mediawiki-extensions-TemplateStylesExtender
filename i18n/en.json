@@ -1,3 +1,4 @@
 {
-	"ext-templatestylesextender-desc": "Extends [https://www.mediawiki.org/wiki/Extension:TemplateStyles TemplateStyles] with new selectors and matchers."
+	"ext-templatestylesextender-desc": "Extends [https://www.mediawiki.org/wiki/Extension:TemplateStyles TemplateStyles] with new selectors and matchers.",
+	"templatestylesextender-unscope-no-permisson": "Only users with 'editinterface' permissions can unscope css."
 }

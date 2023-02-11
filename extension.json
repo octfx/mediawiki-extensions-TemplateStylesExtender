@@ -47,7 +47,8 @@
 	"Hooks": {
 		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
 		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize",
-		"ParserFirstCallInit": "MainHooks"
+		"ParserFirstCallInit": "MainHooks",
+		"EditPage::attemptSave": "MainHooks"
 	},
 	"manifest_version": 2
 }
