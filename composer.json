@@ -1,6 +1,6 @@
 {
 	"name": "octfx/template-styles-extender",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"type": "mediawiki-extension",
 	"description": "Extends TemplateStyles with new CSS properties",
 	"homepage": "http://www.mediawiki.org/wiki/Extension:TemplateStylesExtender",
