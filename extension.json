@@ -29,7 +29,14 @@
 		"TemplateStylesExtenderEnableUnscopingSupport": {
 			"description": "Allow to unscope css by changing '.mw-parser-output' to a custom class",
 			"value": false
+		},
+		"TemplateStylesExtenderUnscopingPermission": {
+			"description": "Speficy the permission a user must have to use unscoping. Defaults to 'editinterface'.",
+			"value": "editinterface"
 		}
+	},
+	"ConfigRegistry": {
+		"TemplateStylesExtender": "GlobalVarConfig::newInstance"
 	},
 	"MessagesDirs": {
 		"TemplateStylesExtender": [

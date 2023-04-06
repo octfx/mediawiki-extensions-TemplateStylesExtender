@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
 use MediaWiki\Extension\TemplateStyles\Hooks;
+use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use MediaWiki\Hook\EditPage__attemptSaveHook;
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\MediaWikiServices;
@@ -24,7 +25,10 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 	 * @see Hooks::handleTag()
 	 */
 	public static function handleTag( $text, $params, $parser, $frame ): string {
-		if ( $parser->getOptions() === null || !MediaWikiServices::getInstance()->getMainConfig()->get( 'TemplateStylesExtenderEnableUnscopingSupport' ) ) {
+		if (
+			$parser->getOptions() === null ||
+			!TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderEnableUnscopingSupport' )
+		) {
 			return Hooks::handleTag( $text, $params, $parser, $frame );
 		}
 
@@ -50,7 +54,11 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 	 */
 	public function onEditPage__attemptSave( $editpage_Obj ): bool {
 		$revision = $editpage_Obj->getExpectedParentRevision();
-		if ( $revision === null || !MediaWikiServices::getInstance()->getMainConfig()->get( 'TemplateStylesExtenderEnableUnscopingSupport' ) ) {
+
+		if (
+			$revision === null ||
+			!TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderEnableUnscopingSupport' )
+		) {
 			return true;
 		}
 
@@ -59,13 +67,18 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 			return true;
 		}
 
-		$permManager = MediaWikiServices::getInstance()->getPermissionManager();
-		$user = MediaWikiServices::getInstance()->getUserFactory()->newFromUserIdentity( $editpage_Obj->getContext()->getUser() );
+		$permission = TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderUnscopingPermission' );
 
-		$userCan = $permManager->userHasRight( $user, 'editinterface' ) || $permManager->userCan( 'editinterface', $user, $editpage_Obj->getTitle() );
+		$permManager = MediaWikiServices::getInstance()->getPermissionManager();
+		$user = MediaWikiServices::getInstance()
+			->getUserFactory()
+			->newFromUserIdentity( $editpage_Obj->getContext()->getUser() );
+
+		$userCan = $permManager->userHasRight( $user, $permission ) ||
+			$permManager->userCan( $permission, $user, $editpage_Obj->getTitle() );
 
 		if ( strpos( $content->getText(), 'wrapclass' ) !== false && !$userCan ) {
-			throw new PermissionsError( 'editinterface', [ 'templatestylesextender-unscope-no-permisson' ] );
+			throw new PermissionsError( $permission, [ 'templatestylesextender-unscope-no-permisson' ] );
 		}
 
 		return true;

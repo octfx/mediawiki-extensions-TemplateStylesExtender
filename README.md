@@ -38,6 +38,10 @@ Example:
 
 **Note**: Including such a call in a page essentially limits editing to users with the `editinterface` right. You can alternatively include a call to a template that includes the styles. 
 
+`$wgTemplateStylesExtenderUnscopingPermission`  
+Default: `editinterface`  
+Specify a permission group that is allowed to unscope css.
+
 ## Notes on CSS vars
 Currently using `:root` selectors won't work due to template styles prepending `.mw-parser-output`.
 
