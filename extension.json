@@ -1,6 +1,6 @@
 {
 	"name": "TemplateStylesExtender",
-	"version": "1.1.6",
+	"version": "1.1.7",
 	"author": [
 		"[https://www.mediawiki.org/wiki/User:Octfx Octfx]"
 	],
@@ -29,7 +29,14 @@
 		"TemplateStylesExtenderEnableUnscopingSupport": {
 			"description": "Allow to unscope css by changing '.mw-parser-output' to a custom class",
 			"value": false
+		},
+		"TemplateStylesExtenderUnscopingPermission": {
+			"description": "Speficy the permission a user must have to use unscoping. Defaults to 'editinterface'.",
+			"value": "editinterface"
 		}
+	},
+	"ConfigRegistry": {
+		"TemplateStylesExtender": "GlobalVarConfig::newInstance"
 	},
 	"MessagesDirs": {
 		"TemplateStylesExtender": [
