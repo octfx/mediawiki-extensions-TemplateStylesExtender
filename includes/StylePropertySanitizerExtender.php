@@ -21,6 +21,7 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
+use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
@@ -91,6 +92,31 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			new TokenMatcher( Token::T_HASH, function ( Token $t ) {
 				return preg_match( '/^([0-9a-f]{3}|[0-9a-f]{8})$/i', $t->value() );
 			} ),
+		] );
+
+		$props['border'] = UnorderedGroup::someOf( [
+			new KeywordMatcher( [
+				'none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'
+			] ),
+			new Alternative( [
+				new KeywordMatcher( [ 'thin', 'medium', 'thick' ] ), $matcherFactory->length(),
+			] ),
+			new Alternative( [
+				$matcherFactory->color(),
+                new FunctionMatcher( 'var', new VarNameMatcher() ),
+			] )
+		] );
+
+		$props['box-shadow'] = new Alternative( [
+			new KeywordMatcher( 'none' ),
+			Quantifier::hash( UnorderedGroup::allOf( [
+				Quantifier::optional( new KeywordMatcher( 'inset' ) ),
+				Quantifier::count( $matcherFactory->length(), 2, 4 ),
+				Quantifier::optional(new Alternative( [
+					$matcherFactory->color(),
+                    new FunctionMatcher( 'var', new VarNameMatcher() ),
+				] ) ),
+			] ) )
 		] );
 
 		$this->cache[__METHOD__] = $props;
