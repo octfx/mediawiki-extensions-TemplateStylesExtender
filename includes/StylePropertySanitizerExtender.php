@@ -103,7 +103,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			] ),
 			new Alternative( [
 				$matcherFactory->color(),
-                new FunctionMatcher( 'var', new VarNameMatcher() ),
+				new FunctionMatcher( 'var', new VarNameMatcher() ),
 			] )
 		] );
 
@@ -112,9 +112,9 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			Quantifier::hash( UnorderedGroup::allOf( [
 				Quantifier::optional( new KeywordMatcher( 'inset' ) ),
 				Quantifier::count( $matcherFactory->length(), 2, 4 ),
-				Quantifier::optional(new Alternative( [
+				Quantifier::optional( new Alternative( [
 					$matcherFactory->color(),
-                    new FunctionMatcher( 'var', new VarNameMatcher() ),
+					new FunctionMatcher( 'var', new VarNameMatcher() ),
 				] ) ),
 			] ) )
 		] );
