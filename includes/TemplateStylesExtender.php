@@ -51,36 +51,44 @@ class TemplateStylesExtender {
 	 * @param MatcherFactory $factory
 	 */
 	public function addVarSelector( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+		$anyProperty = new Alternative( [
+			$factory->color(),
+			$factory->image(),
+			$factory->length(),
+			$factory->integer(),
+			$factory->percentage(),
+			$factory->number(),
+			$factory->angle(),
+			$factory->frequency(),
+			$factory->resolution(),
+			$factory->position(),
+			$factory->cssSingleEasingFunction(),
+			$factory->comma(),
+			$factory->cssWideKeywords(),
+			new KeywordMatcher( [
+				'solid', 'double', 'dotted', 'dashed', 'wavy'
+			] )
+		] );
+
 		$var = new FunctionMatcher(
 			'var',
 			new Juxtaposition( [
 				new WhitespaceMatcher( [ 'significant' => false ] ),
 				new VarNameMatcher(),
 				new WhitespaceMatcher( [ 'significant' => false ] ),
+				Quantifier::optional( new Juxtaposition( [
+					$factory->comma(),
+					new WhitespaceMatcher( [ 'significant' => false ] ),
+					$anyProperty,
+				] ) ),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
 			] )
 		);
 
-		$anyProperty = Quantifier::star(
-			new Alternative( [
-				$var,
-				$factory->color(),
-				$factory->image(),
-				$factory->length(),
-				$factory->integer(),
-				$factory->percentage(),
-				$factory->number(),
-				$factory->angle(),
-				$factory->frequency(),
-				$factory->resolution(),
-				$factory->position(),
-				$factory->cssSingleEasingFunction(),
-				$factory->comma(),
-				$factory->cssWideKeywords(),
-				new KeywordMatcher( [
-					'solid', 'double', 'dotted', 'dashed', 'wavy'
-				] )
-			] )
-		);
+		$anyProperty = Quantifier::star( new Alternative( [
+			$var,
+			$anyProperty,
+		] ) );
 
 		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
 		// The problem is, that var() can be used more or less anywhere
