@@ -6,12 +6,21 @@ use MediaWiki\Extension\TemplateStyles\Hooks;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use MediaWiki\Hook\EditPage__attemptSaveHook;
 use MediaWiki\Hook\ParserFirstCallInitHook;
-use MediaWiki\MediaWikiServices;
+use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\Revision\SlotRecord;
+use MediaWiki\User\UserFactory;
 use MWException;
 use PermissionsError;
 
 class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
+
+	private PermissionManager $manager;
+	private UserFactory $factory;
+
+	public function __construct( PermissionManager $manager, UserFactory $factory ) {
+		$this->manager = $manager;
+		$this->factory = $factory;
+	}
 
 	/**
 	 * @throws MWException
@@ -69,13 +78,10 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 
 		$permission = TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderUnscopingPermission' );
 
-		$permManager = MediaWikiServices::getInstance()->getPermissionManager();
-		$user = MediaWikiServices::getInstance()
-			->getUserFactory()
-			->newFromUserIdentity( $editpage_Obj->getContext()->getUser() );
+		$user = $this->factory->newFromUserIdentity( $editpage_Obj->getContext()->getUser() );
 
-		$userCan = $permManager->userHasRight( $user, $permission ) ||
-			$permManager->userCan( $permission, $user, $editpage_Obj->getTitle() );
+		$userCan = $this->manager->userHasRight( $user, $permission ) ||
+			$this->manager->userCan( $permission, $user, $editpage_Obj->getTitle() );
 
 		if ( strpos( $content->getText(), 'wrapclass' ) !== false && !$userCan ) {
 			throw new PermissionsError( $permission, [ 'templatestylesextender-unscope-no-permisson' ] );

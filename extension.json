@@ -48,7 +48,11 @@
 	},
 	"HookHandlers": {
 		"MainHooks": {
-			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks"
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks",
+			"services": [
+				"PermissionManager",
+				"UserFactory"
+			]
 		}
 	},
 	"Hooks": {
