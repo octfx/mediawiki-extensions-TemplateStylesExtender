@@ -13,7 +13,7 @@
 		}
 	],
 	"require": {
-		"php": ">=7.3.19",
+		"php": ">=8.0",
 		"ext-json": "*",
 		"composer/installers": ">=1.0.1"
 	},
