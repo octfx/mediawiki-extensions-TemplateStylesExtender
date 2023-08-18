@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
+use MediaWiki\EditPage\EditPage;
 use MediaWiki\Extension\TemplateStyles\Hooks;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use MediaWiki\Hook\EditPage__attemptSaveHook;
@@ -10,19 +11,36 @@ use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\Revision\SlotRecord;
 use MediaWiki\User\UserFactory;
 use MWException;
+use Parser;
 use PermissionsError;
+use PPFrame;
 
+/**
+ * phpcs:disable MediaWiki.NamingConventions.LowerCamelFunctionsName.FunctionName
+ */
 class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 
+	/**
+	 * @var PermissionManager
+	 */
 	private PermissionManager $manager;
+
+	/**
+	 * @var UserFactory
+	 */
 	private UserFactory $factory;
 
+	/**
+	 * @param PermissionManager $manager
+	 * @param UserFactory $factory
+	 */
 	public function __construct( PermissionManager $manager, UserFactory $factory ) {
 		$this->manager = $manager;
 		$this->factory = $factory;
 	}
 
 	/**
+	 * @param Parser $parser
 	 * @throws MWException
 	 */
 	public function onParserFirstCallInit( $parser ) {
@@ -30,7 +48,14 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 	}
 
 	/**
-	 * This is a wrapper for <templatestyles> tags, that allows unscoping of css for users with 'editinterface' permissions
+	 * This is a wrapper for <templatestyles> tags,
+	 * that allows unscoping of css for users with 'editinterface' permissions
+	 *
+	 * @param string $text
+	 * @param string[] $params
+	 * @param Parser $parser
+	 * @param PPFrame $frame
+	 * @return string
 	 * @see Hooks::handleTag()
 	 */
 	public static function handleTag( $text, $params, $parser, $frame ): string {
@@ -57,7 +82,7 @@ class MainHooks implements ParserFirstCallInitHook, EditPage__attemptSaveHook {
 	/**
 	 * Check if 'wrapclass' was used in the page, if so only users with 'editinterface' permissions may save the page
 	 *
-	 * @param $editpage_Obj
+	 * @param EditPage $editpage_Obj
 	 * @return true
 	 * @throws PermissionsError
 	 */
