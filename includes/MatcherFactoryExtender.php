@@ -100,6 +100,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 					new Juxtaposition( [ $iVar, $iVar, $iVar, $nVar ], true ),
 					new Juxtaposition( [ $pVar, $pVar, $pVar, $nVar ], true ),
 					Quantifier::hash( $var, 1, 4 ),
+					new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $nVar ], true ),
 				] ) ),
 				new FunctionMatcher( 'hsl', new Alternative([
 					new Juxtaposition( [ $nVar, $pVar, $pVar ], true ),
