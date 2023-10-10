@@ -54,6 +54,25 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
+	 * CSS-color extension enabling RGBA
+	 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
+	 * @return Matcher
+	 */
+	public function color()
+	{
+		if ( !isset( $this->cache[__METHOD__] ) ) {
+			$color = new Alternative( [
+				parent::color(),
+				new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
+					return preg_match( '/^([0-9a-f]{4})|([0-9a-f]{8})$/i', $t->value() );
+				} ),
+			]);
+			$this->cache[__METHOD__] = $color;
+		}
+		return $this->cache[__METHOD__];
+	}
+
+	/**
 	 * This is in reality a complete copy of the parent hook with line 68 and 110 extended
 	 * This can very easily break if there is an update upstream
 	 *
