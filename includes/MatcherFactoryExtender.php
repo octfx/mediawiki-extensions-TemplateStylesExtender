@@ -21,6 +21,7 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
+use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\AnythingMatcher;
 use Wikimedia\CSS\Grammar\BlockMatcher;
@@ -68,6 +69,47 @@ class MatcherFactoryExtender extends MatcherFactory {
 				} ),
 			]);
 			$this->cache[__METHOD__] = $color;
+		}
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * Adds `var` support to color functions
+	 * @return Matcher|Matcher[]
+	 */
+	protected function colorFuncs() {
+		if ( !isset( $this->cache[__METHOD__] ) ) {
+			$var = new FunctionMatcher( 'var', new VarNameMatcher() );
+
+			$i = $this->integer();
+			$iVar = new Alternative([ $var, $i ]);
+
+			$n = $this->number();
+			$nVar = new Alternative([ $var, $n ]);
+
+			$p = $this->percentage();
+			$pVar = new Alternative([ $var, $p ]);
+
+			$this->cache[__METHOD__] = [
+				new FunctionMatcher( 'rgb', new Alternative( [
+					Quantifier::hash( $iVar, 3, 3 ),
+					Quantifier::hash( $pVar, 3, 3 ),
+					Quantifier::hash( $var, 1, 3 ),
+				] ) ),
+				new FunctionMatcher( 'rgba', new Alternative( [
+					new Juxtaposition( [ $iVar, $iVar, $iVar, $nVar ], true ),
+					new Juxtaposition( [ $pVar, $pVar, $pVar, $nVar ], true ),
+					Quantifier::hash( $var, 1, 4 ),
+				] ) ),
+				new FunctionMatcher( 'hsl', new Alternative([
+					new Juxtaposition( [ $nVar, $pVar, $pVar ], true ),
+					Quantifier::hash($var, 1, 3),
+				]) ),
+				new FunctionMatcher( 'hsla', new Alternative([
+					new Juxtaposition( [ $nVar, $pVar, $pVar, $nVar ], true ),
+					Quantifier::hash($var, 1, 4),
+				]) ),
+			];
 		}
 		return $this->cache[__METHOD__];
 	}
