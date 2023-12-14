@@ -51,36 +51,44 @@ class TemplateStylesExtender {
 	 * @param MatcherFactory $factory
 	 */
 	public function addVarSelector( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+		$anyProperty = new Alternative( [
+			$factory->color(),
+			$factory->image(),
+			$factory->length(),
+			$factory->integer(),
+			$factory->percentage(),
+			$factory->number(),
+			$factory->angle(),
+			$factory->frequency(),
+			$factory->resolution(),
+			$factory->position(),
+			$factory->cssSingleEasingFunction(),
+			$factory->comma(),
+			$factory->cssWideKeywords(),
+			new KeywordMatcher( [
+				'solid', 'double', 'dotted', 'dashed', 'wavy'
+			] )
+		] );
+
 		$var = new FunctionMatcher(
 			'var',
 			new Juxtaposition( [
 				new WhitespaceMatcher( [ 'significant' => false ] ),
 				new VarNameMatcher(),
 				new WhitespaceMatcher( [ 'significant' => false ] ),
+				Quantifier::optional( new Juxtaposition( [
+					$factory->comma(),
+					new WhitespaceMatcher( [ 'significant' => false ] ),
+					$anyProperty,
+				] ) ),
+				new WhitespaceMatcher( [ 'significant' => false ] ),
 			] )
 		);
 
-		$anyProperty = Quantifier::star(
-			new Alternative( [
-				$var,
-				$factory->color(),
-				$factory->image(),
-				$factory->length(),
-				$factory->integer(),
-				$factory->percentage(),
-				$factory->number(),
-				$factory->angle(),
-				$factory->frequency(),
-				$factory->resolution(),
-				$factory->position(),
-				$factory->cssSingleEasingFunction(),
-				$factory->comma(),
-				$factory->cssWideKeywords(),
-				new KeywordMatcher( [
-					'solid', 'double', 'dotted', 'dashed', 'wavy'
-				] )
-			] )
-		);
+		$anyProperty = Quantifier::star( new Alternative( [
+			$var,
+			$anyProperty,
+		] ) );
 
 		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
 		// The problem is, that var() can be used more or less anywhere
@@ -203,6 +211,67 @@ class TemplateStylesExtender {
 			} catch ( InvalidArgumentException $e ) {
 				// Fail silently
 			}
+		}
+	}
+
+	/**
+	 * Adds padding|margin-inline|block support
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param MatcherFactory $factory
+	 */
+	public function addInlineBlockMarginPaddingProperties( $propertySanitizer, $factory ): void {
+		$auto = new KeywordMatcher( 'auto' );
+		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
+
+		$props = [];
+
+		$props['margin-block-end'] = $autoLengthPct;
+		$props['margin-block-start'] = $autoLengthPct;
+		$props['margin-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
+		$props['margin-inline-end'] = $autoLengthPct;
+		$props['margin-inline-start'] = $autoLengthPct;
+		$props['margin-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
+		$props['padding-block-end'] = $autoLengthPct;
+		$props['padding-block-start'] = $autoLengthPct;
+		$props['padding-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
+		$props['padding-inline-end'] = $autoLengthPct;
+		$props['padding-inline-start'] = $autoLengthPct;
+		$props['padding-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
+
+		try {
+			$propertySanitizer->addKnownProperties( $props );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds padding|margin-inline|block support
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 * @param MatcherFactory $factory
+	 */
+	public function addInsetProperties( $propertySanitizer, $factory ): void {
+		$auto = new KeywordMatcher( 'auto' );
+		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
+
+		$props = [];
+
+		$props['inset'] = Quantifier::count( $autoLengthPct, 1, 4 );
+
+		$props['inset-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
+		$props['inset-block-end'] = $autoLengthPct;
+		$props['inset-block-start'] = $autoLengthPct;
+
+		$props['inset-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
+		$props['inset-inline-end'] = $autoLengthPct;
+		$props['inset-inline-start'] = $autoLengthPct;
+
+		try {
+			$propertySanitizer->addKnownProperties( $props );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
 		}
 	}
 

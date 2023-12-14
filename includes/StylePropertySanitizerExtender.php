@@ -27,11 +27,9 @@ use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
-use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\CSSObject;
 use Wikimedia\CSS\Objects\Declaration;
-use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
@@ -41,6 +39,13 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
+
+	/**
+	 * @param MatcherFactory $matcherFactory
+	 */
+	public function __construct( MatcherFactory $matcherFactory ) {
+		parent::__construct( new MatcherFactoryExtender() );
+	}
 
 	/**
 	 * @inheritDoc
@@ -87,13 +92,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 		$props = parent::cssBorderBackground3( $matcherFactory );
 
-		$props['background-color'] = new Alternative( [
-			$matcherFactory->color(),
-			new TokenMatcher( Token::T_HASH, function ( Token $t ) {
-				return preg_match( '/^([0-9a-f]{3}|[0-9a-f]{8})$/i', $t->value() );
-			} ),
-		] );
-
 		$props['border'] = UnorderedGroup::someOf( [
 			new KeywordMatcher( [
 				'none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'
@@ -103,7 +101,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			] ),
 			new Alternative( [
 				$matcherFactory->color(),
-                new FunctionMatcher( 'var', new VarNameMatcher() ),
+				new FunctionMatcher( 'var', new VarNameMatcher() ),
 			] )
 		] );
 
@@ -112,9 +110,9 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			Quantifier::hash( UnorderedGroup::allOf( [
 				Quantifier::optional( new KeywordMatcher( 'inset' ) ),
 				Quantifier::count( $matcherFactory->length(), 2, 4 ),
-				Quantifier::optional(new Alternative( [
+				Quantifier::optional( new Alternative( [
 					$matcherFactory->color(),
-                    new FunctionMatcher( 'var', new VarNameMatcher() ),
+					new FunctionMatcher( 'var', new VarNameMatcher() ),
 				] ) ),
 			] ) )
 		] );

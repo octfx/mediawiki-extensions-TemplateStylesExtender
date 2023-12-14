@@ -67,6 +67,8 @@ class StylesheetSanitizerHook {
 		$extended->addPointerEvents( $extender );
 		$extended->addScrollMarginProperties( $extender, $matcherFactory );
 		$extended->addAspectRatio( $extender, $matcherFactory );
+		$extended->addInlineBlockMarginPaddingProperties( $extender, $matcherFactory );
+		$extended->addInsetProperties( $extender, $matcherFactory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}

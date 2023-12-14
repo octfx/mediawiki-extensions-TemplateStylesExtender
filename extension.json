@@ -1,6 +1,6 @@
 {
 	"name": "TemplateStylesExtender",
-	"version": "1.1.8",
+	"version": "1.2.0",
 	"author": [
 		"[https://www.mediawiki.org/wiki/User:Octfx Octfx]"
 	],
@@ -11,7 +11,7 @@
 	"requires": {
 		"MediaWiki": ">= 1.39.0",
 		"platform": {
-			"php": ">=7.3.19"
+			"php": ">=8.0"
 		},
 		"extensions": {
 			"TemplateStyles": ">= 1.0"
@@ -48,7 +48,11 @@
 	},
 	"HookHandlers": {
 		"MainHooks": {
-			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks"
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks",
+			"services": [
+				"PermissionManager",
+				"UserFactory"
+			]
 		}
 	},
 	"Hooks": {
