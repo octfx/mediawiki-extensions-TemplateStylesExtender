@@ -40,6 +40,9 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
 
+	/**
+	 * @param MatcherFactory $matcherFactory
+	 */
 	public function __construct( MatcherFactory $matcherFactory ) {
 		parent::__construct( new MatcherFactoryExtender() );
 	}
