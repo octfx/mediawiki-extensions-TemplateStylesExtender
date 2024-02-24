@@ -69,6 +69,7 @@ class StylesheetSanitizerHook {
 		$extended->addAspectRatio( $extender, $matcherFactory );
 		$extended->addInlineBlockMarginPaddingProperties( $extender, $matcherFactory );
 		$extended->addInsetProperties( $extender, $matcherFactory );
+		$extended->addBackdropFilter( $extender );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}

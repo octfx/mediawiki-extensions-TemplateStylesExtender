@@ -331,6 +331,23 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the backdrop-filter matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
+	public function addBackdropFilter( StylePropertySanitizer $propertySanitizer ): void {
+		try {
+			$filter = $propertySanitizer->getKnownProperties()['filter'];
+
+			$propertySanitizer->addKnownProperties( [
+				'backdrop-filter' => Quantifier::plus( $filter ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *
