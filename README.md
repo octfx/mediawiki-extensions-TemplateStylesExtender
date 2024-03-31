@@ -33,6 +33,8 @@ Enables or disables css variable support.
 Default: `false`  
 Allows users with `editinterface` permissions to unscope css by setting a `wrapclass` attribute.
 
+**Note**: This is potentially expensive, as each templatestyles tag with `wrapclass` set, will attempt to look up the user of the current page revision, and check if this user has the permission to activate css un-scoping. 
+
 Example:
 `<templatestyles src="Foo/style.css" wrapclass="mediawiki" />` results in the css being scoped to `.mediawiki` instead of `.mw-parser-output`.
 

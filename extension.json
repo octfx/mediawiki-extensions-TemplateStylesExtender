@@ -48,18 +48,13 @@
 	},
 	"HookHandlers": {
 		"MainHooks": {
-			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks",
-			"services": [
-				"PermissionManager",
-				"UserFactory"
-			]
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks"
 		}
 	},
 	"Hooks": {
 		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
 		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize",
-		"ParserFirstCallInit": "MainHooks",
-		"EditPage::attemptSave": "MainHooks"
+		"ParserFirstCallInit": "MainHooks"
 	},
 	"manifest_version": 2
 }
