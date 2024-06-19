@@ -24,7 +24,6 @@ use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\FontFaceAtRuleSanitizer;
 
-
 class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 
 	/**
@@ -41,6 +40,7 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 			'font-display' => new Alternative( [
 				new KeywordMatcher( [ 'auto', 'block', 'swap', 'fallback', 'optional' ] )
 			] ),
+			'line-gap-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] )
 		] );
 	}
 }
