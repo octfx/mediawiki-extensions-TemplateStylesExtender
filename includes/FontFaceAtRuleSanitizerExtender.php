@@ -34,13 +34,13 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 
 		// Only allow the font-family if it begins with "TemplateStyles"
 		$this->propertySanitizer->setKnownProperties( [
-			'adjust-size' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
 			'ascent-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
 			'descent-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
 			'font-display' => new Alternative( [
 				new KeywordMatcher( [ 'auto', 'block', 'swap', 'fallback', 'optional' ] )
 			] ),
-			'line-gap-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] )
+			'line-gap-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
+			'size-adjust' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] )
 		] );
 	}
 }
