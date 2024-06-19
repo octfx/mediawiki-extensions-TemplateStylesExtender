@@ -41,7 +41,7 @@ class StylesheetSanitizerHook {
 	 */
 	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
 		$newRules = $sanitizer->getRuleSanitizers();
-	
+
 		if ( TemplateStylesExtender::getConfigValue(
 			'TemplateStylesExtenderEnablePrefersColorScheme',
 				true ) === true ) {
