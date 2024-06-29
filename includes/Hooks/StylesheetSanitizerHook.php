@@ -22,6 +22,7 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
 use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
+use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
@@ -39,18 +40,18 @@ class StylesheetSanitizerHook {
 	 * @param TemplateStylesMatcherFactory $matcherFactory
 	 */
 	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
+		$newRules = $sanitizer->getRuleSanitizers();
+
 		if ( TemplateStylesExtender::getConfigValue(
 			'TemplateStylesExtenderEnablePrefersColorScheme',
 				true ) === true ) {
 			$factory = new MatcherFactoryExtender();
-
-			$newRules = $sanitizer->getRuleSanitizers();
 			$newRules['@media'] = new MediaAtRuleSanitizer( $factory->cssMediaQueryList() );
 			$newRules['@media']->setRuleSanitizers( $newRules );
-
-			$sanitizer->setRuleSanitizers( $newRules );
-
 		}
+
+		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $matcherFactory );
+		$newRules['@font-face']->setRuleSanitizers( $newRules );
 
 		$extended = new TemplateStylesExtender();
 
