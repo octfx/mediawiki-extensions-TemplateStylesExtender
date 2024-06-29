@@ -21,6 +21,7 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\FontFaceAtRuleSanitizer;
 
@@ -32,15 +33,15 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 	public function __construct( MatcherFactory $matcherFactory ) {
 		parent::__construct( $matcherFactory );
 
+		$matcher = new Alternative( [ new KeywordMatcher( 'normal' ), $matcherFactory->percentage() ] );
+
 		// Only allow the font-family if it begins with "TemplateStyles"
 		$this->propertySanitizer->setKnownProperties( [
-			'ascent-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
-			'descent-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
-			'font-display' => new Alternative( [
-				new KeywordMatcher( [ 'auto', 'block', 'swap', 'fallback', 'optional' ] )
-			] ),
-			'line-gap-override' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] ),
-			'size-adjust' => new Alternative( [ $auto, $matcherFactory->lengthPercentage() ] )
-		] );
+			'ascent-override' => $matcher,
+			'descent-override' => $matcher,
+			'font-display' => new KeywordMatcher( [ 'auto', 'block', 'swap', 'fallback', 'optional' ] ),
+			'line-gap-override' => $matcher,
+			'size-adjust' => $matcher,
+		] + $this->propertySanitizer->getKnownProperties() );
 	}
 }

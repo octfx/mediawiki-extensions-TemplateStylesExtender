@@ -51,7 +51,8 @@ class StylesheetSanitizerHook {
 		}
 
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $matcherFactory );
-		$newRules['@font-face']->setRuleSanitizers( $newRules );
+
+		$sanitizer->setRuleSanitizers( $newRules );
 
 		$extended = new TemplateStylesExtender();
 
