@@ -23,13 +23,17 @@ namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\BlockMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
+use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
+use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\CSSObject;
 use Wikimedia\CSS\Objects\Declaration;
+use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
@@ -39,6 +43,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
+	private static $extendedCss1Grid = false;
 
 	/**
 	 * @param MatcherFactory $matcherFactory
@@ -200,6 +205,101 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		$this->cache[__METHOD__] = $props;
 		self::$extendedCss1Masking = true;
 
+		return $props;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Allow variables in grid-template-columns
+	 */
+	protected function cssGrid1( MatcherFactory $matcherFactory ) {
+		// @codeCoverageIgnoreStart
+		if ( self::$extendedCss1Grid && isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+		// @codeCoverageIgnoreEnd
+
+		$var = new FunctionMatcher( 'var', new VarNameMatcher() );
+
+		$props = [];
+		$comma = $matcherFactory->comma();
+		$customIdent = $matcherFactory->customIdent( [ 'span' ] );
+		$lineNamesO = Quantifier::optional( new BlockMatcher(
+			Token::T_LEFT_BRACKET, Quantifier::star( $customIdent )
+		) );
+		$trackBreadth = new Alternative( [
+			$matcherFactory->lengthPercentage(),
+			new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
+				return $t->value() >= 0 && !strcasecmp( $t->unit(), 'fr' );
+			} ),
+			new KeywordMatcher( [ 'min-content', 'max-content', 'auto' ] ),
+			$var
+		] );
+		$inflexibleBreadth = new Alternative( [
+			$matcherFactory->lengthPercentage(),
+			new KeywordMatcher( [ 'min-content', 'max-content', 'auto' ] ),
+			$var
+		] );
+		$fixedBreadth = $matcherFactory->lengthPercentage();
+		$trackSize = new Alternative( [
+			$trackBreadth,
+			new FunctionMatcher( 'minmax',
+				new Juxtaposition( [ $inflexibleBreadth, $trackBreadth ], true )
+			),
+			new FunctionMatcher( 'fit-content', $matcherFactory->lengthPercentage() ),
+			$var
+		] );
+		$fixedSize = new Alternative( [
+			$fixedBreadth,
+			new FunctionMatcher( 'minmax', new Juxtaposition( [ $fixedBreadth, $trackBreadth ], true ) ),
+			new FunctionMatcher( 'minmax',
+				new Juxtaposition( [ $inflexibleBreadth, $fixedBreadth ], true )
+			),
+			$var
+		] );
+		$trackRepeat = new FunctionMatcher( 'repeat', new Juxtaposition( [
+			new Alternative( [ $matcherFactory->integer(), $var ] ),
+			$comma,
+			Quantifier::plus( new Juxtaposition( [ $lineNamesO, $trackSize ] ) ),
+			$lineNamesO
+		] ) );
+		$autoRepeat = new FunctionMatcher( 'repeat', new Juxtaposition( [
+			new Alternative( [ new KeywordMatcher( [ 'auto-fill', 'auto-fit' ] ), $var ] ),
+			$comma,
+			Quantifier::plus( new Juxtaposition( [ $lineNamesO, $fixedSize ] ) ),
+			$lineNamesO
+		] ) );
+		$fixedRepeat = new FunctionMatcher( 'repeat', new Juxtaposition( [
+			$matcherFactory->integer(),
+			$comma,
+			Quantifier::plus( new Juxtaposition( [ $lineNamesO, $fixedSize ] ) ),
+			$lineNamesO
+		] ) );
+		$trackList = new Juxtaposition( [
+			Quantifier::plus( new Juxtaposition( [
+				$lineNamesO, new Alternative( [ $trackSize, $trackRepeat ] )
+			] ) ),
+			$lineNamesO
+		] );
+		$autoTrackList = new Juxtaposition( [
+			Quantifier::star( new Juxtaposition( [
+				$lineNamesO, new Alternative( [ $fixedSize, $fixedRepeat ] )
+			] ) ),
+			$lineNamesO,
+			$autoRepeat,
+			Quantifier::star( new Juxtaposition( [
+				$lineNamesO, new Alternative( [ $fixedSize, $fixedRepeat ] )
+			] ) ),
+			$lineNamesO,
+		] );
+
+		$props['grid-template-columns'] = new Alternative( [
+			new KeywordMatcher( 'none' ), $trackList, $autoTrackList
+		] );
+		$props['grid-template-rows'] = $props['grid-template-columns'];
+
+		$this->cache[__METHOD__] = $props;
 		return $props;
 	}
 
