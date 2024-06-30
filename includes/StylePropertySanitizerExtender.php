@@ -222,7 +222,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 		$var = new FunctionMatcher( 'var', new VarNameMatcher() );
 
-		$props = [];
+		$props = parent::cssGrid1( $matcherFactory );
 		$comma = $matcherFactory->comma();
 		$customIdent = $matcherFactory->customIdent( [ 'span' ] );
 		$lineNamesO = Quantifier::optional( new BlockMatcher(
