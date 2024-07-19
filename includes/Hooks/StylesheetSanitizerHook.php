@@ -73,6 +73,9 @@ class StylesheetSanitizerHook {
 		$extended->addInsetProperties( $extender, $matcherFactory );
 		$extended->addBackdropFilter( $extender );
 
+		$extended->addFontOpticalSizing( $extender );
+		$extended->addFontVariationSettings( $extender, $factory );
+
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
 }

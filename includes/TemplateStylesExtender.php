@@ -348,6 +348,57 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the font-optical-sizing matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
+	public function addFontOpticalSizing( StylePropertySanitizer $propertySanitizer ): void {
+		try {
+			$propertySanitizer->addKnownProperties( [
+				'font-optical-sizing' => new KeywordMatcher( [
+					'none',
+					'auto',
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the font-variation-settings matcher
+	 *
+	 * @param StylePropertySanitizer $sanitizer
+	 * @param MatcherFactory $factory
+	 */
+	public function addFontVariationSettings( StylePropertySanitizer $sanitizer, MatcherFactory $factory ): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				'font-variation-settings' => new Alternative( [
+					new KeywordMatcher( [ 'normal' ] ),
+					Quantifier::hash( new Juxtaposition( [
+						new Alternative( [
+							new KeywordMatcher( [
+								'wght',
+								'wdth',
+								'slnt',
+								'ital',
+								'opsz',
+							] ),
+							Quantifier::plus( $factory->string() ),
+						] ),
+
+						$factory->number(),
+					] ) )
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+			dd( $e );
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *
