@@ -21,10 +21,6 @@ wfLoadExtension( 'TemplateStylesExtender' );
 ```
 
 ## Configuration
-`$wgTemplateStylesExtenderEnablePrefersColorScheme`  
-Default: `true`  
-Enables or disables `@media (prefers-color-scheme)` queries.
-
 `$wgTemplateStylesExtenderEnableCssVars`  
 Default: `true`  
 Enables or disables css variable support.

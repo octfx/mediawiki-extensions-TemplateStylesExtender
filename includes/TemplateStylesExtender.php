@@ -394,7 +394,6 @@ class TemplateStylesExtender {
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently
-			dd( $e );
 		}
 	}
 

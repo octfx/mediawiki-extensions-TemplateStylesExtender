@@ -26,7 +26,6 @@ use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
-use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 
@@ -41,14 +40,6 @@ class StylesheetSanitizerHook {
 	 */
 	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
 		$newRules = $sanitizer->getRuleSanitizers();
-
-		if ( TemplateStylesExtender::getConfigValue(
-			'TemplateStylesExtenderEnablePrefersColorScheme',
-				true ) === true ) {
-			$factory = new MatcherFactoryExtender();
-			$newRules['@media'] = new MediaAtRuleSanitizer( $factory->cssMediaQueryList() );
-			$newRules['@media']->setRuleSanitizers( $newRules );
-		}
 
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $matcherFactory );
 
@@ -74,6 +65,8 @@ class StylesheetSanitizerHook {
 		$extended->addBackdropFilter( $extender );
 
 		$extended->addFontOpticalSizing( $extender );
+
+		$factory = new MatcherFactoryExtender();
 		$extended->addFontVariationSettings( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
