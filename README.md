@@ -9,6 +9,7 @@ Extends Extension:TemplateStyles by the following new matchers:
 * `scroll-margin-*`, `scroll-padding-*`
 * `pointer-events`
 * `aspect-ratio`
+* `content-visibility`
 
 ## Installation
 Download the zip file from the [latest release](https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender/releases/latest) page.

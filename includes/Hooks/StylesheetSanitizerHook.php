@@ -63,8 +63,8 @@ class StylesheetSanitizerHook {
 		$extended->addInlineBlockMarginPaddingProperties( $extender, $matcherFactory );
 		$extended->addInsetProperties( $extender, $matcherFactory );
 		$extended->addBackdropFilter( $extender );
-
 		$extended->addFontOpticalSizing( $extender );
+		$extended->addContentVisibility( $extender );
 
 		$factory = new MatcherFactoryExtender();
 		$extended->addFontVariationSettings( $extender, $factory );

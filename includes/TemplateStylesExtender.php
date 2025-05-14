@@ -398,6 +398,23 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the content-visibility matcher
+	 *
+	 * #28
+	 *
+	 * @param StylePropertySanitizer $sanitizer
+	 */
+	public function addContentVisibility( StylePropertySanitizer $sanitizer ): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *
