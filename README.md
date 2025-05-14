@@ -68,41 +68,5 @@ Wikitext
 ## Notes on relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
 
-### Relative color test
-The following CSS has been verified to work using relative colors.
-```css
-.wrap {
-  --base-color: orange;
-  --test : calc(g - 0.15)
-}
-
-.color {
-	background-color: rgb(from red r g 200);
-	color: rgb( 100, 100, 100);
-	background-color: hsl(from red h s l / 0.21);
-
-	color: color(from red a98-rgb r g b);
-	color: color(from red a98-rgb r g b / 1);
-	
-	color: color(from red xyz-d50 x y z);
-	color: color(from red xyz-d50 x y z / 1);
-	
-	color: hsl(from red h s l);
-	color: hsl(from red h s l / 1);
-	
-	color: rgb(from red r g b);
-	color: rgb(from red r g b / 1);
-
-    background-color: color(
-      from var(--base-color) display-p3 r calc(g + 0.15) calc(b + 0.15)
-    );
-}
-
-#three {
-  width: 200px;
-  height: 200px;
-  background-color: color(
-      from var(--base-color) display-p3 r var(--test) 2
-  );
-}
-```
+## Testfile
+`tests.css` in the content root is used to validate added matchers.

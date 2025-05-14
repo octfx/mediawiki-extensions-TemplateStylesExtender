@@ -33,7 +33,7 @@ use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
-use Wikimedia\CSS\Grammar\WhitespaceMatcher;
+use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
@@ -127,19 +127,24 @@ class TemplateStylesExtender {
 	public function addRuby( StylePropertySanitizer $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
-				'ruby-position' => new KeywordMatcher( [
-					'start',
-					'center',
-					'space-between',
-					'space-around',
+				'ruby-position' => new Alternative( [
+					UnorderedGroup::someOf( [
+						new KeywordMatcher( [ 'alternate' ] ),
+						new Alternative( [
+							new KeywordMatcher( [ 'over' ] ),
+							new KeywordMatcher( [ 'under' ] ),
+						] ),
+					] ),
+					new KeywordMatcher( [ 'inter-character' ] ),
 				] )
 			] );
 
 			$propertySanitizer->addKnownProperties( [
 				'ruby-align' => new KeywordMatcher( [
-					'over',
-					'under',
-					'inter-character',
+					'start',
+					'center',
+					'space-between',
+					'space-around',
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
@@ -273,6 +278,7 @@ class TemplateStylesExtender {
 					'painted',
 					'fill',
 					'stroke',
+					'bounding-box',
 					'all',
 				] )
 			] );
@@ -290,20 +296,13 @@ class TemplateStylesExtender {
 	public function addAspectRatio( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
-				'aspect-ratio' => new Alternative( [
-					$factory->cssWideKeywords(),
+				'aspect-ratio' => UnorderedGroup::someOf( [
+					new KeywordMatcher( [ 'auto' ] ),
 					new Juxtaposition( [
 						$factory->number(),
-						Quantifier::optional(
-							new Juxtaposition( [
-								new WhitespaceMatcher( [ 'significant' => false ] ),
-								new DelimMatcher( '/' ),
-								new WhitespaceMatcher( [ 'significant' => false ] ),
-								$factory->number()
-							] )
-						)
-					] ),
-				] )
+						Quantifier::optional( new Juxtaposition( [ new DelimMatcher( '/' ), $factory->number() ] ) )
+					] )
+				] ),
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently
