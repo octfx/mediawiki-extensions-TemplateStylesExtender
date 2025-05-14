@@ -68,37 +68,6 @@ Wikitext
 ## Notes on relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
 
-This includes `calc` support for channel values!
-
-Example:
-```css
-background-color: color(
-  from var(--base-color) display-p3 r calc(g + 0.15) calc(b + 0.15)
-);
-```
-
-Won't currently work. But there is a workaround using CSS variables:
-```html
-<style>
-  .wrap {
-    --base-color: orange;
-    --g-calc: calc(g - 0.15)
-    --b-calc: calc(b + 0.15)
-  }
-  
-  .example {
-    background-color: color(
-      from var(--base-color) display-p3 r var(--g-calc) var(--b-calc)
-    );
-  }
-</style>
-
-<div class="wrap">
-  <div class="example"></div>
-</div>
-```
-Will show the intended color.
-
 ### Relative color test
 The following CSS has been verified to work using relative colors.
 ```css
@@ -123,6 +92,10 @@ The following CSS has been verified to work using relative colors.
 	
 	color: rgb(from red r g b);
 	color: rgb(from red r g b / 1);
+
+    background-color: color(
+      from var(--base-color) display-p3 r calc(g + 0.15) calc(b + 0.15)
+    );
 }
 
 #three {

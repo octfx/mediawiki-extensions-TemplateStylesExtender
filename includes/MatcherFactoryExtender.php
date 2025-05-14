@@ -133,17 +133,22 @@ class MatcherFactoryExtender extends MatcherFactory {
 			$p = $this->percentage();
 			$pVar = new Alternative([ $var, $p ]);
 
-            $channelValues = new Alternative([
-                new KeywordMatcher([
-                    'r', 'g', 'b',
-                    'x', 'y', 'z',
-                    'h', 's', 'l',
-                ]),
+            $channelNames = new KeywordMatcher([
+                'r', 'g', 'b',
+                'x', 'y', 'z',
+                'h', 's', 'l',
+            ]);
+
+            $channelCalc = $this->calc( $channelNames, 'channels' );
+
+            $channelValues = new Alternative( [
+                $channelNames,
                 $var,
                 $this->number(),
                 $this->percentage(),
                 $this->integer(),
-            ]);
+                $channelCalc,
+            ]) ;
 
             $relativeKeyWordMatcher = Quantifier::optional(
                 new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorNames ] )
@@ -151,10 +156,10 @@ class MatcherFactoryExtender extends MatcherFactory {
             $alphaMatcher = Quantifier::optional(
                 new Juxtaposition( [ new DelimMatcher('/'), new Alternative( [ $nVar, $p ] ) ] ) );
 
-            $colorSpace = new KeywordMatcher([
+            $colorSpace = new KeywordMatcher( [
                 'srgb', 'srgb-linear', 'display-p3', 'a98-rgb',
                 'prophoto-rgb', 'rec2020', 'xyz', 'xyz-d50', 'xyz-d65'
-            ]);
+            ] );
 
 			$this->cache[__METHOD__] = [
 				new FunctionMatcher( 'rgb', new Juxtaposition( [
