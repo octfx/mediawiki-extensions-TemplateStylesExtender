@@ -145,8 +145,11 @@ class MatcherFactoryExtender extends MatcherFactory {
                 $this->integer(),
             ]);
 
-            $relativeKeyWordMatcher = Quantifier::optional( new Juxtaposition([ new KeywordMatcher(['from']), $colorNames ]) );
-            $alphaMatcher = Quantifier::optional( new Juxtaposition([ new DelimMatcher('/'), $nVar]));
+            $relativeKeyWordMatcher = Quantifier::optional(
+                new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorNames ] )
+            );
+            $alphaMatcher = Quantifier::optional(
+                new Juxtaposition( [ new DelimMatcher('/'), new Alternative( [ $nVar, $p ] ) ] ) );
 
             $colorSpace = new KeywordMatcher([
                 'srgb', 'srgb-linear', 'display-p3', 'a98-rgb',
