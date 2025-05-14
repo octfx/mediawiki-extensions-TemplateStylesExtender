@@ -73,22 +73,13 @@ class TemplateStylesExtender {
 		$var = new FunctionMatcher(
 			'var',
 			new Juxtaposition( [
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 				new VarNameMatcher(),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 				Quantifier::optional( new Juxtaposition( [
 					$factory->comma(),
-					new WhitespaceMatcher( [ 'significant' => false ] ),
 					$anyProperty,
 				] ) ),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 			] )
 		);
-
-		$anyProperty = Quantifier::star( new Alternative( [
-			$var,
-			$anyProperty,
-		] ) );
 
 		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
 		// The problem is, that var() can be used more or less anywhere
@@ -100,19 +91,8 @@ class TemplateStylesExtender {
 			new Alternative( [
 				$factory->cssWideKeywords(),
 				new Juxtaposition( [
-					$anyProperty,
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-					Quantifier::plus(
-						new Alternative( [
-							new Juxtaposition( [ $var, $anyProperty ] ),
-							new Juxtaposition( [ $anyProperty, $var ] ),
-						] )
-					),
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-					$anyProperty,
-					Quantifier::optional(
-						new KeywordMatcher( [ '!important' ] )
-					)
+					Quantifier::plus( new Alternative( [ $anyProperty, $var ] ) ),
+					Quantifier::optional( new KeywordMatcher( [ '!important' ] ) )
 				] ),
 			] ),
 		);
