@@ -248,14 +248,32 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @return Matcher
 	 */
 	public function calc( Matcher $typeMatcher, $type ) {
-		$var = new FunctionMatcher( 'var', new VarNameMatcher() );
 		if ( !$this->varEnabled ) {
-			$var = new NothingMatcher();
+			return parent::calc( $typeMatcher, $type );
 		}
 
 		return parent::calc( new Alternative( [
 			$typeMatcher,
-			$var,
+			new FunctionMatcher( 'var', new VarNameMatcher() ),
 		] ), $type );
 	}
+
+	/**
+	 * Allow variables for numbers if enabled
+	 * @return Alternative|Matcher|Matcher[]|TokenMatcher
+	 */
+   public function rawNumber() {
+	   if ( !$this->varEnabled ) {
+		   return parent::rawNumber();
+	   }
+
+	   if ( !isset( $this->cache[__METHOD__] ) ) {
+		   $this->cache[__METHOD__] = new Alternative( [
+			   new TokenMatcher( Token::T_NUMBER ),
+			   new FunctionMatcher( 'var', new VarNameMatcher() ),
+		   ] );
+	   }
+
+	   return $this->cache[__METHOD__];
+   }
 }

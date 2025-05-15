@@ -1,4 +1,10 @@
-/* In-production used CSS declarations, mostly taken from Star Citizen Tools*/
+/* In-production used CSS declarations, mostly taken from Star Citizen Tools */
+
+.item {
+    left: calc( var( --var1 ) / var( --var2 ) );
+    left: calc( var( --var1 ) / var( --var2 ) * 100% );
+    right: calc( ( var( --var1 ) - var( --var2 ) ) / var( --var3 ) * 100% );
+}
 
 .font-variation-settings {
     /* Use the default settings */
