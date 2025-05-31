@@ -21,50 +21,53 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
-use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
+use MediaWiki\Extension\TemplateStyles\Hooks\TemplateStylesStylesheetSanitizerHook;
 use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
+use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 
-class StylesheetSanitizerHook {
+class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 
 	/**
-	 * This adds new matchers
-	 *
-	 * @param StylesheetSanitizer $sanitizer
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param TemplateStylesMatcherFactory $matcherFactory
+	 * @inheritDoc
+	 * @see https://www.mediawiki.org/wiki/Extension:TemplateStyles/Hooks/TemplateStylesStylesheetSanitizer
 	 */
-	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
+	public function onTemplateStylesStylesheetSanitizer(
+		StylesheetSanitizer &$sanitizer,
+		StylePropertySanitizer $propertySanitizer,
+		MatcherFactory $matcherFactory
+	): void {
 		$factory = new MatcherFactoryExtender();
 		$extended = new TemplateStylesExtender();
-		$extender = new StylePropertySanitizerExtender( $factory );
 
-		if ( TemplateStylesExtender::getConfigValue(
-				'TemplateStylesExtenderEnableCssVars',
-				true ) === true ) {
+		if (
+			TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderEnableCssVars', true ) === true
+		) {
 			$factory->setVarEnabled( true );
 			$extended->addVarSelector( $propertySanitizer, $factory );
 		}
+
+		$extender = new StylePropertySanitizerExtender( $factory );
 
 		$newRules = $sanitizer->getRuleSanitizers();
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $factory );
 		$sanitizer->setRuleSanitizers( $newRules );
 
-		$extended->addImageRendering( $extender );
-		$extended->addRuby( $extender );
-		$extended->addPointerEvents( $extender );
-		$extended->addScrollMarginProperties( $extender, $factory );
 		$extended->addAspectRatio( $extender, $factory );
+		$extended->addBackdropFilter( $extender );
+		$extended->addContentVisibility( $extender );
+		$extended->addFontOpticalSizing( $extender );
+		$extended->addFontVariationSettings( $extender, $factory );
+		$extended->addImageRendering( $extender );
 		$extended->addInlineBlockMarginPaddingProperties( $extender, $factory );
 		$extended->addInsetProperties( $extender, $factory );
-		$extended->addBackdropFilter( $extender );
-		$extended->addFontOpticalSizing( $extender );
-		$extended->addContentVisibility( $extender );
-		$extended->addFontVariationSettings( $extender, $factory );
+		$extended->addPointerEvents( $extender );
+		$extended->addRuby( $extender );
+		$extended->addScrollMarginProperties( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}

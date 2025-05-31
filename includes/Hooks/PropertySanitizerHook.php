@@ -21,16 +21,21 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
-use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
+use MediaWiki\Extension\TemplateStyles\Hooks\TemplateStylesPropertySanitizerHook;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
-class PropertySanitizerHook {
+class PropertySanitizerHook implements TemplateStylesPropertySanitizerHook {
+
 	/**
-	 * @param StylePropertySanitizer &$propertySanitizer
-	 * @param TemplateStylesMatcherFactory $matcherFactory
+	 * @inheritDoc
+	 * @see https://www.mediawiki.org/wiki/Extension:TemplateStyles/Hooks/TemplateStylesPropertySanitizer
 	 */
-	public static function onSanitize( &$propertySanitizer, $matcherFactory ): void {
+	public function onTemplateStylesPropertySanitizer(
+		StylePropertySanitizer &$propertySanitizer,
+		MatcherFactory $matcherFactory
+	): void {
 		$propertySanitizer = new StylePropertySanitizerExtender( $matcherFactory );
 	}
 }

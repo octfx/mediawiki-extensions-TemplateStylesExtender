@@ -46,11 +46,17 @@
 	"HookHandlers": {
 		"MainHooks": {
 			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\MainHooks"
+		},
+		"PropertySanitizerHook": {
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook"
+		},
+		"StylesheetSanitizerHook": {
+			"class": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook"
 		}
 	},
 	"Hooks": {
-		"TemplateStylesPropertySanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\PropertySanitizerHook::onSanitize",
-		"TemplateStylesStylesheetSanitizer": "MediaWiki\\Extension\\TemplateStylesExtender\\Hooks\\StylesheetSanitizerHook::onSanitize",
+		"TemplateStylesPropertySanitizer": "PropertySanitizerHook",
+		"TemplateStylesStylesheetSanitizer": "StylesheetSanitizerHook",
 		"ParserFirstCallInit": "MainHooks"
 	},
 	"manifest_version": 2
