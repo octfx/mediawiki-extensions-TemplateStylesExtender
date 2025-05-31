@@ -35,7 +35,7 @@ class MainHooks implements ParserFirstCallInitHook {
 	 * Note this is a potentially expensive operation, as a lookup for the user of the current revision is done.
 	 * The unscoping will only happen, if the editor of the current revision has the rights to do so
 	 *
-	 * @see Hooks::handleTag()
+	 * @inheritDoc TemplateStylesHooks::handleTag()
 	 */
 	public static function handleTag( ?string $text, array $params, Parser $parser, PPFrame $frame ): string {
 		$getOutput = static fn() => TemplateStylesHooks::handleTag( $text, $params, $parser, $frame );
@@ -56,7 +56,7 @@ class MainHooks implements ParserFirstCallInitHook {
 
 		// Should not happen
 		if ( $rev === null ) {
-			return $getOutput(); 
+			return $getOutput();
 		}
 
 		$user = self::getUserIdentity( $rev );
@@ -80,22 +80,40 @@ class MainHooks implements ParserFirstCallInitHook {
 		return $out;
 	}
 
+	/**
+	 * Helper function to get the ParserOptions from the Parser
+	 */
 	private static function getParserOptions( Parser $parser ): ?ParserOptions {
 		return $parser->getOptions();
 	}
 
+	/**
+	 * Helper function to get the Title from the PPFrame
+	 */
 	private static function getTitle( PPFrame $frame ): Title {
 		return $frame->getTitle();
 	}
 
-	private static function getRevision( MediaWikiServices $services, Title $title ): ?RevisionRecord {
+	/**
+	 * Helper function to get the RevisionRecord from the Title
+	 */
+	private static function getRevision(
+		MediaWikiServices $services,
+		Title $title
+	): ?RevisionRecord {
 		return $services->getRevisionLookup()->getRevisionByTitle( $title );
 	}
 
+	/**
+	 * Helper function to get the UserIdentity from the RevisionRecord
+	 */
 	private static function getUserIdentity( RevisionRecord $rev ): ?UserIdentity {
 		return $rev->getUser();
 	}
 
+	/**
+	 * Helper function to check if the UserIdentity is allowed to unscope the css
+	 */
 	private static function isUserAllowedToUnscope( MediaWikiServices $services, UserIdentity $user, Title $title ): bool {
 		$permissionManager = $services->getPermissionManager();
 		$permission = TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderUnscopingPermission' );
