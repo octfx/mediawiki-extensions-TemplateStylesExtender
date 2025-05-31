@@ -9,6 +9,8 @@ Extends Extension:TemplateStyles by the following new matchers:
 * `scroll-margin-*`, `scroll-padding-*`
 * `pointer-events`
 * `aspect-ratio`
+* `content-visibility`
+* Relative Colors
 
 ## Installation
 Download the zip file from the [latest release](https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender/releases/latest) page.
@@ -21,10 +23,6 @@ wfLoadExtension( 'TemplateStylesExtender' );
 ```
 
 ## Configuration
-`$wgTemplateStylesExtenderEnablePrefersColorScheme`  
-Default: `true`  
-Enables or disables `@media (prefers-color-scheme)` queries.
-
 `$wgTemplateStylesExtenderEnableCssVars`  
 Default: `true`  
 Enables or disables css variable support.
@@ -67,3 +65,8 @@ Wikitext
 </div>
 ```
 
+## Notes on relative colors
+The relative colors module is quite extensive, not every feature is currently implemented.
+
+## Testfile
+`tests.css` in the content root is used to validate added matchers.

@@ -33,7 +33,7 @@ use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
-use Wikimedia\CSS\Grammar\WhitespaceMatcher;
+use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
@@ -73,22 +73,13 @@ class TemplateStylesExtender {
 		$var = new FunctionMatcher(
 			'var',
 			new Juxtaposition( [
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 				new VarNameMatcher(),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 				Quantifier::optional( new Juxtaposition( [
 					$factory->comma(),
-					new WhitespaceMatcher( [ 'significant' => false ] ),
 					$anyProperty,
 				] ) ),
-				new WhitespaceMatcher( [ 'significant' => false ] ),
 			] )
 		);
-
-		$anyProperty = Quantifier::star( new Alternative( [
-			$var,
-			$anyProperty,
-		] ) );
 
 		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
 		// The problem is, that var() can be used more or less anywhere
@@ -100,19 +91,8 @@ class TemplateStylesExtender {
 			new Alternative( [
 				$factory->cssWideKeywords(),
 				new Juxtaposition( [
-					$anyProperty,
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-					Quantifier::plus(
-						new Alternative( [
-							new Juxtaposition( [ $var, $anyProperty ] ),
-							new Juxtaposition( [ $anyProperty, $var ] ),
-						] )
-					),
-					new WhitespaceMatcher( [ 'significant' => false ] ),
-					$anyProperty,
-					Quantifier::optional(
-						new KeywordMatcher( [ '!important' ] )
-					)
+					Quantifier::plus( new Alternative( [ $anyProperty, $var ] ) ),
+					Quantifier::optional( new KeywordMatcher( [ '!important' ] ) )
 				] ),
 			] ),
 		);
@@ -147,19 +127,24 @@ class TemplateStylesExtender {
 	public function addRuby( StylePropertySanitizer $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
-				'ruby-position' => new KeywordMatcher( [
-					'start',
-					'center',
-					'space-between',
-					'space-around',
+				'ruby-position' => new Alternative( [
+					UnorderedGroup::someOf( [
+						new KeywordMatcher( [ 'alternate' ] ),
+						new Alternative( [
+							new KeywordMatcher( [ 'over' ] ),
+							new KeywordMatcher( [ 'under' ] ),
+						] ),
+					] ),
+					new KeywordMatcher( [ 'inter-character' ] ),
 				] )
 			] );
 
 			$propertySanitizer->addKnownProperties( [
 				'ruby-align' => new KeywordMatcher( [
-					'over',
-					'under',
-					'inter-character',
+					'start',
+					'center',
+					'space-between',
+					'space-around',
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
@@ -293,6 +278,7 @@ class TemplateStylesExtender {
 					'painted',
 					'fill',
 					'stroke',
+					'bounding-box',
 					'all',
 				] )
 			] );
@@ -310,20 +296,13 @@ class TemplateStylesExtender {
 	public function addAspectRatio( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
-				'aspect-ratio' => new Alternative( [
-					$factory->cssWideKeywords(),
+				'aspect-ratio' => UnorderedGroup::someOf( [
+					new KeywordMatcher( [ 'auto' ] ),
 					new Juxtaposition( [
 						$factory->number(),
-						Quantifier::optional(
-							new Juxtaposition( [
-								new WhitespaceMatcher( [ 'significant' => false ] ),
-								new DelimMatcher( '/' ),
-								new WhitespaceMatcher( [ 'significant' => false ] ),
-								$factory->number()
-							] )
-						)
-					] ),
-				] )
+						Quantifier::optional( new Juxtaposition( [ new DelimMatcher( '/' ), $factory->number() ] ) )
+					] )
+				] ),
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently
@@ -341,6 +320,73 @@ class TemplateStylesExtender {
 
 			$propertySanitizer->addKnownProperties( [
 				'backdrop-filter' => Quantifier::plus( $filter ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the font-optical-sizing matcher
+	 *
+	 * @param StylePropertySanitizer $propertySanitizer
+	 */
+	public function addFontOpticalSizing( StylePropertySanitizer $propertySanitizer ): void {
+		try {
+			$propertySanitizer->addKnownProperties( [
+				'font-optical-sizing' => new KeywordMatcher( [
+					'none',
+					'auto',
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the font-variation-settings matcher
+	 *
+	 * @param StylePropertySanitizer $sanitizer
+	 * @param MatcherFactory $factory
+	 */
+	public function addFontVariationSettings( StylePropertySanitizer $sanitizer, MatcherFactory $factory ): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				'font-variation-settings' => new Alternative( [
+					new KeywordMatcher( [ 'normal' ] ),
+					Quantifier::hash( new Juxtaposition( [
+						new Alternative( [
+							new KeywordMatcher( [
+								'wght',
+								'wdth',
+								'slnt',
+								'ital',
+								'opsz',
+							] ),
+							Quantifier::plus( $factory->string() ),
+						] ),
+
+						$factory->number(),
+					] ) )
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the content-visibility matcher
+	 *
+	 * #28
+	 *
+	 * @param StylePropertySanitizer $sanitizer
+	 */
+	public function addContentVisibility( StylePropertySanitizer $sanitizer ): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently

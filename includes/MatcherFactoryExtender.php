@@ -23,8 +23,6 @@ namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
-use Wikimedia\CSS\Grammar\AnythingMatcher;
-use Wikimedia\CSS\Grammar\BlockMatcher;
 use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
@@ -32,24 +30,32 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\NothingMatcher;
-use Wikimedia\CSS\Grammar\NoWhitespace;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Objects\Token;
 
-// phpcs:disable
 class MatcherFactoryExtender extends MatcherFactory {
-	private static $extendedCssMediaQuery = false;
+
+	private bool $varEnabled = false;
+
+	/**
+	 * @param bool $varEnabled
+	 * @return void
+	 */
+	public function setVarEnabled( bool $varEnabled ): void {
+		$this->varEnabled = $varEnabled;
+	}
 
 	/**
 	 * CSS-wide value keywords
 	 * @see https://www.w3.org/TR/2016/CR-css-values-3-20160929/#common-keywords
 	 * @return Matcher
 	 */
-	public function cssWideKeywords()
-	{
+	public function cssWideKeywords() {
 		if ( !isset( $this->cache[__METHOD__] ) ) {
-			$this->cache[__METHOD__] = new KeywordMatcher( [ 'initial', 'inherit', 'unset', 'revert', 'revert-layer' ] );
+			$this->cache[__METHOD__] = new KeywordMatcher( [
+				'initial', 'inherit', 'unset', 'revert', 'revert-layer'
+			] );
 		}
 		return $this->cache[__METHOD__];
 	}
@@ -59,15 +65,15 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
 	 * @return Matcher
 	 */
-	public function color()
-	{
+	public function color() {
 		if ( !isset( $this->cache[__METHOD__] ) ) {
 			$color = new Alternative( [
 				parent::color(),
 				new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
 					return preg_match( '/^([0-9a-f]{4})|([0-9a-f]{8})$/i', $t->value() );
 				} ),
-			]);
+				new FunctionMatcher( 'var', new VarNameMatcher() )
+			] );
 			$this->cache[__METHOD__] = $color;
 		}
 		return $this->cache[__METHOD__];
@@ -80,160 +86,194 @@ class MatcherFactoryExtender extends MatcherFactory {
 	protected function colorFuncs() {
 		if ( !isset( $this->cache[__METHOD__] ) ) {
 			$var = new FunctionMatcher( 'var', new VarNameMatcher() );
+			if ( !$this->varEnabled ) {
+				$var = new NothingMatcher();
+			}
+
+			// This needs to be duplicated here from parent::color() as this function calls colorFuncs
+			$colorNames = new Alternative( [
+				new KeywordMatcher( [
+					// Basic colors
+					'aqua', 'black', 'blue', 'fuchsia', 'gray', 'green',
+					'lime', 'maroon', 'navy', 'olive', 'purple', 'red',
+					'silver', 'teal', 'white', 'yellow',
+					// Extended colors
+					'aliceblue', 'antiquewhite', 'aquamarine', 'azure',
+					'beige', 'bisque', 'blanchedalmond', 'blueviolet', 'brown',
+					'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
+					'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+					'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray',
+					'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
+					'darkolivegreen', 'darkorange', 'darkorchid', 'darkred',
+					'darksalmon', 'darkseagreen', 'darkslateblue',
+					'darkslategray', 'darkslategrey', 'darkturquoise',
+					'darkviolet', 'deeppink', 'deepskyblue', 'dimgray',
+					'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite',
+					'forestgreen', 'gainsboro', 'ghostwhite', 'gold',
+					'goldenrod', 'greenyellow', 'grey', 'honeydew', 'hotpink',
+					'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
+					'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue',
+					'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
+					'lightgray', 'lightgreen', 'lightgrey', 'lightpink',
+					'lightsalmon', 'lightseagreen', 'lightskyblue',
+					'lightslategray', 'lightslategrey', 'lightsteelblue',
+					'lightyellow', 'limegreen', 'linen', 'magenta',
+					'mediumaquamarine', 'mediumblue', 'mediumorchid',
+					'mediumpurple', 'mediumseagreen', 'mediumslateblue',
+					'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
+					'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
+					'navajowhite', 'oldlace', 'olivedrab', 'orange',
+					'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+					'paleturquoise', 'palevioletred', 'papayawhip',
+					'peachpuff', 'peru', 'pink', 'plum', 'powderblue',
+					'rosybrown', 'royalblue', 'saddlebrown', 'salmon',
+					'sandybrown', 'seagreen', 'seashell', 'sienna', 'skyblue',
+					'slateblue', 'slategray', 'slategrey', 'snow',
+					'springgreen', 'steelblue', 'tan', 'thistle', 'tomato',
+					'turquoise', 'violet', 'wheat', 'whitesmoke',
+					'yellowgreen',
+					// Other keywords. Intentionally omitting the deprecated system colors.
+					'transparent', 'currentColor',
+				] ),
+				$var
+			] );
 
 			$i = $this->integer();
-			$iVar = new Alternative([ $var, $i ]);
+			$iVar = new Alternative( [ $var, $i ] );
 
 			$n = $this->number();
-			$nVar = new Alternative([ $var, $n ]);
+			$nVar = new Alternative( [ $var, $n ] );
 
 			$p = $this->percentage();
-			$pVar = new Alternative([ $var, $p ]);
+			$pVar = new Alternative( [ $var, $p ] );
+
+			$channelNames = new KeywordMatcher( [
+				'r', 'g', 'b',
+				'x', 'y', 'z',
+				'h', 's', 'l',
+			] );
+
+			$channelCalc = $this->calc( $channelNames, 'channels' );
+
+			$channelValues = new Alternative( [
+				$channelNames,
+				$var,
+				$this->number(),
+				$this->percentage(),
+				$this->integer(),
+				$channelCalc,
+			] );
+
+			$relativeKeyWordMatcher = Quantifier::optional(
+				new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorNames ] )
+			);
+			$alphaMatcher = Quantifier::optional(
+				new Juxtaposition( [ new DelimMatcher( '/' ), new Alternative( [ $nVar, $p ] ) ] ) );
+
+			$colorSpace = new KeywordMatcher( [
+				'srgb', 'srgb-linear', 'display-p3', 'a98-rgb',
+				'prophoto-rgb', 'rec2020', 'xyz', 'xyz-d50', 'xyz-d65'
+			] );
 
 			$this->cache[__METHOD__] = [
-				new FunctionMatcher( 'rgb', new Alternative( [
-					Quantifier::hash( $iVar, 3, 3 ),
-					Quantifier::hash( $pVar, 3, 3 ),
-					Quantifier::hash( $var, 1, 3 ),
+				new FunctionMatcher( 'rgb', new Juxtaposition( [
+					$relativeKeyWordMatcher,
+					new Alternative( [
+						Quantifier::hash( $iVar, 3, 3 ),
+						Quantifier::hash( $pVar, 3, 3 ),
+						Quantifier::hash( $var, 1, 3 ),
+						Quantifier::count( $channelValues, 1, 3 ),
+					] ),
+					$alphaMatcher
 				] ) ),
-				new FunctionMatcher( 'rgba', new Alternative( [
-					new Juxtaposition( [ $iVar, $iVar, $iVar, $nVar ], true ),
-					new Juxtaposition( [ $pVar, $pVar, $pVar, $nVar ], true ),
-					Quantifier::hash( $var, 1, 4 ),
-					new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $nVar ], true ),
+
+				new FunctionMatcher( 'rgba', new Juxtaposition( [
+					$relativeKeyWordMatcher,
+					new Alternative( [
+						new Juxtaposition( [ $iVar, $iVar, $iVar, $nVar ], true ),
+						new Juxtaposition( [ $pVar, $pVar, $pVar, $nVar ], true ),
+						Quantifier::hash( $var, 1, 4 ),
+						new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $nVar ], true ),
+					] ),
+					$alphaMatcher
 				] ) ),
-				new FunctionMatcher( 'hsl', new Alternative([
-					new Juxtaposition( [ $nVar, $pVar, $pVar ], true ),
-					Quantifier::hash($var, 1, 3),
-				]) ),
-				new FunctionMatcher( 'hsla', new Alternative([
-					new Juxtaposition( [ $nVar, $pVar, $pVar, $nVar ], true ),
-					Quantifier::hash($var, 1, 4),
-				]) ),
+
+				new FunctionMatcher( 'hsl', new Juxtaposition( [
+					$relativeKeyWordMatcher,
+					new Alternative( [
+						new Juxtaposition( [ $nVar, $pVar, $pVar ], true ),
+						Quantifier::hash( $var, 1, 3 ),
+						Quantifier::count( $channelValues, 1, 3 ),
+					] ),
+					$alphaMatcher
+				] ) ),
+
+				new FunctionMatcher( 'hsla', new Juxtaposition( [
+					$relativeKeyWordMatcher,
+					new Alternative( [
+						new Juxtaposition( [ $nVar, $pVar, $pVar, $nVar ], true ),
+						Quantifier::hash( $var, 1, 4 ),
+					] ),
+					$alphaMatcher
+				] ) ),
+
+				new FunctionMatcher( 'color', new Alternative( [
+					// Absolute
+					new Juxtaposition( [
+						$colorSpace,
+						Quantifier::count( $channelValues, 3, 3 ),
+						$alphaMatcher
+					] ),
+
+					// Relative
+					new Juxtaposition( [
+						new KeywordMatcher( [ 'from' ] ),
+						$colorNames,
+						$colorSpace,
+						Quantifier::count( $channelValues, 3, 3 ),
+						$alphaMatcher
+					] ),
+				] ) ),
 			];
 		}
+
 		return $this->cache[__METHOD__];
 	}
 
 	/**
-	 * This is in reality a complete copy of the parent hook with line 68 and 110 extended
-	 * This can very easily break if there is an update upstream
+	 * Wraps the parent `calc` to allow using variables in the $typeMatcher
 	 *
-	 * @inheritDoc
-	 * T241946
+	 * @param Matcher $typeMatcher
+	 * @param string $type
+	 * @return Matcher
 	 */
-	public function cssMediaQuery( $strict = true ) {
-		$key = __METHOD__ . ':' . ( $strict ? 'strict' : 'unstrict' );
-		if ( self::$extendedCssMediaQuery === false || !isset( $this->cache[$key] ) ) {
-			if ( $strict ) {
-				$generalEnclosed = new NothingMatcher();
-
-				$mediaType = new KeywordMatcher( [
-					'all', 'print', 'screen', 'speech',
-					// deprecated
-					'tty', 'tv', 'projection', 'handheld', 'braille', 'embossed', 'aural'
-				] );
-
-				$rangeFeatures = [
-					'width', 'height', 'aspect-ratio', 'resolution', 'color', 'color-index', 'monochrome',
-					// deprecated
-					'device-width', 'device-height', 'device-aspect-ratio'
-				];
-				$discreteFeatures = [
-					'orientation', 'scan', 'grid', 'update', 'overflow-block', 'overflow-inline', 'color-gamut',
-					'pointer', 'hover', 'any-pointer', 'any-hover', 'scripting', 'prefers-color-scheme'
-				];
-				$mfName = new KeywordMatcher( array_merge(
-					$rangeFeatures,
-					array_map( function ( $f ) {
-						return "min-$f";
-					}, $rangeFeatures ),
-					array_map( function ( $f ) {
-						return "max-$f";
-					}, $rangeFeatures ),
-					$discreteFeatures
-				) );
-			} else {
-				$anythingPlus = new AnythingMatcher( [ 'quantifier' => '+' ] );
-				$generalEnclosed = new Alternative( [
-					new FunctionMatcher( null, $anythingPlus ),
-					new BlockMatcher( Token::T_LEFT_PAREN,
-						new Juxtaposition( [ $this->ident(), $anythingPlus ] )
-					),
-				] );
-				$mediaType = $this->ident();
-				$mfName = $this->ident();
-			}
-
-			$posInt = $this->calc(
-				new TokenMatcher( Token::T_NUMBER, function ( Token $t ) {
-					return $t->typeFlag() === 'integer' && preg_match( '/^\+?\d+$/', $t->representation() );
-				} ),
-				'integer'
-			);
-			$eq = new DelimMatcher( '=' );
-			$oeq = Quantifier::optional( new Juxtaposition( [ new NoWhitespace, $eq ] ) );
-			$ltgteq = Quantifier::optional( new Alternative( [
-				$eq,
-				new Juxtaposition( [ new DelimMatcher( [ '<', '>' ] ), $oeq ] ),
-			] ) );
-			$lteq = new Juxtaposition( [ new DelimMatcher( '<' ), $oeq ] );
-			$gteq = new Juxtaposition( [ new DelimMatcher( '>' ), $oeq ] );
-			$mfValue = new Alternative( [
-				$this->number(),
-				$this->dimension(),
-				$this->ident(),
-				new KeywordMatcher( [ 'light', 'dark' ] ),
-				new Juxtaposition( [ $posInt, new DelimMatcher( '/' ), $posInt ] ),
-			] );
-
-			$mediaInParens = new NothingMatcher(); // temporary
-			$mediaNot = new Juxtaposition( [ new KeywordMatcher( 'not' ), &$mediaInParens ] );
-			$mediaAnd = new Juxtaposition( [ new KeywordMatcher( 'and' ), &$mediaInParens ] );
-			$mediaOr = new Juxtaposition( [ new KeywordMatcher( 'or' ), &$mediaInParens ] );
-			$mediaCondition = new Alternative( [
-				$mediaNot,
-				new Juxtaposition( [
-					&$mediaInParens,
-					new Alternative( [
-						Quantifier::star( $mediaAnd ),
-						Quantifier::star( $mediaOr ),
-					] )
-				] ),
-			] );
-			$mediaConditionWithoutOr = new Alternative( [
-				$mediaNot,
-				new Juxtaposition( [ &$mediaInParens, Quantifier::star( $mediaAnd ) ] ),
-			] );
-			$mediaFeature = new BlockMatcher( Token::T_LEFT_PAREN, new Alternative( [
-				new Juxtaposition( [ $mfName, new TokenMatcher( Token::T_COLON ), $mfValue ] ), // <mf-plain>
-				$mfName, // <mf-boolean>
-				new Juxtaposition( [ $mfName, $ltgteq, $mfValue ] ), // <mf-range>, 1st alternative
-				new Juxtaposition( [ $mfValue, $ltgteq, $mfName ] ), // <mf-range>, 2nd alternative
-				new Juxtaposition( [ $mfValue, $lteq, $mfName, $lteq, $mfValue ] ), // <mf-range>, 3rd alt
-				new Juxtaposition( [ $mfValue, $gteq, $mfName, $gteq, $mfValue ] ), // <mf-range>, 4th alt
-			] ) );
-			$mediaInParens = new Alternative( [
-				new BlockMatcher( Token::T_LEFT_PAREN, $mediaCondition ),
-				$mediaFeature,
-				$generalEnclosed,
-			] );
-
-			$this->cache[$key] = new Alternative( [
-				$mediaCondition,
-				new Juxtaposition( [
-					Quantifier::optional( new KeywordMatcher( [ 'not', 'only' ] ) ),
-					$mediaType,
-					Quantifier::optional( new Juxtaposition( [
-						new KeywordMatcher( 'and' ),
-						$mediaConditionWithoutOr,
-					] ) )
-				] )
-			] );
+	public function calc( Matcher $typeMatcher, $type ) {
+		if ( !$this->varEnabled ) {
+			return parent::calc( $typeMatcher, $type );
 		}
 
-		self::$extendedCssMediaQuery = true;
-
-		return $this->cache[$key];
+		return parent::calc( new Alternative( [
+			$typeMatcher,
+			new FunctionMatcher( 'var', new VarNameMatcher() ),
+		] ), $type );
 	}
+
+	/**
+	 * Allow variables for numbers if enabled
+	 * @return Alternative|Matcher|Matcher[]|TokenMatcher
+	 */
+   public function rawNumber() {
+	   if ( !$this->varEnabled ) {
+		   return parent::rawNumber();
+	   }
+
+	   if ( !isset( $this->cache[__METHOD__] ) ) {
+		   $this->cache[__METHOD__] = new Alternative( [
+			   new TokenMatcher( Token::T_NUMBER ),
+			   new FunctionMatcher( 'var', new VarNameMatcher() ),
+		   ] );
+	   }
+
+	   return $this->cache[__METHOD__];
+   }
 }

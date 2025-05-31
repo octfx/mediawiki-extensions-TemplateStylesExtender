@@ -26,7 +26,6 @@ use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
-use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 
@@ -40,38 +39,32 @@ class StylesheetSanitizerHook {
 	 * @param TemplateStylesMatcherFactory $matcherFactory
 	 */
 	public static function onSanitize( $sanitizer, $propertySanitizer, $matcherFactory ): void {
-		$newRules = $sanitizer->getRuleSanitizers();
-
-		if ( TemplateStylesExtender::getConfigValue(
-			'TemplateStylesExtenderEnablePrefersColorScheme',
-				true ) === true ) {
-			$factory = new MatcherFactoryExtender();
-			$newRules['@media'] = new MediaAtRuleSanitizer( $factory->cssMediaQueryList() );
-			$newRules['@media']->setRuleSanitizers( $newRules );
-		}
-
-		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $matcherFactory );
-
-		$sanitizer->setRuleSanitizers( $newRules );
-
+		$factory = new MatcherFactoryExtender();
 		$extended = new TemplateStylesExtender();
-
-		$extender = new StylePropertySanitizerExtender( $matcherFactory );
+		$extender = new StylePropertySanitizerExtender( $factory );
 
 		if ( TemplateStylesExtender::getConfigValue(
 				'TemplateStylesExtenderEnableCssVars',
 				true ) === true ) {
-			$extended->addVarSelector( $propertySanitizer, $matcherFactory );
+			$factory->setVarEnabled( true );
+			$extended->addVarSelector( $propertySanitizer, $factory );
 		}
+
+		$newRules = $sanitizer->getRuleSanitizers();
+		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $factory );
+		$sanitizer->setRuleSanitizers( $newRules );
 
 		$extended->addImageRendering( $extender );
 		$extended->addRuby( $extender );
 		$extended->addPointerEvents( $extender );
-		$extended->addScrollMarginProperties( $extender, $matcherFactory );
-		$extended->addAspectRatio( $extender, $matcherFactory );
-		$extended->addInlineBlockMarginPaddingProperties( $extender, $matcherFactory );
-		$extended->addInsetProperties( $extender, $matcherFactory );
+		$extended->addScrollMarginProperties( $extender, $factory );
+		$extended->addAspectRatio( $extender, $factory );
+		$extended->addInlineBlockMarginPaddingProperties( $extender, $factory );
+		$extended->addInsetProperties( $extender, $factory );
 		$extended->addBackdropFilter( $extender );
+		$extended->addFontOpticalSizing( $extender );
+		$extended->addContentVisibility( $extender );
+		$extended->addFontVariationSettings( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
