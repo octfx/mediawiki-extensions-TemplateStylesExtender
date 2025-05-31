@@ -80,23 +80,14 @@ class MainHooks implements ParserFirstCallInitHook {
 		return $out;
 	}
 
-	/**
-	 * Helper function to get the ParserOptions from the Parser
-	 */
 	private static function getParserOptions( Parser $parser ): ?ParserOptions {
 		return $parser->getOptions();
 	}
 
-	/**
-	 * Helper function to get the Title from the PPFrame
-	 */
 	private static function getTitle( PPFrame $frame ): Title {
 		return $frame->getTitle();
 	}
 
-	/**
-	 * Helper function to get the RevisionRecord from the Title
-	 */
 	private static function getRevision(
 		MediaWikiServices $services,
 		Title $title
@@ -104,17 +95,15 @@ class MainHooks implements ParserFirstCallInitHook {
 		return $services->getRevisionLookup()->getRevisionByTitle( $title );
 	}
 
-	/**
-	 * Helper function to get the UserIdentity from the RevisionRecord
-	 */
 	private static function getUserIdentity( RevisionRecord $rev ): ?UserIdentity {
 		return $rev->getUser();
 	}
 
-	/**
-	 * Helper function to check if the UserIdentity is allowed to unscope the css
-	 */
-	private static function isUserAllowedToUnscope( MediaWikiServices $services, UserIdentity $user, Title $title ): bool {
+	private static function isUserAllowedToUnscope(
+		MediaWikiServices $services,
+		UserIdentity $user,
+		Title $title
+	): bool {
 		$permissionManager = $services->getPermissionManager();
 		$permission = TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderUnscopingPermission' );
 
