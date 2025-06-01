@@ -304,21 +304,6 @@
 	content-visibility: unset;
 }
 
-.image-rendering {
-	/* Keyword values */
-	image-rendering: auto;
-	image-rendering: smooth;
-	image-rendering: crisp-edges;
-	image-rendering: pixelated;
-
-	/* Global values */
-	image-rendering: inherit;
-	image-rendering: initial;
-	image-rendering: revert;
-	image-rendering: revert-layer;
-	image-rendering: unset;
-}
-
 .ruby-position {
 	/* Keyword values */
 	ruby-position: over;
