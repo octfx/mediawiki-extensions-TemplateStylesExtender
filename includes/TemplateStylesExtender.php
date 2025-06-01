@@ -182,38 +182,6 @@ class TemplateStylesExtender {
 	 * @param StylePropertySanitizer $propertySanitizer
 	 * @param MatcherFactory $factory
 	 */
-	public function addInlineBlockMarginPaddingProperties( $propertySanitizer, $factory ): void {
-		$auto = new KeywordMatcher( 'auto' );
-		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
-
-		$props = [];
-
-		$props['margin-block-end'] = $autoLengthPct;
-		$props['margin-block-start'] = $autoLengthPct;
-		$props['margin-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
-		$props['margin-inline-end'] = $autoLengthPct;
-		$props['margin-inline-start'] = $autoLengthPct;
-		$props['margin-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
-		$props['padding-block-end'] = $autoLengthPct;
-		$props['padding-block-start'] = $autoLengthPct;
-		$props['padding-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
-		$props['padding-inline-end'] = $autoLengthPct;
-		$props['padding-inline-start'] = $autoLengthPct;
-		$props['padding-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
-
-		try {
-			$propertySanitizer->addKnownProperties( $props );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
-	 * Adds padding|margin-inline|block support
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param MatcherFactory $factory
-	 */
 	public function addInsetProperties( $propertySanitizer, $factory ): void {
 		$auto = new KeywordMatcher( 'auto' );
 		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
