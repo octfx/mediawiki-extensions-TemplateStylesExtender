@@ -19,8 +19,12 @@
 		}
 	},
 	"config": {
-		"TemplateStylesExtenderEnableCssVars": {
-			"description": "Enable the matcher for css variables",
+		"TemplateStylesExtenderCustomPropertiesDeclaration": {
+			"description": "Allow CSS custom properties (CSS variables) to be declared as properties",
+			"value": true
+		},
+		"TemplateStylesExtenderExtendCustomPropertiesValues": {
+			"description": "Allow the CSS custom properties (CSS variables) to be used as values in all properties",
 			"value": true
 		},
 		"TemplateStylesExtenderEnableUnscopingSupport": {

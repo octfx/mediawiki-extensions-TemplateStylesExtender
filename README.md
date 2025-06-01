@@ -23,24 +23,17 @@ wfLoadExtension( 'TemplateStylesExtender' );
 ```
 
 ## Configuration
-`$wgTemplateStylesExtenderEnableCssVars`  
-Default: `true`  
-Enables or disables css variable support.
 
-`$wgTemplateStylesExtenderEnableUnscopingSupport`  
-Default: `false`  
-Allows users with `editinterface` permissions to unscope css by setting a `wrapclass` attribute.
+| Configuration | Description | Default |
+| - | - | - |
+| `$wgTemplateStylesExtenderCustomPropertiesDeclaration` | Allow CSS custom properties (CSS variables) to be declared as properties | `true` |
+| `$wgTemplateStylesExtenderExtendCustomPropertiesValues` | Allow the CSS custom properties (CSS variables) to be used as values in all properties | `true`
+| `$wgTemplateStylesExtenderEnableUnscopingSupport` | Allows users with unscope permissions to unscope CSS by setting a `wrapclass` attribute.[^1][^2] | `false` |
+| `$wgTemplateStylesExtenderUnscopingPermission` | Specify a permission group that is allowed to unscope CSS. | `editinterface` |
 
-**Note**: This is potentially expensive, as each templatestyles tag with `wrapclass` set, will attempt to look up the user of the current page revision, and check if this user has the permission to activate css un-scoping. 
+[^1]: This is potentially expensive, as each templatestyles tag with `wrapclass` set, will attempt to look up the user of the current page revision, and check if this user has the permission to activate CSS un-scoping. <br/> Example: `<templatestyles src="Foo/style.css" wrapclass="mediawiki" />` results in the CSS being scoped to `.mediawiki` instead of `.mw-parser-output`.
 
-Example:
-`<templatestyles src="Foo/style.css" wrapclass="mediawiki" />` results in the css being scoped to `.mediawiki` instead of `.mw-parser-output`.
-
-**Note**: Including such a call in a page essentially limits editing to users with the `editinterface` right. You can alternatively include a call to a template that includes the styles. 
-
-`$wgTemplateStylesExtenderUnscopingPermission`  
-Default: `editinterface`  
-Specify a permission group that is allowed to unscope css.
+[^2]: Including such a call in a page essentially limits editing to users with the `editinterface` right. You can alternatively include a call to a template that includes the styles.
 
 ## Notes on CSS vars
 Currently using `:root` selectors won't work due to template styles prepending `.mw-parser-output`.

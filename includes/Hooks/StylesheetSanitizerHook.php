@@ -43,15 +43,24 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 	): void {
 		$factory = new MatcherFactoryExtender();
 		$extended = new TemplateStylesExtender();
+		$extender = new StylePropertySanitizerExtender( $factory );
 
 		if (
-			TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderEnableCssVars', true ) === true
+			TemplateStylesExtender::getConfigValue(
+				'TemplateStylesExtenderExtendCustomPropertiesValues'
+			) === true
 		) {
 			$factory->setVarEnabled( true );
 			$extended->addVarSelector( $propertySanitizer, $factory );
 		}
 
-		$extender = new StylePropertySanitizerExtender( $factory );
+		if (
+			TemplateStylesExtender::getConfigValue(
+				'TemplateStylesExtenderCustomPropertiesDeclaration'
+			) === true
+		) {
+			$extender->setVarEnabled( true );
+		}
 
 		$newRules = $sanitizer->getRuleSanitizers();
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $factory );

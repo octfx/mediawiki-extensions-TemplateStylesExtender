@@ -41,8 +41,8 @@ class TemplateStylesExtender {
 	private static ?Config $config = null;
 
 	/**
-	 * Adds a css wide keyword matcher for css variables
-	 * Matches 0-INF preceding css declarations at least one var( --content ) and 0-INF following declarations
+	 * Adds a CSS wide keyword matcher for CSS variables
+	 * Matches 0-INF preceding CSS declarations at least one var( --content ) and 0-INF following declarations
 	 *
 	 * @param StylePropertySanitizer $propertySanitizer
 	 * @param MatcherFactory $factory
