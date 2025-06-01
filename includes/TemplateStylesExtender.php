@@ -24,9 +24,9 @@ namespace MediaWiki\Extension\TemplateStylesExtender;
 use InvalidArgumentException;
 use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigException;
-use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
 use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
@@ -70,7 +70,7 @@ class TemplateStylesExtender {
 		$var = new FunctionMatcher(
 			'var',
 			new Juxtaposition( [
-				new VarNameMatcher(),
+				new CustomPropertyMatcher(),
 				Quantifier::optional( new Juxtaposition( [
 					$factory->comma(),
 					$anyProperty,

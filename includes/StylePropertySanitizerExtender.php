@@ -21,9 +21,9 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
-use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\BlockMatcher;
+use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
@@ -107,7 +107,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			] ),
 			new Alternative( [
 				$matcherFactory->color(),
-				new FunctionMatcher( 'var', new VarNameMatcher() ),
+				new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 			] )
 		] );
 
@@ -118,7 +118,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 				Quantifier::count( $matcherFactory->length(), 2, 4 ),
 				Quantifier::optional( new Alternative( [
 					$matcherFactory->color(),
-					new FunctionMatcher( 'var', new VarNameMatcher() ),
+					new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 				] ) ),
 			] ) )
 		] );
@@ -221,7 +221,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		}
 		// @codeCoverageIgnoreEnd
 
-		$var = new FunctionMatcher( 'var', new VarNameMatcher() );
+		$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
 
 		$props = parent::cssGrid1( $matcherFactory );
 		$comma = $matcherFactory->comma();
