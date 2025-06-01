@@ -21,8 +21,8 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
-use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
 use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
@@ -72,7 +72,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 				new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
 					return preg_match( '/^([0-9a-f]{4})|([0-9a-f]{8})$/i', $t->value() );
 				} ),
-				new FunctionMatcher( 'var', new VarNameMatcher() )
+				new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 			] );
 			$this->cache[__METHOD__] = $color;
 		}
@@ -85,7 +85,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 */
 	protected function colorFuncs() {
 		if ( !isset( $this->cache[__METHOD__] ) ) {
-			$var = new FunctionMatcher( 'var', new VarNameMatcher() );
+			$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
 			if ( !$this->varEnabled ) {
 				$var = new NothingMatcher();
 			}
@@ -254,7 +254,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 		return parent::calc( new Alternative( [
 			$typeMatcher,
-			new FunctionMatcher( 'var', new VarNameMatcher() ),
+			new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 		] ), $type );
 	}
 
@@ -270,7 +270,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 	   if ( !isset( $this->cache[__METHOD__] ) ) {
 		   $this->cache[__METHOD__] = new Alternative( [
 			   new TokenMatcher( Token::T_NUMBER ),
-			   new FunctionMatcher( 'var', new VarNameMatcher() ),
+			   new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 		   ] );
 	   }
 
