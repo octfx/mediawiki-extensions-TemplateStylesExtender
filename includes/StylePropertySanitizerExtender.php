@@ -30,7 +30,6 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
-use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\CSSObject;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
@@ -38,7 +37,6 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	private bool $varEnabled = false;
-	private static $extendedCssBorderBackground = false;
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
@@ -58,52 +56,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 */
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
-	}
-
-	/**
-	 * @inheritDoc
-	 * Allow rgba syntax like #aaaaaaaa
-	 *
-	 * T265675
-	 */
-	protected function cssBorderBackground3( MatcherFactory $matcherFactory ) {
-		// @codeCoverageIgnoreStart
-		if ( self::$extendedCssBorderBackground && isset( $this->cache[__METHOD__] ) ) {
-			return $this->cache[__METHOD__];
-		}
-		// @codeCoverageIgnoreEnd
-
-		$props = parent::cssBorderBackground3( $matcherFactory );
-
-		$props['border'] = UnorderedGroup::someOf( [
-			new KeywordMatcher( [
-				'none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'
-			] ),
-			new Alternative( [
-				new KeywordMatcher( [ 'thin', 'medium', 'thick' ] ), $matcherFactory->length(),
-			] ),
-			new Alternative( [
-				$matcherFactory->color(),
-				new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-			] )
-		] );
-
-		$props['box-shadow'] = new Alternative( [
-			new KeywordMatcher( 'none' ),
-			Quantifier::hash( UnorderedGroup::allOf( [
-				Quantifier::optional( new KeywordMatcher( 'inset' ) ),
-				Quantifier::count( $matcherFactory->length(), 2, 4 ),
-				Quantifier::optional( new Alternative( [
-					$matcherFactory->color(),
-					new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-				] ) ),
-			] ) )
-		] );
-
-		$this->cache[__METHOD__] = $props;
-		self::$extendedCssBorderBackground = true;
-
-		return $props;
 	}
 
 	/**
