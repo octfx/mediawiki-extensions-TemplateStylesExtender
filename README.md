@@ -1,6 +1,8 @@
 # TemplateStylesExtender
 
-Extends Extension:TemplateStyles by the following new matchers:
+Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles) with new selectors and matchers.
+
+TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer) 5.5.0, which is being used by MediaWiki 1.43.
 
 * CSS Variables:
   * Example: `color: var( --example-var )`
@@ -17,8 +19,8 @@ Extends Extension:TemplateStyles by the following new matchers:
 | [Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/) | Added properties: [`ascent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/ascent-override), [`descent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/descent-override), [`font-display`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display), [`line-gap-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/line-gap-override) | - |
 | [Fonts Module Level 5](https://www.w3.org/TR/css-fonts-5/) | Added property: [`size-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/size-adjust) | - |
 | [Masking Module Level 1](https://www.w3.org/TR/css-masking/) | Added property: `-webkit-mask-image` | - |
-| [Ruby Annotation Layout Module Level 1](https://www.w3.org/TR/css-ruby-1/) | Addedd properties: `ruby-align`, `ruby-position` | [T277755](https://phabricator.wikimedia.org/T277755)
-| [Values and Units Module Level 4](https://www.w3.org/TR/css-values-4/) | Added function: `clamp()` | [T394619](https://phabricator.wikimedia.org/T394619) |
+| [Ruby Annotation Layout Module Level 1](https://www.w3.org/TR/css-ruby-1/) | Addedd properties: [`ruby-align`](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-align), [`ruby-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-position) | [T277755](https://phabricator.wikimedia.org/T277755)
+| [Values and Units Module Level 4](https://www.w3.org/TR/css-values-4/) | Added function: [`clamp()`](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp) | [T394619](https://phabricator.wikimedia.org/T394619) |
 
 
 ## Installation
