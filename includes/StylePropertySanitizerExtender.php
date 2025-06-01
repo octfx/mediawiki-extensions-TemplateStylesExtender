@@ -38,8 +38,6 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	private bool $varEnabled = false;
-
-	private static $extendedCssText3 = false;
 	private static $extendedCssBorderBackground = false;
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCssSizing3 = false;
@@ -60,36 +58,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 */
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
-	}
-
-	/**
-	 * @inheritDoc
-	 * Allow overflow-wrap: anywhere
-	 *
-	 * T255343
-	 */
-	protected function cssText3( MatcherFactory $matcherFactory ) {
-		// @codeCoverageIgnoreStart
-		if ( self::$extendedCssText3 && isset( $this->cache[__METHOD__] ) ) {
-			return $this->cache[__METHOD__];
-		}
-		// @codeCoverageIgnoreEnd
-
-		$props = parent::cssText3( $matcherFactory );
-
-		$props['overflow-wrap'] = new Alternative( [
-			new KeywordMatcher( [ 'normal' ] ),
-			UnorderedGroup::someOf( [
-				new KeywordMatcher( [ 'break-word' ] ),
-				new KeywordMatcher( [ 'break-spaces' ] ),
-				new KeywordMatcher( [ 'anywhere' ] ),
-			] )
-		] );
-
-		$this->cache[__METHOD__] = $props;
-		self::$extendedCssText3 = true;
-
-		return $props;
 	}
 
 	/**
