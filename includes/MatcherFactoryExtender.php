@@ -49,34 +49,27 @@ class MatcherFactoryExtender extends MatcherFactory {
 	/**
 	 * CSS-wide value keywords
 	 * @see https://www.w3.org/TR/2016/CR-css-values-3-20160929/#common-keywords
-	 * @return Matcher
 	 */
-	public function cssWideKeywords() {
-		if ( !isset( $this->cache[__METHOD__] ) ) {
-			$this->cache[__METHOD__] = new KeywordMatcher( [
+	public function cssWideKeywords(): Matcher {
+		return $this->cache[__METHOD__]
+			??= new KeywordMatcher( [
 				'initial', 'inherit', 'unset', 'revert', 'revert-layer'
 			] );
-		}
-		return $this->cache[__METHOD__];
 	}
 
 	/**
 	 * CSS-color extension enabling RGBA
 	 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
-	 * @return Matcher
 	 */
-	public function color() {
-		if ( !isset( $this->cache[__METHOD__] ) ) {
-			$color = new Alternative( [
+	public function color(): Matcher {
+		return $this->cache[__METHOD__]
+			??= new Alternative( [
 				parent::color(),
 				new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
 					return preg_match( '/^([0-9a-f]{4})|([0-9a-f]{8})$/i', $t->value() );
 				} ),
 				new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 			] );
-			$this->cache[__METHOD__] = $color;
-		}
-		return $this->cache[__METHOD__];
 	}
 
 	/**
@@ -267,14 +260,11 @@ class MatcherFactoryExtender extends MatcherFactory {
 		   return parent::rawNumber();
 	   }
 
-	   if ( !isset( $this->cache[__METHOD__] ) ) {
-		   $this->cache[__METHOD__] = new Alternative( [
+	   return $this->cache[__METHOD__]
+		   ??= new Alternative( [
 			   new TokenMatcher( Token::T_NUMBER ),
 			   new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 		   ] );
-	   }
-
-	   return $this->cache[__METHOD__];
    }
 
    /**
