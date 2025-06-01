@@ -4,8 +4,6 @@ Extends Extension:TemplateStyles by the following new matchers:
 
 * CSS Variables:
   * Example: `color: var( --example-var )`
-* `ruby-position`
-* `ruby-align`
 * `scroll-margin-*`, `scroll-padding-*`
 * `pointer-events`
 * `aspect-ratio`
@@ -19,6 +17,7 @@ Extends Extension:TemplateStyles by the following new matchers:
 | [Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/) | Added properties: [`ascent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/ascent-override), [`descent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/descent-override), [`font-display`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display), [`line-gap-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/line-gap-override) | - |
 | [Fonts Module Level 5](https://www.w3.org/TR/css-fonts-5/) | Added property: [`size-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/size-adjust) | - |
 | [Masking Module Level 1](https://www.w3.org/TR/css-masking/) | Added property: `-webkit-mask-image` | - |
+| [Ruby Annotation Layout Module Level 1](https://www.w3.org/TR/css-ruby-1/) | Addedd properties: `ruby-align`, `ruby-position` | [T277755](https://phabricator.wikimedia.org/T277755)
 | [Values and Units Module Level 4](https://www.w3.org/TR/css-values-4/) | Added function: `clamp()` | [T394619](https://phabricator.wikimedia.org/T394619) |
 
 
