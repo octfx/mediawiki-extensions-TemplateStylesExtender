@@ -68,6 +68,7 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 
 		$extended->addAspectRatio( $extender, $factory );
 		$extended->addBackdropFilter( $extender );
+		$extended->addContain( $extender );
 		$extended->addContentVisibility( $extender );
 		$extended->addFontOpticalSizing( $extender );
 		$extended->addFontVariationSettings( $extender, $factory );
