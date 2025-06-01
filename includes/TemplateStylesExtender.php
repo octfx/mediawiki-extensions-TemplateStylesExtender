@@ -391,6 +391,26 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the contain matcher
+	 *
+	 * @param StylePropertySanitizer $sanitizer
+	 */
+	public function addContain( StylePropertySanitizer $sanitizer ): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				'contain' => new KeywordMatcher( [
+					// Level 1
+					'none', 'strict', 'content', 'size', 'layout', 'paint',
+					// Level 3
+					'style', 'inline-size'
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *

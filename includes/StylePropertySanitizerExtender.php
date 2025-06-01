@@ -40,7 +40,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCss1Masking = false;
 	private static $extendedCss1Grid = false;
-	private static $extendedCssContain1 = false;
 
 	/**
 	 * @param MatcherFactory $matcherFactory
@@ -114,7 +113,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	/**
 	 * @inheritDoc
 	 *
-	 * Allow variables in grid-template-columns
+	 * Allow variables in grid-template-columns and grid-template-rows
 	 */
 	protected function cssGrid1( MatcherFactory $matcherFactory ) {
 		// @codeCoverageIgnoreStart
@@ -126,6 +125,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
 
 		$props = parent::cssGrid1( $matcherFactory );
+
 		$comma = $matcherFactory->comma();
 		$customIdent = $matcherFactory->customIdent( [ 'span' ] );
 		$lineNamesO = Quantifier::optional( new BlockMatcher(
@@ -203,31 +203,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		$props['grid-template-rows'] = $props['grid-template-columns'];
 
 		$this->cache[__METHOD__] = $props;
-		return $props;
-	}
-
-	/**
-	 * Properties for CSS Containment Module Level 1
-	 * @see https://www.w3.org/TR/css-contain-1/
-	 * @param MatcherFactory $matcherFactory Factory for Matchers
-	 * @return Matcher[] Array mapping declaration names (lowercase) to Matchers for the values
-	 */
-	protected function cssContain1( MatcherFactory $matcherFactory ) {
-		// @codeCoverageIgnoreStart
-		if ( self::$extendedCssContain1 && isset( $this->cache[__METHOD__] ) ) {
-			return $this->cache[__METHOD__];
-		}
-		// @codeCoverageIgnoreEnd
-
-		$props = [];
-		$property = new KeywordMatcher( [
-			'none', 'size', 'layout', 'paint', 'strict'
-		] );
-		$props['contain'] = Quantifier::hash( $property );
-
-		$this->cache[__METHOD__] = $props;
-		self::$extendedCssContain1 = true;
-
 		return $props;
 	}
 
