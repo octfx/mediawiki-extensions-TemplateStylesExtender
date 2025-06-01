@@ -278,11 +278,11 @@ class MatcherFactoryExtender extends MatcherFactory {
    }
 
    /**
-	 * Backport Ratio values from master branch
-	 * This is not present in css-sanitizer 5.5.0
-	 *
-	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
-	 */
+	* Backport Ratio values from master branch
+	* This is not present in css-sanitizer 5.5.0
+	*
+	* @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
+	*/
 	public function ratio(): Matcher {
 		// Use the parent method if it exists
 		if ( method_exists( parent::class, 'ratio' ) ) {
