@@ -24,6 +24,8 @@ namespace MediaWiki\Extension\TemplateStylesExtender;
 use InvalidArgumentException;
 use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigException;
+use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
+use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
@@ -31,10 +33,8 @@ use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
-use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
-use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
 
@@ -43,11 +43,11 @@ class TemplateStylesExtender {
 	/**
 	 * Adds a CSS wide keyword matcher for CSS variables
 	 * Matches 0-INF preceding CSS declarations at least one var( --content ) and 0-INF following declarations
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param MatcherFactory $factory
 	 */
-	public function addVarSelector( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
+	public function addVarSelector(
+		StylePropertySanitizerExtender $propertySanitizer,
+		MatcherFactoryExtender $factory
+	): void {
 		$anyProperty = new Alternative( [
 			$factory->color(),
 			$factory->image(),
@@ -98,10 +98,8 @@ class TemplateStylesExtender {
 	/**
 	 * Adds the ruby-position and ruby-align matcher
 	 * T277755
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
 	 */
-	public function addRuby( StylePropertySanitizer $propertySanitizer ): void {
+	public function addRuby( StylePropertySanitizerExtender $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
 				'ruby-position' => new Alternative( [
@@ -133,11 +131,11 @@ class TemplateStylesExtender {
 	 * Adds scroll-margin-* and scroll-padding-* matcher
 	 * TODO: This is not well tested
 	 * T271598
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param MatcherFactory $factory
 	 */
-	public function addScrollMarginProperties( $propertySanitizer, $factory ): void {
+	public function addScrollMarginProperties(
+		StylePropertySanitizerExtender $propertySanitizer,
+		MatcherFactoryExtender $factory
+	): void {
 		$suffixes = [
 			'margin-block-end',
 			'margin-block-start',
@@ -178,11 +176,11 @@ class TemplateStylesExtender {
 
 	/**
 	 * Adds padding|margin-inline|block support
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param MatcherFactory $factory
 	 */
-	public function addInsetProperties( $propertySanitizer, $factory ): void {
+	public function addInsetProperties(
+		StylePropertySanitizerExtender $propertySanitizer,
+		MatcherFactoryExtender $factory
+	): void {
 		$auto = new KeywordMatcher( 'auto' );
 		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
 
@@ -207,10 +205,8 @@ class TemplateStylesExtender {
 
 	/**
 	 * Adds the pointer-events matcher
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
 	 */
-	public function addPointerEvents( StylePropertySanitizer $propertySanitizer ): void {
+	public function addPointerEvents( StylePropertySanitizerExtender $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
 				'pointer-events' => new KeywordMatcher( [
@@ -233,33 +229,9 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the aspect-ratio matcher
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 * @param MatcherFactory $factory
-	 */
-	public function addAspectRatio( StylePropertySanitizer $propertySanitizer, MatcherFactory $factory ): void {
-		try {
-			$propertySanitizer->addKnownProperties( [
-				'aspect-ratio' => UnorderedGroup::someOf( [
-					new KeywordMatcher( [ 'auto' ] ),
-					new Juxtaposition( [
-						$factory->number(),
-						Quantifier::optional( new Juxtaposition( [ new DelimMatcher( '/' ), $factory->number() ] ) )
-					] )
-				] ),
-			] );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
 	 * Adds the backdrop-filter matcher
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
 	 */
-	public function addBackdropFilter( StylePropertySanitizer $propertySanitizer ): void {
+	public function addBackdropFilter( StylePropertySanitizerExtender $propertySanitizer ): void {
 		try {
 			$filter = $propertySanitizer->getKnownProperties()['filter'];
 
@@ -273,10 +245,8 @@ class TemplateStylesExtender {
 
 	/**
 	 * Adds the font-optical-sizing matcher
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
 	 */
-	public function addFontOpticalSizing( StylePropertySanitizer $propertySanitizer ): void {
+	public function addFontOpticalSizing( StylePropertySanitizerExtender $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
 				'font-optical-sizing' => new KeywordMatcher( [
@@ -291,11 +261,11 @@ class TemplateStylesExtender {
 
 	/**
 	 * Adds the font-variation-settings matcher
-	 *
-	 * @param StylePropertySanitizer $sanitizer
-	 * @param MatcherFactory $factory
 	 */
-	public function addFontVariationSettings( StylePropertySanitizer $sanitizer, MatcherFactory $factory ): void {
+	public function addFontVariationSettings(
+		StylePropertySanitizerExtender $sanitizer,
+		MatcherFactoryExtender $factory
+	): void {
 		try {
 			$sanitizer->addKnownProperties( [
 				'font-variation-settings' => new Alternative( [
@@ -322,13 +292,9 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the content-visibility matcher
-	 *
-	 * #28
-	 *
-	 * @param StylePropertySanitizer $sanitizer
+	 * Adds the content-visibility matcher (#28)
 	 */
-	public function addContentVisibility( StylePropertySanitizer $sanitizer ): void {
+	public function addContentVisibility( StylePropertySanitizerExtender $sanitizer ): void {
 		try {
 			$sanitizer->addKnownProperties( [
 				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
@@ -340,10 +306,8 @@ class TemplateStylesExtender {
 
 	/**
 	 * Adds the contain matcher
-	 *
-	 * @param StylePropertySanitizer $sanitizer
 	 */
-	public function addContain( StylePropertySanitizer $sanitizer ): void {
+	public function addContain( StylePropertySanitizerExtender $sanitizer ): void {
 		try {
 			$sanitizer->addKnownProperties( [
 				'contain' => new KeywordMatcher( [
@@ -352,6 +316,41 @@ class TemplateStylesExtender {
 					// Level 3
 					'style', 'inline-size'
 				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Backport CSS Box Sizing Level 4 from master branch
+	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
+	 */
+	public function addCssSizing4( StylePropertySanitizerExtender $sanitizer, MatcherFactoryExtender $factory ): void {
+		try {
+			$auto = new KeywordMatcher( 'auto' );
+			$containIntrinsic = new Juxtaposition( [
+				Quantifier::optional( $auto ),
+				new Alternative( [
+					new KeywordMatcher( 'none' ),
+					$factory->lengthPercentage(),
+				] ),
+			] );
+
+			$sanitizer->addKnownProperties( [
+				'aspect-ratio' => UnorderedGroup::someOf( [ $auto, $factory->ratio() ] ),
+				'contain-intrinsic-width' => $containIntrinsic,
+				'contain-intrinsic-height' => $containIntrinsic,
+				'contain-intrinsic-block-size' => $containIntrinsic,
+				'contain-intrinsic-inline-size' => $containIntrinsic,
+				'contain-intrinsic-size' => Quantifier::count( $containIntrinsic, 1, 2 ),
+				'min-intrinsic-sizing' => new Alternative( [
+					new KeywordMatcher( 'legacy' ),
+					UnorderedGroup::someOf( [
+						new KeywordMatcher( 'zero-if-scroll' ),
+						new KeywordMatcher( 'zero-if-extrinsic' ),
+					] ),
+				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently

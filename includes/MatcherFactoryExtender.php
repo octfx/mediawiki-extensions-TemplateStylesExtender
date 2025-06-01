@@ -276,4 +276,30 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	   return $this->cache[__METHOD__];
    }
+
+   /**
+	 * Backport Ratio values from master branch
+	 * This is not present in css-sanitizer 5.5.0
+	 *
+	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
+	 */
+	public function ratio(): Matcher {
+		// Use the parent method if it exists
+		if ( method_exists( parent::class, 'ratio' ) ) {
+			return parent::ratio();
+		}
+
+		return $this->cache[__METHOD__]
+			// <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
+			??= new Alternative( [
+				$this->rawNumber(),
+				new Juxtaposition( [
+					$this->rawNumber(),
+					$this->optionalWhitespace(),
+					new DelimMatcher( [ '/' ] ),
+					$this->optionalWhitespace(),
+					$this->rawNumber(),
+				] ),
+			] );
+	}
 }
