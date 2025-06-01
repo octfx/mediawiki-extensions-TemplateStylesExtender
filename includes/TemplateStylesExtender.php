@@ -21,9 +21,9 @@ declare( strict_types=1 );
 
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
-use Config;
-use ConfigException;
 use InvalidArgumentException;
+use MediaWiki\Config\Config;
+use MediaWiki\Config\ConfigException;
 use MediaWiki\Extension\TemplateStylesExtender\Matcher\VarNameMatcher;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
@@ -38,10 +38,7 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
 
-	/**
-	 * @var Config
-	 */
-	private static $config;
+	private static ?Config $config = null;
 
 	/**
 	 * Adds a css wide keyword matcher for css variables
@@ -401,7 +398,7 @@ class TemplateStylesExtender {
 	 * @param null $default
 	 * @return mixed|null
 	 */
-	public static function getConfigValue( string $key, $default = null ) {
+	public static function getConfigValue( string $key, mixed $default = null ): mixed {
 		if ( self::$config === null ) {
 			self::$config = MediaWikiServices::getInstance()
 				->getConfigFactory()
@@ -409,6 +406,7 @@ class TemplateStylesExtender {
 		}
 
 		try {
+			// @phan-suppress-next-line PhanPossiblyNullPropertyReal
 			$value = self::$config->get( $key );
 		} catch ( ConfigException $e ) {
 			wfLogWarning(
