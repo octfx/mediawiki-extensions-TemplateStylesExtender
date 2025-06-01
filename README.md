@@ -1,4 +1,5 @@
 # TemplateStylesExtender
+
 Extends Extension:TemplateStyles by the following new matchers:
 
 * CSS Variables:
@@ -11,6 +12,16 @@ Extends Extension:TemplateStyles by the following new matchers:
 * `aspect-ratio`
 * `content-visibility`
 * Relative Colors
+
+| Module | Changes | Upstream task
+| - | - | - |
+| [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added keyword: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer) | - |
+| [Containment Level 3](https://www.w3.org/TR/css-contain-3/) | Added properties: [`contain`](https://developer.mozilla.org/en-US/docs/Web/CSS/contain) | - |
+| [Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/) | Added properties: [`ascent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/ascent-override), [`descent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/descent-override), [`font-display`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display), [`line-gap-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/line-gap-override) | - |
+| [Fonts Module Level 5](https://www.w3.org/TR/css-fonts-5/) | Added property: [`size-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/size-adjust) | - |
+| [Masking Module Level 1](https://www.w3.org/TR/css-masking/) | Added property: `-webkit-mask-image` | - |
+| [Values and Units Module Level 4](https://www.w3.org/TR/css-values-4/) | Added function: `clamp()` | [T394619](https://phabricator.wikimedia.org/T394619) |
+
 
 ## Installation
 Download the zip file from the [latest release](https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender/releases/latest) page.
