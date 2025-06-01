@@ -25,6 +25,42 @@
 }
 
 /**
+ * CSS Box Sizing Module Level 4
+ */
+.ts-css-box-sizing-4 {
+	aspect-ratio: 1 / 1;
+	aspect-ratio: 1;
+	aspect-ratio: 16 / 9;
+	aspect-ratio: 0.5;
+	aspect-ratio: auto 3/4;
+	aspect-ratio: 3/4 auto;
+	contain-intrinsic-width: none;
+	contain-intrinsic-width: 10rem;
+	contain-intrinsic-width: auto 300px;
+	contain-intrinsic-height: none;
+	contain-intrinsic-height: 10rem;
+	contain-intrinsic-height: auto 300px;
+	contain-intrinsic-block-size: none;
+	contain-intrinsic-block-size: 10rem;
+	contain-intrinsic-block-size: auto 300px;
+	contain-intrinsic-inline-size: none;
+	contain-intrinsic-inline-size: 10rem;
+	contain-intrinsic-inline-size: auto 300px;
+	contain-intrinsic-size: none;
+	contain-intrinsic-size: 10rem;
+	contain-intrinsic-size: auto 300px;
+	contain-intrinsic-size: auto none;
+	contain-intrinsic-size: none none;
+	contain-intrinsic-size: 300px 10rem;
+	contain-intrinsic-size: auto 300px auto 4rem;
+	min-intrinsic-sizing: legacy;
+	min-intrinsic-sizing: zero-if-scroll;
+	min-intrinsic-sizing: zero-if-extrinsic;
+	min-intrinsic-sizing: zero-if-scroll zero-if-extrinsic;
+	min-intrinsic-sizing: zero-if-extrinsic zero-if-scroll;
+}
+
+/**
  * CSS Cascading and Inheritance Level 5
  */
 .ts-css-cascading-and-inheritance-revert-layer {
@@ -270,37 +306,6 @@
 	background: #ff0099aa;
 }
 
-.var {
-	color: var(--color-base);
-	border: 1px var(--border-type) black;
-}
-
-.aspect-ratio {
-	aspect-ratio: 1 / 1;
-	aspect-ratio: 1;
-
-	/* fallback to 'auto' for replaced elements */
-	aspect-ratio: auto 3/4;
-	aspect-ratio: 9/6 auto;
-
-	/* Global values */
-	aspect-ratio: inherit;
-	aspect-ratio: initial;
-	aspect-ratio: revert;
-	aspect-ratio: revert-layer;
-	aspect-ratio: unset;
-}
-
-.revert {
-	color: revert;
-	margin: revert-layer;
-}
-
-.border-shorthand {
-	border: 1px solid var(--border-color-base);
-	border-color: var(--border-color-base);
-}
-
 .mask-image {
 	/* Keyword value */
 	mask-image: none;
@@ -417,23 +422,4 @@
 		from var(--color-primary) h calc(s - 25) calc(l + var(--adjust-hover)) /
 			0.66
 	);
-}
-
-.wrap {
-	--base-color: orange;
-	--test: calc(g - 0.15);
-}
-
-#one {
-	background-color: color(from var(--base-color) display-p3 r 1 1);
-}
-
-#two {
-	background-color: var(--base-color);
-}
-
-#three {
-	width: 200px;
-	height: 200px;
-	background-color: color(from var(--base-color) display-p3 r var(--test) 2);
 }

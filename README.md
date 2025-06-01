@@ -8,12 +8,12 @@ TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawi
   * Example: `color: var( --example-var )`
 * `scroll-margin-*`, `scroll-padding-*`
 * `pointer-events`
-* `aspect-ratio`
 * `content-visibility`
 * Relative Colors
 
 | Module | Changes | Upstream task
 | - | - | - |
+| [Box Sizing Module Level 4](https://www.w3.org/TR/css-sizing-4/) | Backported for `css-sanitizer` 5.5.0 | [T375344](https://phabricator.wikimedia.org/T375344)
 | [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added keyword: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer) | - |
 | [Containment Module Level 3](https://www.w3.org/TR/css-contain-3/) | Added properties: [`contain`](https://developer.mozilla.org/en-US/docs/Web/CSS/contain) | - |
 | [Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/) | Added properties: [`ascent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/ascent-override), [`descent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/descent-override), [`font-display`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display), [`line-gap-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/line-gap-override) | - |

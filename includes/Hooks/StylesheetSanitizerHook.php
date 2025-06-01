@@ -66,7 +66,6 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $factory );
 		$sanitizer->setRuleSanitizers( $newRules );
 
-		$extended->addAspectRatio( $extender, $factory );
 		$extended->addBackdropFilter( $extender );
 		$extended->addContain( $extender );
 		$extended->addContentVisibility( $extender );
@@ -76,6 +75,11 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addPointerEvents( $extender );
 		$extended->addRuby( $extender );
 		$extended->addScrollMarginProperties( $extender, $factory );
+
+		// Missing in css-sanitizer 5.5.0
+		if ( !method_exists( $propertySanitizer, 'cssSizing4' ) ) {
+			$extended->addCssSizing4( $extender, $factory );
+		}
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
