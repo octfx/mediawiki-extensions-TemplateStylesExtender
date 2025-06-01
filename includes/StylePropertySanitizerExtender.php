@@ -32,11 +32,12 @@ use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\CSSObject;
-use Wikimedia\CSS\Objects\Declaration;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
+
+	private bool $varEnabled = false;
 
 	private static $extendedCssText3 = false;
 	private static $extendedCssBorderBackground = false;
@@ -51,6 +52,14 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 */
 	public function __construct( MatcherFactory $matcherFactory ) {
 		parent::__construct( new MatcherFactoryExtender() );
+	}
+
+	/**
+	 * @param bool $varEnabled
+	 * @return void
+	 */
+	public function setVarEnabled( bool $varEnabled ): void {
+		$this->varEnabled = $varEnabled;
 	}
 
 	/**
@@ -330,11 +339,15 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	}
 
 	/**
-	 * @param CSSObject $object
-	 * @return CSSObject|Declaration|null
+	 * @inheritDoc
 	 */
 	protected function doSanitize( CSSObject $object ) {
-		if ( strpos( $object->getName(), '--' ) !== 0 ) {
+		if ( !$this->varEnabled ) {
+			return parent::doSanitize( $object );
+		}
+
+		// Not a CSS custom property
+		if ( !str_starts_with( $object->getName(), '--' ) ) {
 			return parent::doSanitize( $object );
 		}
 
