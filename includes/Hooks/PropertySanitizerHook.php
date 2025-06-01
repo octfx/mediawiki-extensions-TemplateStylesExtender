@@ -22,8 +22,8 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender\Hooks;
 
 use MediaWiki\Extension\TemplateStyles\Hooks\TemplateStylesPropertySanitizerHook;
-use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
