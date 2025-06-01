@@ -38,7 +38,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	private bool $varEnabled = false;
 	private static $extendedCssSizingAdditions = false;
-	private static $extendedCssSizing3 = false;
 	private static $extendedCss1Masking = false;
 	private static $extendedCss1Grid = false;
 	private static $extendedCssContain1 = false;
@@ -88,32 +87,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		self::$extendedCssSizingAdditions = true;
 
 		return $this->cache[__METHOD__];
-	}
-
-	/**
-	 * @inheritDoc
-	 * Allow width: fit-content
-	 *
-	 * T271958
-	 */
-	protected function cssSizing3( MatcherFactory $matcherFactory ) {
-		// @codeCoverageIgnoreStart
-		if ( self::$extendedCssSizing3 && isset( $this->cache[__METHOD__] ) ) {
-			return $this->cache[__METHOD__];
-		}
-		// @codeCoverageIgnoreEnd
-
-		$props = parent::cssSizing3( $matcherFactory );
-
-		$props['width'] = new Alternative( [
-			$props['width'],
-			new KeywordMatcher( 'fit-content' )
-		] );
-
-		$this->cache[__METHOD__] = $props;
-		self::$extendedCssSizing3 = true;
-
-		return $props;
 	}
 
 	/**
