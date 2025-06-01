@@ -96,26 +96,6 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the image-rendering matcher
-	 * T222678
-	 *
-	 * @param StylePropertySanitizer $propertySanitizer
-	 */
-	public function addImageRendering( StylePropertySanitizer $propertySanitizer ): void {
-		try {
-			$propertySanitizer->addKnownProperties( [
-				'image-rendering' => new KeywordMatcher( [
-					'auto',
-					'crisp-edges',
-					'pixelated',
-				] )
-			] );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
 	 * Adds the ruby-position and ruby-align matcher
 	 * T277755
 	 *

@@ -72,7 +72,6 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addContentVisibility( $extender );
 		$extended->addFontOpticalSizing( $extender );
 		$extended->addFontVariationSettings( $extender, $factory );
-		$extended->addImageRendering( $extender );
 		$extended->addInlineBlockMarginPaddingProperties( $extender, $factory );
 		$extended->addInsetProperties( $extender, $factory );
 		$extended->addPointerEvents( $extender );
