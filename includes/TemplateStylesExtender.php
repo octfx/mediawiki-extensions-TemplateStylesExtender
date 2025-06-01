@@ -172,35 +172,6 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds padding|margin-inline|block support
-	 */
-	public function addInsetProperties(
-		StylePropertySanitizerExtender $propertySanitizer,
-		MatcherFactoryExtender $factory
-	): void {
-		$auto = new KeywordMatcher( 'auto' );
-		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
-
-		$props = [];
-
-		$props['inset'] = Quantifier::count( $autoLengthPct, 1, 4 );
-
-		$props['inset-block'] = Quantifier::count( $autoLengthPct, 1, 2 );
-		$props['inset-block-end'] = $autoLengthPct;
-		$props['inset-block-start'] = $autoLengthPct;
-
-		$props['inset-inline'] = Quantifier::count( $autoLengthPct, 1, 2 );
-		$props['inset-inline-end'] = $autoLengthPct;
-		$props['inset-inline-start'] = $autoLengthPct;
-
-		try {
-			$propertySanitizer->addKnownProperties( $props );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
 	 * Adds the pointer-events matcher
 	 */
 	public function addPointerEvents( StylePropertySanitizerExtender $propertySanitizer ): void {
