@@ -95,6 +95,14 @@
 }
 
 /**
+ * CSS Color Module Level 4
+ */
+.ts-css-color-4-hex-color {
+	background: #f09a;
+	background: #ff0099aa;
+}
+
+/**
  * CSS Containment Module Level 3
  */
 .ts-css-containment-contain {
@@ -202,86 +210,6 @@
 	font-family: 'Times New Roman';
 	src: local('Times New Roman');
 	size-adjust: 100%;
-}
-
-/**
- * CSS Masking Module Level 1
- */
-.ts-css-masking-clip-path {
-	clip-path: circle(50% at 50% 50%);
-}
-
-.ts-css-masking-clip-rule {
-	clip-rule: evenodd; /* Applied to SVG graphics elements within a clipPath */
-}
-
-.ts-css-masking-mask-image {
-	mask-image: url('mask.png');
-}
-
-.ts-css-masking-mask-mode {
-	mask-mode: alpha;
-}
-
-.ts-css-masking-mask-repeat {
-	mask-repeat: no-repeat;
-}
-
-.ts-css-masking-mask-position {
-	mask-position: center;
-}
-
-.ts-css-masking-mask-clip {
-	mask-clip: content-box;
-}
-
-.ts-css-masking-mask-origin {
-	mask-origin: border-box;
-}
-
-.ts-css-masking-mask-size {
-	mask-size: 50% 50%;
-}
-
-.ts-css-masking-mask-composite {
-	mask-composite: add;
-}
-
-.ts-css-masking-mask-shorthand {
-	mask: url('mask.svg#star') luminance center / 50% 50% no-repeat border-box
-		content-box add;
-}
-
-.ts-css-masking-mask-border-source {
-	mask-border-source: url('mask-border.png');
-}
-
-.ts-css-masking-mask-border-mode {
-	mask-border-mode: luminance;
-}
-
-.ts-css-masking-mask-border-slice {
-	mask-border-slice: 10;
-}
-
-.ts-css-masking-mask-border-width {
-	mask-border-width: 10px;
-}
-
-.ts-css-masking-mask-border-outset {
-	mask-border-outset: 5px;
-}
-
-.ts-css-masking-mask-border-repeat {
-	mask-border-repeat: round;
-}
-
-.ts-css-masking-mask-border-shorthand {
-	mask-border: url('border-mask.png') 10 round;
-}
-
-.ts-css-masking-mask-type {
-	mask-type: alpha; /* Applied to SVG mask elements */
 }
 
 /**
@@ -473,37 +401,7 @@
 	grid-row: span 8 / auto;
 }
 
-.hex-color {
-	background: #f09;
-	background: #f09a;
-	background: #ff0099;
-	background: #ff0099aa;
-}
-
-.mask-image {
-	/* Keyword value */
-	mask-image: none;
-
-	/* <mask-source> value */
-	mask-image: url(masks.svg#mask1);
-
-	/* <image> values */
-	mask-image: linear-gradient(rgb(0 0 0 / 100%), transparent);
-
-	/* Not implemented */
-	/* mask-image: image(url(mask.png), skyblue); */
-
-	/* Multiple values */
-	mask-image: url(mask.png), linear-gradient(black 25%, transparent 35%);
-
-	/* Global values */
-	mask-image: inherit;
-	mask-image: initial;
-	mask-image: revert;
-	mask-image: revert-layer;
-	mask-image: unset;
-}
-
+/*
 .color {
 	background-color: rgb(from red r g 200);
 	color: rgb(100, 100, 100);
@@ -533,3 +431,4 @@
 			0.66
 	);
 }
+*/
