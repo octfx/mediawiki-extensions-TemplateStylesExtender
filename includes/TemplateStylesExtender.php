@@ -215,30 +215,18 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the font-optical-sizing matcher
+	 * Partially implements CSS Fonts Module Level 4
 	 */
-	public function addFontOpticalSizing( StylePropertySanitizerExtender $propertySanitizer ): void {
-		try {
-			$propertySanitizer->addKnownProperties( [
-				'font-optical-sizing' => new KeywordMatcher( [
-					'none',
-					'auto',
-				] ),
-			] );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
-	 * Adds the font-variation-settings matcher
-	 */
-	public function addFontVariationSettings(
+	public function addCssFonts4(
 		StylePropertySanitizerExtender $sanitizer,
 		MatcherFactoryExtender $factory
 	): void {
 		try {
 			$sanitizer->addKnownProperties( [
+				'font-optical-sizing' => new KeywordMatcher( [
+					'none',
+					'auto',
+				] ),
 				'font-variation-settings' => new Alternative( [
 					new KeywordMatcher( [ 'normal' ] ),
 					Quantifier::hash( new Juxtaposition( [
@@ -252,7 +240,6 @@ class TemplateStylesExtender {
 							] ),
 							Quantifier::plus( $factory->string() ),
 						] ),
-
 						$factory->number(),
 					] ) )
 				] ),

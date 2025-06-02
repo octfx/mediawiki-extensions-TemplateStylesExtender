@@ -67,11 +67,10 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$sanitizer->setRuleSanitizers( $newRules );
 
 		$extended->addBackdropFilter( $extender );
-		$extended->addFontOpticalSizing( $extender );
-		$extended->addFontVariationSettings( $extender, $factory );
 		$extended->addPointerEvents( $extender );
 
 		$extended->addCssContainment3( $extender );
+		$extended->addCssFonts4( $extender, $factory );
 		$extended->addCssRuby1( $extender );
 		$extended->addCssScrollSnap1( $extender, $factory );
 

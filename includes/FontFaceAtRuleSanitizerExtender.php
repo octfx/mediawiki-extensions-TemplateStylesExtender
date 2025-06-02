@@ -35,12 +35,13 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 
 		$matcher = new Alternative( [ new KeywordMatcher( 'normal' ), $matcherFactory->percentage() ] );
 
-		// Only allow the font-family if it begins with "TemplateStyles"
 		$this->propertySanitizer->setKnownProperties( [
+			// CSS Fonts Module Level 4
 			'ascent-override' => $matcher,
 			'descent-override' => $matcher,
 			'font-display' => new KeywordMatcher( [ 'auto', 'block', 'swap', 'fallback', 'optional' ] ),
 			'line-gap-override' => $matcher,
+			// CSS Fonts Module Level 5
 			'size-adjust' => $matcher,
 		] + $this->propertySanitizer->getKnownProperties() );
 	}
