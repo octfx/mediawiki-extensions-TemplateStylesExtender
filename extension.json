@@ -32,7 +32,7 @@
 			"value": false
 		},
 		"TemplateStylesExtenderUnscopingPermission": {
-			"description": "Speficy the permission a user must have to use unscoping. Defaults to 'editinterface'.",
+			"description": "Specify the permission a user must have to use unscoping. Defaults to 'editinterface'.",
 			"value": "editinterface"
 		}
 	},
