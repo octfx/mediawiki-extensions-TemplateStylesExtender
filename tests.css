@@ -167,6 +167,34 @@
 	line-gap-override: 100%;
 }
 
+.ts-css-fonts-4-font-variation-settings {
+	/* Use the default settings */
+	font-variation-settings: normal;
+
+	/* Set values for variable font axis names */
+	font-variation-settings: 'xhgt' 0.7;
+
+	/* Global values */
+	font-variation-settings: inherit;
+	font-variation-settings: initial;
+	font-variation-settings: revert;
+	font-variation-settings: revert-layer;
+	font-variation-settings: unset;
+}
+
+.ts-css-fonts-4-font-optical-sizing {
+	/* keyword values */
+	font-optical-sizing: none;
+	font-optical-sizing: auto; /* default */
+
+	/* Global values */
+	font-optical-sizing: inherit;
+	font-optical-sizing: initial;
+	font-optical-sizing: revert;
+	font-optical-sizing: revert-layer;
+	font-optical-sizing: unset;
+}
+
 /**
  * CSS Fonts Module Level 5
  */
@@ -433,34 +461,6 @@
 	left: calc(var(--var1) / var(--var2));
 	left: calc(var(--var1) / var(--var2) * 100%);
 	right: calc((var(--var1) - var(--var2)) / var(--var3) * 100%);
-}
-
-.font-variation-settings {
-	/* Use the default settings */
-	font-variation-settings: normal;
-
-	/* Set values for variable font axis names */
-	font-variation-settings: 'xhgt' 0.7;
-
-	/* Global values */
-	font-variation-settings: inherit;
-	font-variation-settings: initial;
-	font-variation-settings: revert;
-	font-variation-settings: revert-layer;
-	font-variation-settings: unset;
-}
-
-.font-optical-sizing {
-	/* keyword values */
-	font-optical-sizing: none;
-	font-optical-sizing: auto; /* default */
-
-	/* Global values */
-	font-optical-sizing: inherit;
-	font-optical-sizing: initial;
-	font-optical-sizing: revert;
-	font-optical-sizing: revert-layer;
-	font-optical-sizing: unset;
 }
 
 .grid {
