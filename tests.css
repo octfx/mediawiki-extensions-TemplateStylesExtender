@@ -81,6 +81,20 @@
 	contain: inline-size;
 }
 
+.ts-css-containment-content-visibility {
+	/* Keyword values */
+	content-visibility: visible;
+	content-visibility: hidden;
+	content-visibility: auto;
+
+	/* Global values */
+	content-visibility: inherit;
+	content-visibility: initial;
+	content-visibility: revert;
+	content-visibility: revert-layer;
+	content-visibility: unset;
+}
+
 /**
  * CSS Filter Effects Module Level 2
  */
@@ -331,20 +345,6 @@
 	mask-image: revert;
 	mask-image: revert-layer;
 	mask-image: unset;
-}
-
-.content-visibility {
-	/* Keyword values */
-	content-visibility: visible;
-	content-visibility: hidden;
-	content-visibility: auto;
-
-	/* Global values */
-	content-visibility: inherit;
-	content-visibility: initial;
-	content-visibility: revert;
-	content-visibility: revert-layer;
-	content-visibility: unset;
 }
 
 .scroll-margin {

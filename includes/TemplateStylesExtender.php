@@ -260,22 +260,9 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the content-visibility matcher (#28)
+	 * Adds the contain and content-visibility matcher (#28)
 	 */
-	public function addContentVisibility( StylePropertySanitizerExtender $sanitizer ): void {
-		try {
-			$sanitizer->addKnownProperties( [
-				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
-			] );
-		} catch ( InvalidArgumentException $e ) {
-			// Fail silently
-		}
-	}
-
-	/**
-	 * Adds the contain matcher
-	 */
-	public function addContain( StylePropertySanitizerExtender $sanitizer ): void {
+	public function addCssContainment3( StylePropertySanitizerExtender $sanitizer ): void {
 		try {
 			$sanitizer->addKnownProperties( [
 				'contain' => new KeywordMatcher( [
@@ -284,6 +271,7 @@ class TemplateStylesExtender {
 					// Level 3
 					'style', 'inline-size'
 				] ),
+				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
 			] );
 		} catch ( InvalidArgumentException $e ) {
 			// Fail silently

@@ -67,13 +67,13 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$sanitizer->setRuleSanitizers( $newRules );
 
 		$extended->addBackdropFilter( $extender );
-		$extended->addContain( $extender );
-		$extended->addContentVisibility( $extender );
 		$extended->addFontOpticalSizing( $extender );
 		$extended->addFontVariationSettings( $extender, $factory );
 		$extended->addPointerEvents( $extender );
 		$extended->addRuby( $extender );
 		$extended->addScrollMarginProperties( $extender, $factory );
+
+		$extended->addCssContainment3( $extender );
 
 		// Missing in css-sanitizer 5.5.0
 		if ( !method_exists( $propertySanitizer, 'cssSizing4' ) ) {
