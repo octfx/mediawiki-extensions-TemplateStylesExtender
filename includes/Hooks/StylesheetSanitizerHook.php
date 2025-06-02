@@ -70,9 +70,9 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addFontOpticalSizing( $extender );
 		$extended->addFontVariationSettings( $extender, $factory );
 		$extended->addPointerEvents( $extender );
-		$extended->addRuby( $extender );
 
 		$extended->addCssContainment3( $extender );
+		$extended->addCssRuby1( $extender );
 		$extended->addCssScrollSnap1( $extender, $factory );
 
 		// Missing in css-sanitizer 5.5.0
