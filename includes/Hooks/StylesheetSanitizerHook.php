@@ -71,9 +71,9 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addFontVariationSettings( $extender, $factory );
 		$extended->addPointerEvents( $extender );
 		$extended->addRuby( $extender );
-		$extended->addScrollMarginProperties( $extender, $factory );
 
 		$extended->addCssContainment3( $extender );
+		$extended->addCssScrollSnap1( $extender, $factory );
 
 		// Missing in css-sanitizer 5.5.0
 		if ( !method_exists( $propertySanitizer, 'cssSizing4' ) ) {

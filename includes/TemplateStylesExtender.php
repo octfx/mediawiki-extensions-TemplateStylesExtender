@@ -125,49 +125,55 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds scroll-margin-* and scroll-padding-* matcher
-	 * TODO: This is not well tested
+	 * Implements Scroll Snap Module Level 1
 	 * T271598
 	 */
-	public function addScrollMarginProperties(
+	public function addCssScrollSnap1(
 		StylePropertySanitizerExtender $propertySanitizer,
 		MatcherFactoryExtender $factory
 	): void {
-		$suffixes = [
-			'margin-block-end',
-			'margin-block-start',
-			'margin-block',
-			'margin-bottom',
-			'margin-inline-end',
-			'margin-inline-start',
-			'margin-inline',
-			'margin-left',
-			'margin-right',
-			'margin-top',
-			'margin',
-			'padding-block-end',
-			'padding-block-start',
-			'padding-block',
-			'padding-bottom',
-			'padding-inline-end',
-			'padding-inline-start',
-			'padding-inline',
-			'padding-left',
-			'padding-right',
-			'padding-top',
-			'padding',
-		];
+		$auto = new KeywordMatcher( 'auto' );
+		$autoLengthPct = new Alternative( [ $auto, $factory->lengthPercentage() ] );
 
-		foreach ( $suffixes as $suffix ) {
-			try {
-				$propertySanitizer->addKnownProperties( [
-					sprintf( 'scroll-%s', $suffix ) => new Alternative( [
-						$factory->length()
-					] )
-				] );
-			} catch ( InvalidArgumentException $e ) {
-				// Fail silently
-			}
+		try {
+			$propertySanitizer->addKnownProperties( [
+				'scroll-margin' => Quantifier::count( $factory->length(), 1, 4 ),
+				'scroll-margin-block' => Quantifier::count( $factory->length(), 1, 2 ),
+				'scroll-margin-block-end' => $factory->length(),
+				'scroll-margin-block-start' => $factory->length(),
+				'scroll-margin-bottom' => $factory->length(),
+				'scroll-margin-inline' => Quantifier::count( $factory->length(), 1, 2 ),
+				'scroll-margin-inline-end' => $factory->length(),
+				'scroll-margin-inline-start' => $factory->length(),
+				'scroll-margin-left' => $factory->length(),
+				'scroll-margin-right' => $factory->length(),
+				'scroll-margin-top' => $factory->length(),
+				'scroll-padding' => Quantifier::count( $autoLengthPct, 1, 4 ),
+				'scroll-padding-block' => Quantifier::count( $autoLengthPct, 1, 2 ),
+				'scroll-padding-block-end' => $autoLengthPct,
+				'scroll-padding-block-start' => $autoLengthPct,
+				'scroll-padding-bottom' => $autoLengthPct,
+				'scroll-padding-inline' => Quantifier::count( $autoLengthPct, 1, 2 ),
+				'scroll-padding-inline-end' => $autoLengthPct,
+				'scroll-padding-inline-start' => $autoLengthPct,
+				'scroll-padding-left' => $autoLengthPct,
+				'scroll-padding-right' => $autoLengthPct,
+				'scroll-padding-top' => $autoLengthPct,
+				'scroll-snap-align' => new Alternative( [
+					new KeywordMatcher( [ 'none', 'center', 'start', 'end' ] ),
+					Quantifier::count( new KeywordMatcher( [ 'start', 'end', 'center' ] ), 1, 2 ),
+				] ),
+				'scroll-snap-stop' => new KeywordMatcher( [ 'normal', 'always' ] ),
+				'scroll-snap-type' => new Alternative( [
+					new KeywordMatcher( [ 'none', 'x', 'y', 'block', 'inline', 'both' ] ),
+					new Juxtaposition( [
+						new KeywordMatcher( [ 'x', 'y', 'both' ] ),
+						new KeywordMatcher( [ 'mandatory', 'proximity' ] ),
+					] ),
+				] ),
+			] );
+		} catch ( InvalidArgumentException $e ) {
+			// Fail silently
 		}
 	}
 
