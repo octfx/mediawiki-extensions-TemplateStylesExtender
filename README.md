@@ -50,7 +50,8 @@ wfLoadExtension( 'TemplateStylesExtender' );
 
 [^2]: Including such a call in a page essentially limits editing to users with the `editinterface` right. You can alternatively include a call to a template that includes the styles.
 
-## Notes on CSS vars
+## Notes
+### `:root` CSS variables declaration
 Currently using `:root` selectors won't work due to template styles prepending `.mw-parser-output`.
 
 One possible fix is to wrap the entire content into a `div` element and adding the declarations to this, e.g.
@@ -73,8 +74,15 @@ Wikitext
 </div>
 ```
 
-## Notes on relative colors
+### Relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
 
-## Testfile
-`tests.css` in the content root is used to validate added matchers.
+
+## Development
+
+* css-sanitizer workboard: https://phabricator.wikimedia.org/tag/css-sanitizer
+* css-sanitizer repo: https://github.com/wikimedia/css-sanitizer
+* TemplateStyles repo: https://github.com/wikimedia/mediawiki-extensions-TemplateStyles
+
+### Test file
+Add `tests.css` in the content root to a TemplateStyle page to validate added matchers.
