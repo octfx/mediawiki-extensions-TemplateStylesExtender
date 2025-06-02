@@ -25,6 +25,33 @@
 }
 
 /**
+ * CSS Basic User Interface Module Level 4
+ */
+.ts-css-basic-user-interface-pointer-events {
+	/* Keyword values */
+	pointer-events: auto;
+	pointer-events: none;
+
+	/* Values used in SVGs */
+	pointer-events: visiblePainted;
+	pointer-events: visibleFill;
+	pointer-events: visibleStroke;
+	pointer-events: visible;
+	pointer-events: painted;
+	pointer-events: fill;
+	pointer-events: stroke;
+	pointer-events: bounding-box;
+	pointer-events: all;
+
+	/* Global values */
+	pointer-events: inherit;
+	pointer-events: initial;
+	pointer-events: revert;
+	pointer-events: revert-layer;
+	pointer-events: unset;
+}
+
+/**
  * CSS Box Sizing Module Level 4
  */
 .ts-css-box-sizing-4 {
@@ -371,30 +398,6 @@
 	scroll-margin-bottom: revert;
 	scroll-margin-bottom: revert-layer;
 	scroll-margin-bottom: unset;
-}
-
-.pointer-events {
-	/* Keyword values */
-	pointer-events: auto;
-	pointer-events: none;
-
-	/* Values used in SVGs */
-	pointer-events: visiblePainted;
-	pointer-events: visibleFill;
-	pointer-events: visibleStroke;
-	pointer-events: visible;
-	pointer-events: painted;
-	pointer-events: fill;
-	pointer-events: stroke;
-	pointer-events: bounding-box;
-	pointer-events: all;
-
-	/* Global values */
-	pointer-events: inherit;
-	pointer-events: initial;
-	pointer-events: revert;
-	pointer-events: revert-layer;
-	pointer-events: unset;
 }
 
 .color {

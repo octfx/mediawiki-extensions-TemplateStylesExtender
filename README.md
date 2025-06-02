@@ -7,11 +7,11 @@ TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawi
 * CSS Variables:
   * Example: `color: var( --example-var )`
 * `scroll-margin-*`, `scroll-padding-*`
-* `pointer-events`
 * Relative Colors
 
 | Module | Changes | Upstream task
 | - | - | - |
+| [Basic User Interface Module Level 4](https://www.w3.org/TR/css-ui-4/) | Added property: [`pointer-events`](https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events) | [T342271](https://phabricator.wikimedia.org/T342271)
 | [Box Sizing Module Level 4](https://www.w3.org/TR/css-sizing-4/) | Backported for `css-sanitizer` 5.5.0 | [T375344](https://phabricator.wikimedia.org/T375344)
 | [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added value: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer) | - |
 | [Containment Module Level 3](https://www.w3.org/TR/css-contain-3/) | Added properties: [`contain`](https://developer.mozilla.org/en-US/docs/Web/CSS/contain), [`content-visibility`](https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility) | - |
