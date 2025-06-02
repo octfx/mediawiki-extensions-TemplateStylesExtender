@@ -6,7 +6,6 @@ TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawi
 
 * CSS Variables:
   * Example: `color: var( --example-var )`
-* `scroll-margin-*`, `scroll-padding-*`
 * Relative Colors
 
 | Module | Changes | Upstream task
@@ -20,6 +19,7 @@ TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawi
 | [Fonts Module Level 5](https://www.w3.org/TR/css-fonts-5/) | Added property: [`size-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/size-adjust) | - |
 | [Masking Module Level 1](https://www.w3.org/TR/css-masking/) | Added property: `-webkit-mask-image` | - |
 | [Ruby Annotation Layout Module Level 1](https://www.w3.org/TR/css-ruby-1/) | Addedd properties: [`ruby-align`](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-align), [`ruby-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-position) | [T277755](https://phabricator.wikimedia.org/T277755)
+| [Scroll Snap Module Level 1](https://www.w3.org/TR/css-scroll-snap-1/) | Added properties: [`scroll-margin`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin), [`scroll-padding`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding), [`scroll-snap-align`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align), [`scroll-snap-stop`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-stop), [`scroll-snap-type`](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type) | [T271598](https://phabricator.wikimedia.org/T271598)
 | [Values and Units Module Level 4](https://www.w3.org/TR/css-values-4/) | Added function: [`clamp()`](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp) | [T394619](https://phabricator.wikimedia.org/T394619) |
 
 

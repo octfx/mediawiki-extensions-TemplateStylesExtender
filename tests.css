@@ -292,6 +292,136 @@
 }
 
 /**
+ * CSS Scroll Snap Module Level 1
+ */
+.ts-css-scroll-snap-scroll-margin {
+	scroll-margin: 10px;
+	scroll-margin: 1em 0.5em 1em 1em;
+
+	/* Global values */
+	scroll-margin: inherit;
+	scroll-margin: initial;
+	scroll-margin: revert;
+	scroll-margin: revert-layer;
+	scroll-margin: unset;
+}
+
+.ts-css-scroll-snap-scroll-margin-block {
+	scroll-margin-block: 10px;
+	scroll-margin-block: 1em 0.5em;
+
+	/* Global values */
+	scroll-margin-block: inherit;
+	scroll-margin-block: initial;
+	scroll-margin-block: revert;
+	scroll-margin-block: revert-layer;
+	scroll-margin-block: unset;
+}
+
+.ts-css-scroll-snap-scroll-margin-block-end {
+	/* <length> values */
+	scroll-margin-block-end: 10px;
+	scroll-margin-block-end: 1em;
+
+	/* Global values */
+	scroll-margin-block-end: inherit;
+	scroll-margin-block-end: initial;
+	scroll-margin-block-end: revert;
+	scroll-margin-block-end: revert-layer;
+	scroll-margin-block-end: unset;
+}
+
+/* skipping other scroll-margin-* properties for now */
+
+.ts-css-scroll-snap-scroll-padding {
+	/* Keyword values */
+	scroll-padding: auto;
+
+	/* <length> values */
+	scroll-padding: 10px;
+	scroll-padding: 1em 0.5em 1em 1em;
+	scroll-padding: 10%;
+
+	/* Global values */
+	scroll-padding: inherit;
+	scroll-padding: initial;
+	scroll-padding: revert;
+	scroll-padding: revert-layer;
+	scroll-padding: unset;
+}
+
+.ts-css-scroll-snap-scroll-padding-block {
+	/* Keyword values */
+	scroll-padding-block: auto;
+
+	/* <length> values */
+	scroll-padding-block: 10px;
+	scroll-padding-block: 1em 0.5em;
+	scroll-padding-block: 10%;
+
+	/* Global values */
+	scroll-padding-block: inherit;
+	scroll-padding-block: initial;
+	scroll-padding-block: revert;
+	scroll-padding-block: revert-layer;
+	scroll-padding-block: unset;
+}
+
+.ts-css-scroll-snap-scroll-padding-block-end {
+	/* Keyword values */
+	scroll-padding-block-end: auto;
+
+	/* <length> values */
+	scroll-padding-block-end: 10px;
+	scroll-padding-block-end: 1em;
+	scroll-padding-block-end: 10%;
+
+	/* Global values */
+	scroll-padding-block-end: inherit;
+	scroll-padding-block-end: initial;
+	scroll-padding-block-end: revert;
+	scroll-padding-block-end: revert-layer;
+	scroll-padding-block-end: unset;
+}
+
+.ts-css-scroll-snap-scroll-snap-align {
+	/* Single keyword value */
+	scroll-snap-align: none;
+	scroll-snap-align: center;
+	scroll-snap-align: start;
+	scroll-snap-align: end;
+
+	/* Two keyword values */
+	scroll-snap-align: start end;
+	scroll-snap-align: end center;
+	scroll-snap-align: center start;
+
+	/* Global values */
+	scroll-snap-align: inherit;
+	scroll-snap-align: initial;
+	scroll-snap-align: revert;
+	scroll-snap-align: revert-layer;
+	scroll-snap-align: unset;
+}
+
+.ts-css-scroll-snap-scroll-snap-stop {
+	scroll-snap-stop: normal;
+	scroll-snap-stop: always;
+}
+
+.ts-css-scroll-snap-scroll-snap-type {
+	scroll-snap-type: none;
+	scroll-snap-type: x;
+	scroll-snap-type: y;
+	scroll-snap-type: block;
+	scroll-snap-type: inline;
+	scroll-snap-type: both;
+	scroll-snap-type: x mandatory;
+	scroll-snap-type: y mandatory;
+	scroll-snap-type: both mandatory;
+}
+
+/**
  * CSS Values and Units Module Level 4
  */
 .ts-css-values-and-units-clamp {
@@ -372,32 +502,6 @@
 	mask-image: revert;
 	mask-image: revert-layer;
 	mask-image: unset;
-}
-
-.scroll-margin {
-	/* <length> values */
-	scroll-margin: 10px;
-	scroll-margin: 1em 0.5em 1em 1em;
-
-	/* Global values */
-	scroll-margin: inherit;
-	scroll-margin: initial;
-	scroll-margin: revert;
-	scroll-margin: revert-layer;
-	scroll-margin: unset;
-}
-
-.scroll-margin-bottom {
-	/* <length> values */
-	scroll-margin-bottom: 10px;
-	scroll-margin-bottom: 1em;
-
-	/* Global values */
-	scroll-margin-bottom: inherit;
-	scroll-margin-bottom: initial;
-	scroll-margin-bottom: revert;
-	scroll-margin-bottom: revert-layer;
-	scroll-margin-bottom: unset;
 }
 
 .color {
