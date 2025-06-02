@@ -47,8 +47,8 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * CSS-wide value keywords
-	 * @see https://www.w3.org/TR/2016/CR-css-values-3-20160929/#common-keywords
+	 * Add revert-layer to the list of CSS-wide value keywords
+	 * @inheritDoc
 	 */
 	public function cssWideKeywords(): Matcher {
 		return $this->cache[__METHOD__]
@@ -58,98 +58,47 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * CSS-color extension enabling RGBA
-	 * @see https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
+	 * Add alpha support to hex-color
 	 */
-	public function color(): Matcher {
+	public function colorHex(): TokenMatcher {
 		return $this->cache[__METHOD__]
-			??= new Alternative( [
-				parent::color(),
-				new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
-					return preg_match( '/^([0-9a-f]{4})|([0-9a-f]{8})$/i', $t->value() );
-				} ),
-				new FunctionMatcher( 'var', new CustomPropertyMatcher() )
-			] );
+			??= new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
+				return preg_match( '/^([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $t->value() );
+			} );
 	}
 
 	/**
-	 * Adds `var` support to color functions
+	 * Partially implements CSS Color Module Level 4 and 5
+	 *
+	 * TODO: Add support for modern syntax
+	 * TODO: Add new color functions
+	 * TODO: Tighten up relative color syntax
+	 *
 	 * @return Matcher|Matcher[]
 	 */
 	protected function colorFuncs() {
 		if ( !isset( $this->cache[__METHOD__] ) ) {
-			$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
-			if ( !$this->varEnabled ) {
-				$var = new NothingMatcher();
-			}
+			// Allow variables in color functions
+			$var = $this->varEnabled
+				? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
+				: new NothingMatcher();
 
-			// This needs to be duplicated here from parent::color() as this function calls colorFuncs
-			$colorNames = new Alternative( [
-				new KeywordMatcher( [
-					// Basic colors
-					'aqua', 'black', 'blue', 'fuchsia', 'gray', 'green',
-					'lime', 'maroon', 'navy', 'olive', 'purple', 'red',
-					'silver', 'teal', 'white', 'yellow',
-					// Extended colors
-					'aliceblue', 'antiquewhite', 'aquamarine', 'azure',
-					'beige', 'bisque', 'blanchedalmond', 'blueviolet', 'brown',
-					'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
-					'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
-					'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray',
-					'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
-					'darkolivegreen', 'darkorange', 'darkorchid', 'darkred',
-					'darksalmon', 'darkseagreen', 'darkslateblue',
-					'darkslategray', 'darkslategrey', 'darkturquoise',
-					'darkviolet', 'deeppink', 'deepskyblue', 'dimgray',
-					'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite',
-					'forestgreen', 'gainsboro', 'ghostwhite', 'gold',
-					'goldenrod', 'greenyellow', 'grey', 'honeydew', 'hotpink',
-					'indianred', 'indigo', 'ivory', 'khaki', 'lavender',
-					'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue',
-					'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
-					'lightgray', 'lightgreen', 'lightgrey', 'lightpink',
-					'lightsalmon', 'lightseagreen', 'lightskyblue',
-					'lightslategray', 'lightslategrey', 'lightsteelblue',
-					'lightyellow', 'limegreen', 'linen', 'magenta',
-					'mediumaquamarine', 'mediumblue', 'mediumorchid',
-					'mediumpurple', 'mediumseagreen', 'mediumslateblue',
-					'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
-					'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
-					'navajowhite', 'oldlace', 'olivedrab', 'orange',
-					'orangered', 'orchid', 'palegoldenrod', 'palegreen',
-					'paleturquoise', 'palevioletred', 'papayawhip',
-					'peachpuff', 'peru', 'pink', 'plum', 'powderblue',
-					'rosybrown', 'royalblue', 'saddlebrown', 'salmon',
-					'sandybrown', 'seagreen', 'seashell', 'sienna', 'skyblue',
-					'slateblue', 'slategray', 'slategrey', 'snow',
-					'springgreen', 'steelblue', 'tan', 'thistle', 'tomato',
-					'turquoise', 'violet', 'wheat', 'whitesmoke',
-					'yellowgreen',
-					// Other keywords. Intentionally omitting the deprecated system colors.
-					'transparent', 'currentColor',
-				] ),
-				$var
-			] );
+			$i = new Alternative( [ $this->integer(), $var ] );
+			$n = new Alternative( [ $this->number(), $var ] );
+			$p = new Alternative( [ $this->percentage(), $var ] );
 
-			$i = $this->integer();
-			$iVar = new Alternative( [ $var, $i ] );
+			$colorWord = new Alternative( [ $this->colorWords(), $var ] );
 
-			$n = $this->number();
-			$nVar = new Alternative( [ $var, $n ] );
-
-			$p = $this->percentage();
-			$pVar = new Alternative( [ $var, $p ] );
-
-			$channelNames = new KeywordMatcher( [
+			$channelName = new KeywordMatcher( [
 				'r', 'g', 'b',
 				'x', 'y', 'z',
 				'h', 's', 'l',
 			] );
 
-			$channelCalc = $this->calc( $channelNames, 'channels' );
+			$channelCalc = $this->calc( $channelName, 'channels' );
 
-			$channelValues = new Alternative( [
-				$channelNames,
+			$channelValue = new Alternative( [
+				$channelName,
 				$var,
 				$this->number(),
 				$this->percentage(),
@@ -158,10 +107,10 @@ class MatcherFactoryExtender extends MatcherFactory {
 			] );
 
 			$relativeKeyWordMatcher = Quantifier::optional(
-				new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorNames ] )
+				new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorWord ] )
 			);
 			$alphaMatcher = Quantifier::optional(
-				new Juxtaposition( [ new DelimMatcher( '/' ), new Alternative( [ $nVar, $p ] ) ] ) );
+				new Juxtaposition( [ new DelimMatcher( '/' ), new Alternative( [ $n, $p ] ) ] ) );
 
 			$colorSpace = new KeywordMatcher( [
 				'srgb', 'srgb-linear', 'display-p3', 'a98-rgb',
@@ -172,10 +121,9 @@ class MatcherFactoryExtender extends MatcherFactory {
 				new FunctionMatcher( 'rgb', new Juxtaposition( [
 					$relativeKeyWordMatcher,
 					new Alternative( [
-						Quantifier::hash( $iVar, 3, 3 ),
-						Quantifier::hash( $pVar, 3, 3 ),
-						Quantifier::hash( $var, 1, 3 ),
-						Quantifier::count( $channelValues, 1, 3 ),
+						Quantifier::hash( $i, 3, 3 ),
+						Quantifier::hash( $p, 3, 3 ),
+						Quantifier::count( $channelValue, 1, 3 ),
 					] ),
 					$alphaMatcher
 				] ) ),
@@ -183,10 +131,10 @@ class MatcherFactoryExtender extends MatcherFactory {
 				new FunctionMatcher( 'rgba', new Juxtaposition( [
 					$relativeKeyWordMatcher,
 					new Alternative( [
-						new Juxtaposition( [ $iVar, $iVar, $iVar, $nVar ], true ),
-						new Juxtaposition( [ $pVar, $pVar, $pVar, $nVar ], true ),
+						new Juxtaposition( [ $i, $i, $i, $n ], true ),
+						new Juxtaposition( [ $p, $p, $p, $n ], true ),
 						Quantifier::hash( $var, 1, 4 ),
-						new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $nVar ], true ),
+						new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $n ], true ),
 					] ),
 					$alphaMatcher
 				] ) ),
@@ -194,9 +142,8 @@ class MatcherFactoryExtender extends MatcherFactory {
 				new FunctionMatcher( 'hsl', new Juxtaposition( [
 					$relativeKeyWordMatcher,
 					new Alternative( [
-						new Juxtaposition( [ $nVar, $pVar, $pVar ], true ),
-						Quantifier::hash( $var, 1, 3 ),
-						Quantifier::count( $channelValues, 1, 3 ),
+						new Juxtaposition( [ $n, $p, $p ], true ),
+						Quantifier::count( $channelValue, 1, 3 ),
 					] ),
 					$alphaMatcher
 				] ) ),
@@ -204,8 +151,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 				new FunctionMatcher( 'hsla', new Juxtaposition( [
 					$relativeKeyWordMatcher,
 					new Alternative( [
-						new Juxtaposition( [ $nVar, $pVar, $pVar, $nVar ], true ),
-						Quantifier::hash( $var, 1, 4 ),
+						new Juxtaposition( [ $n, $p, $p, $n ], true ),
 					] ),
 					$alphaMatcher
 				] ) ),
@@ -214,16 +160,16 @@ class MatcherFactoryExtender extends MatcherFactory {
 					// Absolute
 					new Juxtaposition( [
 						$colorSpace,
-						Quantifier::count( $channelValues, 3, 3 ),
+						Quantifier::count( $channelValue, 3, 3 ),
 						$alphaMatcher
 					] ),
 
 					// Relative
 					new Juxtaposition( [
 						new KeywordMatcher( [ 'from' ] ),
-						$colorNames,
+						$colorWord,
 						$colorSpace,
-						Quantifier::count( $channelValues, 3, 3 ),
+						Quantifier::count( $channelValue, 3, 3 ),
 						$alphaMatcher
 					] ),
 				] ) ),

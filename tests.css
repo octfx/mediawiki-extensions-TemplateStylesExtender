@@ -384,7 +384,9 @@
 	width: clamp(100px, 100%, 200px);
 }
 
-/* In-production used CSS declarations, mostly taken from Star Citizen Tools */
+/**
+ * Uncategorized
+ */
 .item {
 	left: calc(var(--var1) / var(--var2));
 	left: calc(var(--var1) / var(--var2) * 100%);
@@ -401,7 +403,6 @@
 	grid-row: span 8 / auto;
 }
 
-/*
 .color {
 	background-color: rgb(from red r g 200);
 	color: rgb(100, 100, 100);
@@ -431,4 +432,3 @@
 			0.66
 	);
 }
-*/
