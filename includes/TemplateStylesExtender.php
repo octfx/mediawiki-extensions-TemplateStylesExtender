@@ -93,12 +93,18 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Adds the ruby-position and ruby-align matcher
+	 * Implements CSS Ruby Module Level 1
 	 * T277755
 	 */
-	public function addRuby( StylePropertySanitizerExtender $propertySanitizer ): void {
+	public function addCssRuby1( StylePropertySanitizerExtender $propertySanitizer ): void {
 		try {
 			$propertySanitizer->addKnownProperties( [
+				'ruby-align' => new KeywordMatcher( [
+					'start',
+					'center',
+					'space-between',
+					'space-around',
+				] ),
 				'ruby-position' => new Alternative( [
 					UnorderedGroup::someOf( [
 						new KeywordMatcher( [ 'alternate' ] ),
@@ -108,15 +114,6 @@ class TemplateStylesExtender {
 						] ),
 					] ),
 					new KeywordMatcher( [ 'inter-character' ] ),
-				] )
-			] );
-
-			$propertySanitizer->addKnownProperties( [
-				'ruby-align' => new KeywordMatcher( [
-					'start',
-					'center',
-					'space-between',
-					'space-around',
 				] )
 			] );
 		} catch ( InvalidArgumentException $e ) {
