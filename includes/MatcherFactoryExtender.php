@@ -165,12 +165,14 @@ class MatcherFactoryExtender extends MatcherFactory {
 			$this->createRelativeColorChannel( 'w', $nPNone ),
 			$this->createRelativeColorChannel( 'b', $nPNone ),
 		];
-		$relativeLabComponents = [ // For lab and oklab
+		// For lab and oklab
+		$relativeLabComponents = [
 			$this->createRelativeColorChannel( 'l', $nPNone ),
 			$this->createRelativeColorChannel( 'a', $nPNone ),
 			$this->createRelativeColorChannel( 'b', $nPNone ),
 		];
-		$relativeLchComponents = [ // For lch and oklch
+		// For lch and oklch
+		$relativeLchComponents = [
 			$this->createRelativeColorChannel( 'l', $nPNone ),
 			$this->createRelativeColorChannel( 'c', $nPNone ),
 			$this->createRelativeColorChannel( 'h', $hueNone ),
@@ -313,7 +315,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @param Matcher $optionalAlpha
 	 * @return Juxtaposition
 	 */
-	protected function buildStandardColorSyntax(array $components, Matcher $optionalAlpha): Juxtaposition {
+	protected function buildStandardColorSyntax( array $components, Matcher $optionalAlpha ): Juxtaposition {
 		return new Juxtaposition( [ ...$components, $optionalAlpha ] );
 	}
 
