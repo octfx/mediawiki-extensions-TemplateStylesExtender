@@ -179,6 +179,35 @@ class MatcherFactoryExtender extends MatcherFactory {
 		return $this->cache[__METHOD__];
 	}
 
+	/** @inheritDoc */
+	public function resolution(): Matcher {
+		return $this->cache[__METHOD__]
+			??= new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
+				return preg_match( '/^(dpi|dpcm|dppx|x)$/i', $t->unit() );
+			} );
+	}
+
+	/**
+	 * Partially implements CSS Image Module Level 4
+	 */
+	public function image(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		$image = parent::image();
+
+		$this->cache[__METHOD__] = new Alternative( [
+			$image,
+			new FunctionMatcher( 'image-set', Quantifier::hash( new Juxtaposition( [
+				new Alternative( [ $image, $this->urlstring( 'image' ) ] ),
+				new Alternative( [ $this->resolution(), new FunctionMatcher( 'type', $this->string() ) ] )
+			] ) ) ),
+		] );
+
+		return $this->cache[__METHOD__];
+	}
+
 	/**
 	 * Wraps the parent `calc` to allow using variables in the $typeMatcher
 	 *
