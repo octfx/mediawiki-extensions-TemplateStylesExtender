@@ -213,6 +213,28 @@
 }
 
 /**
+ * CSS Images Module Level 4
+ */
+.ts-css-images-4-image-set {
+	/* Select image based on resolution */
+	background-image: image-set('image1.jpg' 1x, 'image2.jpg' 2x);
+
+	background-image: image-set(url('image1.jpg') 1x, url('image2.jpg') 2x);
+
+	/* Select gradient based on resolution */
+	background-image: image-set(
+		linear-gradient(blue, white) 1x,
+		linear-gradient(blue, green) 2x
+	);
+
+	/* Select image based on supported formats */
+	background-image: image-set(
+		url('image1.avif') type('image/avif'),
+		url('image2.jpg') type('image/jpeg')
+	);
+}
+
+/**
  * CSS Ruby Annotation Layout Module Level 1
  */
 .ts-css-ruby-position {
