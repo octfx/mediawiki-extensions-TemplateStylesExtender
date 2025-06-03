@@ -83,96 +83,67 @@ class MatcherFactoryExtender extends MatcherFactory {
 				? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 				: new NothingMatcher();
 
-			$i = new Alternative( [ $this->integer(), $var ] );
+			// CSS data types
 			$n = new Alternative( [ $this->number(), $var ] );
 			$p = new Alternative( [ $this->percentage(), $var ] );
+			$a = new Alternative( [ $this->angle(), $var ] );
+			$alphaValue = new Alternative( [ $n, $p ] );
+			$hue = new Alternative( [ $n, $a ] );
 
-			$colorWord = new Alternative( [ $this->colorWords(), $var ] );
+			$none = new KeywordMatcher( [ 'none' ] );
+			$nPNone = new Alternative( [ $n, $p, $none ] );
+			$hueNone = new Alternative( [ $hue, $none ] );
 
-			$channelName = new KeywordMatcher( [
-				'r', 'g', 'b',
-				'x', 'y', 'z',
-				'h', 's', 'l',
+			$colorSpaceParams = new Alternative( [
+				// <predefined-rgb-params>
+				new Juxtaposition( [
+					new KeywordMatcher( [
+						'srgb', 'srgb-linear', 'display-p3', 'a98-rgb', 'prophoto-rgb',
+						'rec2020', 'rec2100-pq', 'rec2100-hlg', 'rec2100-linear'
+					] ),
+					Quantifier::count( $nPNone, 3, 3 ),
+				] ),
+				// <xyz-params> 
+				new Juxtaposition( [
+					new KeywordMatcher( [ 'xyz', 'xyz-d50', 'xyz-d65' ] ),
+					Quantifier::count( $nPNone, 3, 3 ),
+				] ),
 			] );
 
-			$channelCalc = $this->calc( $channelName, 'channels' );
+			// $colorWord = new Alternative( [ $this->colorWords(), $var ] );
+			$optionalAlpha = Quantifier::optional( new Juxtaposition( [ new DelimMatcher( '/' ), new Alternative( [ $alphaValue, $none ] ) ] ) );
+			$optionalLegacyAlpha = Quantifier::optional( $alphaValue );
 
-			$channelValue = new Alternative( [
-				$channelName,
-				$var,
-				$this->number(),
-				$this->percentage(),
-				$this->integer(),
-				$channelCalc,
+			// Color functions
+			$rgb = new Alternative( [
+				// <legacy-rgb-syntax>
+				new Juxtaposition( [ Quantifier::hash( $p, 3, 3 ), $optionalLegacyAlpha ], true ),
+				new Juxtaposition( [ Quantifier::hash( $n, 3, 3 ), $optionalLegacyAlpha ], true ),
+				// <modern-rgb-syntax>
+				new Juxtaposition( [ Quantifier::count( $nPNone, 3, 3 ), $optionalAlpha ] ),
 			] );
-
-			$relativeKeyWordMatcher = Quantifier::optional(
-				new Juxtaposition( [ new KeywordMatcher( [ 'from' ] ), $colorWord ] )
-			);
-			$alphaMatcher = Quantifier::optional(
-				new Juxtaposition( [ new DelimMatcher( '/' ), new Alternative( [ $n, $p ] ) ] ) );
-
-			$colorSpace = new KeywordMatcher( [
-				'srgb', 'srgb-linear', 'display-p3', 'a98-rgb',
-				'prophoto-rgb', 'rec2020', 'xyz', 'xyz-d50', 'xyz-d65'
+			$hsl = new Alternative( [
+				// <legacy-hsl-syntax>
+				new Juxtaposition( [ $hue, $p, $p, $optionalLegacyAlpha ], true ),
+				// <modern-hsl-syntax>
+				new Juxtaposition( [ $hueNone, $nPNone, $nPNone, $optionalAlpha ] ),
 			] );
+			$hwb = new Juxtaposition( [ $hueNone, $nPNone, $nPNone, $optionalAlpha ] );
+			$lab = new Juxtaposition( [ $nPNone, $nPNone, $nPNone, $optionalAlpha ] );
+			$lch = new Juxtaposition( [ $nPNone, $nPNone, $hueNone, $optionalAlpha ] );
+			$color = new Juxtaposition( [ $colorSpaceParams, $optionalAlpha ] );
 
 			$this->cache[__METHOD__] = [
-				new FunctionMatcher( 'rgb', new Juxtaposition( [
-					$relativeKeyWordMatcher,
-					new Alternative( [
-						Quantifier::hash( $i, 3, 3 ),
-						Quantifier::hash( $p, 3, 3 ),
-						Quantifier::count( $channelValue, 1, 3 ),
-					] ),
-					$alphaMatcher
-				] ) ),
-
-				new FunctionMatcher( 'rgba', new Juxtaposition( [
-					$relativeKeyWordMatcher,
-					new Alternative( [
-						new Juxtaposition( [ $i, $i, $i, $n ], true ),
-						new Juxtaposition( [ $p, $p, $p, $n ], true ),
-						Quantifier::hash( $var, 1, 4 ),
-						new Juxtaposition( [ Quantifier::hash( $var, 1, 3 ), $n ], true ),
-					] ),
-					$alphaMatcher
-				] ) ),
-
-				new FunctionMatcher( 'hsl', new Juxtaposition( [
-					$relativeKeyWordMatcher,
-					new Alternative( [
-						new Juxtaposition( [ $n, $p, $p ], true ),
-						Quantifier::count( $channelValue, 1, 3 ),
-					] ),
-					$alphaMatcher
-				] ) ),
-
-				new FunctionMatcher( 'hsla', new Juxtaposition( [
-					$relativeKeyWordMatcher,
-					new Alternative( [
-						new Juxtaposition( [ $n, $p, $p, $n ], true ),
-					] ),
-					$alphaMatcher
-				] ) ),
-
-				new FunctionMatcher( 'color', new Alternative( [
-					// Absolute
-					new Juxtaposition( [
-						$colorSpace,
-						Quantifier::count( $channelValue, 3, 3 ),
-						$alphaMatcher
-					] ),
-
-					// Relative
-					new Juxtaposition( [
-						new KeywordMatcher( [ 'from' ] ),
-						$colorWord,
-						$colorSpace,
-						Quantifier::count( $channelValue, 3, 3 ),
-						$alphaMatcher
-					] ),
-				] ) ),
+				new FunctionMatcher( 'rgb', $rgb ),
+				new FunctionMatcher( 'rgba', $rgb ),
+				new FunctionMatcher( 'hsl', $hsl ),
+				new FunctionMatcher( 'hsla', $hsl ),
+				new FunctionMatcher( 'hwb', $hwb ),
+				new FunctionMatcher( 'lab', $lab ),
+				new FunctionMatcher( 'lch', $lch ),
+				new FunctionMatcher( 'oklab', $lab ),
+				new FunctionMatcher( 'oklch', $lch ),
+				new FunctionMatcher( 'color', $color )
 			];
 		}
 

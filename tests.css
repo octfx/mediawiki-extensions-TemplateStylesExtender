@@ -95,11 +95,141 @@
 }
 
 /**
- * CSS Color Module Level 4
+ * CSS Color Module Level 4/5
  */
-.ts-css-color-4-hex-color {
+.ts-css-color-hex-color {
 	background: #f09a;
 	background: #ff0099aa;
+}
+
+.ts-css-color-rgb {
+	background: rgb(255, 0, 153);
+	background: rgb(255 0 153 / 0.66);
+	background: rgb(255 0 153 / 66%);
+	background: rgb(100% 0% 50%);
+
+	/* Absolute values */
+	background: rgb(255 255 255);
+	background: rgb(255 255 255 / 50%);
+
+	/* Relative values */
+	/*
+	background: rgb(from green r g b / 0.5);
+	background: rgb(from #0000FF calc(r + 40) calc(g + 40) b);
+	background: rgb(from hwb(120deg 10% 20%) r g calc(b + 200));
+	*/
+
+	/* Legacy 'rgba()' alias */
+	background: rgba(0 255 255);
+
+	/* Legacy format */
+	background: rgb(0, 255, 255);
+	background: rgb(0, 255, 255, 50%);
+}
+
+.ts-css-color-hsl {
+	/* Absolute values */
+	background: hsl(120deg 75% 25%);
+	background: hsl(120 75 25); /* deg and % units are optional */
+	background: hsl(120deg 75% 25% / 60%);
+	background: hsl(none 75% 25%);
+
+	/* Relative values */
+	/*
+	background: hsl(from green h s l / 0.5);
+	background: hsl(from #0000FF h s calc(l + 20));
+	background: hsl(from rgb(200 0 0) calc(h + 30) s calc(l + 30));
+	*/
+
+	/* Legacy 'hsla()' alias */
+	background: hsla(120deg 75% 25% / 60%);
+
+	/* Legacy format */
+	background: hsl(120, 75%, 25%);
+	background: hsl(120deg, 75%, 25%, 0.8);
+}
+
+.ts-css-color-hwb {
+	/* Absolute values */
+	background: hwb(194 0% 0%);
+	background: hwb(194 0% 0% / 0.5);
+
+	/* Relative values */
+	/*
+	background: hwb(from green h w b / 0.5);
+	background: hwb(from #0000FF h calc(w + 30) b);
+	background: hwb(from lch(40% 70 240deg) h w calc(b - 30));
+	*/
+}
+
+.ts-css-color-lab {
+	/* Absolute values */
+	background: lab(29.2345% 39.3825 20.0664);
+	background: lab(52.2345% 40.1645 59.9971);
+	background: lab(52.2345% 40.1645 59.9971 / 0.5);
+
+	/* Relative values */
+	/*
+	background: lab(from green l a b / 0.5);
+	background: lab(from #0000FF calc(l + 10) a b);
+	background: lab(from hsl(180 100% 50%) calc(l - 10) a b);
+	*/
+}
+
+.ts-css-color-lch {
+	/* Absolute values */
+	background: lch(29.2345% 44.2 27);
+	background: lch(52.2345% 72.2 56.2);
+	background: lch(52.2345% 72.2 56.2 / 0.5);
+
+	/* Relative values */
+	/*
+	background: lch(from green l c h / 0.5);
+	background: lch(from #0000FF calc(l + 10) c h);
+	background: lch(from hsl(180 100% 50%) calc(l - 10) c h);
+	background: lch(from var(--aColorValue) l c h / calc(alpha - 0.1));
+	*/
+}
+
+.ts-css-color-oklab {
+	/* Absolute values */
+	background: oklab(40.1% 0.1143 0.045);
+	background: oklab(59.69% 0.1007 0.1191);
+	background: oklab(59.69% 0.1007 0.1191 / 0.5);
+
+	/* Relative values */
+	/*
+	background: oklab(from green l a b / 0.5);
+	background: oklab(from #0000FF calc(l + 0.1) a b / calc(alpha * 0.9));
+	background: oklab(from hsl(180 100% 50%) calc(l - 0.1) a b);
+	*/
+}
+
+.ts-css-color-oklch {
+	/* Absolute values */
+	background: oklch(40.1% 0.123 21.57);
+	background: oklch(59.69% 0.156 49.77);
+	background: oklch(59.69% 0.156 49.77 / 0.5);
+
+	/* Relative values */
+	/*
+	background: oklch(from green l c h / 0.5);
+	background: oklch(from #0000FF calc(l + 0.1) c h);
+	background: oklch(from hsl(180 100% 50%) calc(l - 0.1) c h);
+	background: oklch(from var(--aColor) l c h / calc(alpha - 0.1));
+	*/
+}
+
+.ts-css-color-color {
+	/* Absolute values */
+	background: color(display-p3 1 0.5 0);
+	background: color(display-p3 1 0.5 0 / 0.5);
+
+	/* Relative values */
+	/*
+	background: color(from green srgb r g b / 0.5);
+	background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35));
+	*/
 }
 
 /**
@@ -403,6 +533,7 @@
 	grid-row: span 8 / auto;
 }
 
+/*
 .color {
 	background-color: rgb(from red r g 200);
 	color: rgb(100, 100, 100);
@@ -432,3 +563,4 @@
 			0.66
 	);
 }
+*/
