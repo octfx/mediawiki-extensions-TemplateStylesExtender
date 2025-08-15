@@ -37,7 +37,7 @@
 		}
 	},
 	"ConfigRegistry": {
-		"TemplateStylesExtender": "GlobalVarConfig::newInstance"
+		"TemplateStylesExtender": "MediaWiki\\Config\\GlobalVarConfig::newInstance"
 	},
 	"MessagesDirs": {
 		"TemplateStylesExtender": [
