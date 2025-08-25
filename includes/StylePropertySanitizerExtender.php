@@ -197,10 +197,20 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			$lineNamesO,
 		] );
 
+		$subgrid = new Juxtaposition( [ $lineNamesO, new KeywordMatcher( 'subgrid' ), $lineNamesO ] );
+
 		$props['grid-template-columns'] = new Alternative( [
-			new KeywordMatcher( 'none' ), $trackList, $autoTrackList
+			new KeywordMatcher( [ 'none', 'masonry' ] ),
+			$trackList,
+			$autoTrackList,
+			$subgrid,
 		] );
 		$props['grid-template-rows'] = $props['grid-template-columns'];
+
+		$props['masonry-auto-flow'] = new Juxtaposition( [
+			new KeywordMatcher( [ 'pack', 'next' ] ),
+			Quantifier::optional( new KeywordMatcher( 'definite-first' ) )
+		] );
 
 		$this->cache[__METHOD__] = $props;
 		return $props;
