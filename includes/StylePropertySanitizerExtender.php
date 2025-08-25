@@ -39,7 +39,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private bool $varEnabled = false;
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCss1Masking = false;
-	private static $extendedCss1Grid = false;
+	private static $extendedCss3Grid = false;
 
 	/**
 	 * @param MatcherFactory $matcherFactory
@@ -115,16 +115,16 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 *
 	 * Allow variables in grid-template-columns and grid-template-rows
 	 */
-	protected function cssGrid1( MatcherFactory $matcherFactory ) {
+	protected function cssGrid3( MatcherFactory $matcherFactory ) {
 		// @codeCoverageIgnoreStart
-		if ( self::$extendedCss1Grid && isset( $this->cache[__METHOD__] ) ) {
+		if ( self::$extendedCss3Grid && isset( $this->cache[__METHOD__] ) ) {
 			return $this->cache[__METHOD__];
 		}
 		// @codeCoverageIgnoreEnd
 
 		$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
 
-		$props = parent::cssGrid1( $matcherFactory );
+		$props = parent::cssGrid3( $matcherFactory );
 
 		$comma = $matcherFactory->comma();
 		$customIdent = $matcherFactory->customIdent( [ 'span' ] );
