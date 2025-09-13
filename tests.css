@@ -25,6 +25,32 @@
 }
 
 /**
+ * CSS Grid Module Level 2
+ */
+.ts-css-grid-2 {
+	grid-template-columns: subgrid;
+	grid-template-columns: [col-start] subgrid;
+	grid-template-columns: subgrid [col-end];
+	grid-template-columns: [col-start] subgrid [col-end];
+	grid-template-rows: subgrid;
+	grid-template-rows: [row-start] subgrid;
+	grid-template-rows: subgrid [row-end];
+	grid-template-rows: [row-start] subgrid [row-end];
+}
+
+/**
+ * CSS Grid Module Level 3
+ */
+.ts-css-grid-3 {
+	grid-template-columns: masonry;
+	grid-template-rows: masonry;
+	masonry-auto-flow: pack;
+	masonry-auto-flow: next;
+	masonry-auto-flow: pack definite-first;
+	masonry-auto-flow: next definite-first;
+}
+
+/**
  * CSS Basic User Interface Module Level 4
  */
 .ts-css-basic-user-interface-pointer-events {
