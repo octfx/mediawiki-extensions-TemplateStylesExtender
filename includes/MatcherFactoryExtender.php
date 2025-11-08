@@ -145,7 +145,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 			$optionalAlpha,
 			Quantifier::optional( new Juxtaposition( [
 				new DelimMatcher( '/' ),
-				$this->calc( new KeywordMatcher( [ 'alpha' ] ), 'number' )
+				$this->mathFunction( new KeywordMatcher( [ 'alpha' ] ) )
 			] ) )
 		] );
 
@@ -323,18 +323,16 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * Helper to create a relative color channel matcher.
 	 * @param string $channel Character representing the channel (e.g., 'r', 'h')
 	 * @param Matcher $typeMatcher Matcher for the channel's type (e.g., $nPNone, $hueNone)
-	 * @param string $calcType Type for calc() function, defaults to 'number'
 	 * @return Alternative
 	 */
 	protected function createRelativeColorChannel(
 		string $channel,
 		Matcher $typeMatcher,
-		string $calcType = 'number'
 	): Alternative {
 		return new Alternative( [
 			new KeywordMatcher( [ $channel ] ),
 			$typeMatcher,
-			$this->calc( new KeywordMatcher( [ $channel ] ), $calcType )
+			$this->mathFunction( new KeywordMatcher( [ $channel ] ) )
 		] );
 	}
 
@@ -359,21 +357,20 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * Wraps the parent `calc` to allow using variables in the $typeMatcher
+	 * Wraps the parent `mathFunction` to allow using variables in the $typeMatcher
 	 *
 	 * @param Matcher $typeMatcher
-	 * @param string $type
 	 * @return Matcher
 	 */
-	public function calc( Matcher $typeMatcher, $type ) {
+	public function mathFunction( Matcher $typeMatcher ) {
 		if ( !$this->varEnabled ) {
-			return parent::calc( $typeMatcher, $type );
+			return parent::mathFunction( $typeMatcher );
 		}
 
-		return parent::calc( new Alternative( [
+		return parent::mathFunction( new Alternative( [
 			$typeMatcher,
 			new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-		] ), $type );
+		] ) );
 	}
 
 	/**
