@@ -59,7 +59,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	/**
 	 * @inheritDoc
 	 *
-	 * Partly implement clamp
+	 * Partly implement clamp, min and max
 	 */
 	protected function getSizingAdditions( MatcherFactory $matcherFactory ) {
 		// @codeCoverageIgnoreStart
@@ -68,9 +68,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		}
 		// @codeCoverageIgnoreEnd
 
-		$props = parent::getSizingAdditions( $matcherFactory );
-
-		$props[] = new FunctionMatcher( 'clamp', Quantifier::hash( new Alternative( [
+		$calcVal = new Alternative( [
 			$matcherFactory->length(),
 			$matcherFactory->lengthPercentage(),
 			$matcherFactory->frequency(),
@@ -79,7 +77,19 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			$matcherFactory->time(),
 			$matcherFactory->number(),
 			$matcherFactory->integer(),
-		] ), 3, 3 ) );
+		] );
+
+		$props = parent::getSizingAdditions( $matcherFactory );
+
+		$props[] = new FunctionMatcher( 'clamp', Quantifier::hash( $calcVal, 3, 3 ) );
+
+		$props[] = new FunctionMatcher( function ( $name ) {
+			$funcNames = [
+				'min',
+				'max'
+			];
+			return in_array( $name, $funcNames );
+		}, Quantifier::hash( $calcVal ) );
 
 		$this->cache[__METHOD__] = $props;
 
