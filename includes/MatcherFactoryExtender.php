@@ -37,6 +37,34 @@ use Wikimedia\CSS\Objects\Token;
 class MatcherFactoryExtender extends MatcherFactory {
 
 	private bool $varEnabled = false;
+	private MatcherFactory $baseMatcherFactory;
+
+	/**
+	 * @param MatcherFactory $baseMatcherFactory
+	 */
+	public function __construct( MatcherFactory $baseMatcherFactory ) {
+		$this->baseMatcherFactory = $baseMatcherFactory;
+	}
+
+	/**
+	 * Preserve URL validation supplied by TemplateStyles.
+	 *
+	 * @param string $type
+	 * @return Matcher
+	 */
+	public function urlstring( $type ): Matcher {
+		return $this->baseMatcherFactory->urlstring( $type );
+	}
+
+	/**
+	 * Preserve URL validation supplied by TemplateStyles.
+	 *
+	 * @param string $type
+	 * @return Matcher
+	 */
+	public function url( $type ): Matcher {
+		return $this->baseMatcherFactory->url( $type );
+	}
 
 	/**
 	 * @param bool $varEnabled

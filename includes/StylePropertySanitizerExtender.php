@@ -36,6 +36,15 @@ use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
+	private const EXTERNAL_RESOURCE_FUNCTIONS = [
+		'attr',
+		'image',
+		'image-set',
+		'-webkit-image-set',
+		'src',
+		'url',
+	];
+
 	private bool $varEnabled = false;
 	private static $extendedCssSizingAdditions = false;
 	private static $extendedCss1Masking = false;
@@ -45,7 +54,11 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 * @param MatcherFactory $matcherFactory
 	 */
 	public function __construct( MatcherFactory $matcherFactory ) {
-		parent::__construct( new MatcherFactoryExtender() );
+		$extendedMatcherFactory = $matcherFactory instanceof MatcherFactoryExtender
+			? $matcherFactory
+			: new MatcherFactoryExtender( $matcherFactory );
+
+		parent::__construct( $extendedMatcherFactory );
 	}
 
 	/**
@@ -237,6 +250,20 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		// Not a CSS custom property
 		if ( !str_starts_with( $object->getName(), '--' ) ) {
 			return parent::doSanitize( $object );
+		}
+
+		foreach ( $object->toTokenArray() as $token ) {
+			if (
+				$token->type() === Token::T_URL ||
+				$token->type() === Token::T_BAD_URL ||
+				(
+					$token->type() === Token::T_FUNCTION &&
+					in_array( strtolower( (string)$token->value() ), self::EXTERNAL_RESOURCE_FUNCTIONS, true )
+				)
+			) {
+				$this->sanitizationError( 'bad-value-for-property', $token, [ $object->getName() ] );
+				return null;
+			}
 		}
 
 		$this->clearSanitizationErrors();

@@ -41,7 +41,7 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		StylePropertySanitizer $propertySanitizer,
 		MatcherFactory $matcherFactory
 	): void {
-		$factory = new MatcherFactoryExtender();
+		$factory = new MatcherFactoryExtender( $matcherFactory );
 		$extended = new TemplateStylesExtender();
 		$extender = new StylePropertySanitizerExtender( $factory );
 
