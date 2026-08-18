@@ -391,38 +391,12 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * Wraps the parent `calc` to allow using variables in the $typeMatcher
-	 *
-	 * For backward compatibility with css-sanitizer <=5.5.0.
-	 * Prefer mathFunction; it will fallback to calc.
-	 *
-	 * @param Matcher $typeMatcher
-	 * @param string $type
-	 * @return Matcher
-	 */
-	public function calc( Matcher $typeMatcher, $type ) {
-		if ( !$this->varEnabled ) {
-			return parent::calc( $typeMatcher, $type );
-		}
-
-		return parent::calc( new Alternative( [
-			$typeMatcher,
-			new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-		] ), $type );
-	}
-
-	/**
 	 * Wraps the parent `mathFunction` to allow using variables in the $typeMatcher
 	 *
 	 * @param Matcher $typeMatcher
 	 * @return Matcher
 	 */
 	public function mathFunction( Matcher $typeMatcher ) {
-		// b/c for css-sanitizer <=5.5.0.
-		if ( !method_exists( get_parent_class( $this ), 'mathFunction' ) ) {
-			return $this->calc( $typeMatcher, 'number' );
-		}
-
 		if ( !$this->varEnabled ) {
 			return parent::mathFunction( $typeMatcher );
 		}
@@ -446,34 +420,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 			??= new Alternative( [
 				new TokenMatcher( Token::T_NUMBER ),
 				new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-			] );
-
-		return $this->cache[__METHOD__];
-	}
-
-	/**
-	 * Backport Ratio values from master branch
-	 * This is not present in css-sanitizer 5.5.0
-	 *
-	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
-	 */
-	public function ratio(): Matcher {
-		// Use the parent method if it exists
-		if ( method_exists( parent::class, 'ratio' ) ) {
-			return parent::ratio();
-		}
-
-		$this->cache[__METHOD__]
-			// <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
-			??= new Alternative( [
-				$this->rawNumber(),
-				new Juxtaposition( [
-					$this->rawNumber(),
-					$this->optionalWhitespace(),
-					new DelimMatcher( [ '/' ] ),
-					$this->optionalWhitespace(),
-					$this->rawNumber(),
-				] ),
 			] );
 
 		return $this->cache[__METHOD__];

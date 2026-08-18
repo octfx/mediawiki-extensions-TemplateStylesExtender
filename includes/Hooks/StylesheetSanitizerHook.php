@@ -74,11 +74,6 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addCssRuby1( $extender );
 		$extended->addCssScrollSnap1( $extender, $factory );
 
-		// Missing in css-sanitizer 5.5.0
-		if ( !method_exists( $propertySanitizer, 'cssSizing4' ) ) {
-			$extended->addCssSizing4( $extender, $factory );
-		}
-
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}
 }
