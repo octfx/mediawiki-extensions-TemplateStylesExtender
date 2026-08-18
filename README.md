@@ -2,12 +2,6 @@
 
 Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles) with new selectors and matchers.
 
-TemplateStylesExtender extends the sanitizers from [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer), the library TemplateStyles is built on. That library is pinned by MediaWiki core rather than by this extension, so the CSS grammar available to you is whichever css-sanitizer your MediaWiki ships.
-
-Development tracks the css-sanitizer shipped by the **current MediaWiki long-term support release**. Support for older css-sanitizer versions is dropped once the LTS moves past them, which can happen in a *point* release of the LTS rather than only at a major upgrade.
-
-The authoritative minimum is `requires.MediaWiki` in [`extension.json`](extension.json); MediaWiki enforces it when loading the extension, and it is raised whenever a css-sanitizer change makes an older release unsupportable.
-
 ## Features
 
 * Declare CSS custom properties/variables
@@ -98,3 +92,11 @@ grep -A1 '"name": "wikimedia/css-sanitizer"' vendor/composer/installed.json
 
 ### Test file
 Add `tests.css` in the content root to a TemplateStyle page to validate added matchers.
+
+## Support policy
+
+TemplateStylesExtender extends the sanitizers from [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer), the library TemplateStyles is built on. That library is pinned by MediaWiki core rather than by this extension, so the CSS grammar available to you is whichever css-sanitizer your MediaWiki ships.
+
+Development tracks the css-sanitizer shipped by the **current MediaWiki long-term support release**. Support for older css-sanitizer versions is dropped once the LTS moves past them, which can happen in a *point* release of the LTS rather than only at a major upgrade — so a wiki that is behind on point releases of an otherwise supported MediaWiki may still be too old.
+
+The authoritative minimum is `requires.MediaWiki` in [`extension.json`](extension.json). MediaWiki enforces it when loading the extension, so it cannot drift out of sync with what the code actually needs.
