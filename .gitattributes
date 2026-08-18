@@ -5,8 +5,7 @@
 # `export-ignore`, so none of the development-only files below ship to users.
 #
 # Kept in the archive (production): includes/, i18n/, extension.json,
-# composer.json, README.md, COPYING, and tests.css (the README tells wiki
-# admins to paste it into a TemplateStyles page to validate an install).
+# composer.json, README.md and COPYING.
 
 # PHPUnit tests
 /tests                  export-ignore

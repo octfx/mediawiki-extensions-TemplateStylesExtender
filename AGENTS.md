@@ -106,11 +106,26 @@ grep '"wikimedia/css-sanitizer"' ../../extensions/TemplateStyles/composer.json
 
 Because there is no declarable constraint, `method_exists()` guards in the source are the only compatibility mechanism available. Each one straddles a specific version boundary, so say which in a comment. Before adding a new guard, check whether any supported MediaWiki branch still needs it — if none do, it is dead code, and Phan will report the older branch of the guard as an undeclared method.
 
-### tests.css
+### The corpus test
 
-`tests.css` at the repository root is a hand-maintained corpus of every construct this extension is supposed to allow. It is **not** run by CI — the README asks a human to paste it into a TemplateStyles page and look at the result.
+`tests/phpunit/integration/CssCorpusTest.php` holds every declaration this extension is
+meant to affect, asserted against the sanitizer `TemplateStylesHooks::getSanitizer()`
+actually builds.
 
-Treat it as documentation of intent, and keep it updated when adding matchers. Be aware that a declaration listed there is not evidence the feature works.
+Build the sanitizer that way in tests, never by hand. A hand-assembled
+`MatcherFactoryExtender` does not reproduce production: the order in which
+`setVarEnabled()` is called relative to the first matcher use changes what is accepted, and
+a hand-made factory never exercises TemplateStyles' URL policy at all. Going through the
+hook chain is also the only way to catch an override that is never wired in.
+
+Note that `getSanitizer()` memoises per wrapper class, so repeated calls return the *same*
+instance and sanitization errors accumulate — clear them before each measurement or every
+check after the first false one looks like a failure.
+
+Cases are split three ways, and the split is the point: **accepted** (a failure is a
+regression), **rejected by design** (a failure is a security regression), and **not yet
+implemented** (a failure means someone implemented it and the case should move). When you
+add a matcher, add its declarations in the same commit.
 
 ## Coding conventions
 

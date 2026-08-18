@@ -90,8 +90,23 @@ determines the available grammar, and what static analysis checks against:
 grep -A1 '"name": "wikimedia/css-sanitizer"' vendor/composer/installed.json
 ```
 
-### Test file
-Add `tests.css` in the content root to a TemplateStyle page to validate added matchers.
+### Tests
+
+```sh
+composer phpunit
+```
+
+`tests/phpunit/integration/CssCorpusTest.php` asserts every CSS declaration this extension
+is meant to affect against the sanitizer TemplateStyles actually builds, split three ways:
+
+* **accepted** — what the extension exists to allow; a failure is a regression
+* **rejected by design** — declarations that must stay rejected, such as relative URLs the
+  TemplateStyles URL policy blocks; a failure is a security regression
+* **not yet implemented** — documented gaps, such as relative colours with `calc()` on a
+  channel. Implementing one turns its test red, which is the prompt to move the case into
+  the accepted set
+
+When you add a matcher, add its declarations to the corpus in the same commit.
 
 ## Support policy
 
