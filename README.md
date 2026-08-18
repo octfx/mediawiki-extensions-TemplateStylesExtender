@@ -97,14 +97,19 @@ composer phpunit
 ```
 
 `tests/phpunit/integration/CssCorpusTest.php` asserts every CSS declaration this extension
-is meant to affect against the sanitizer TemplateStyles actually builds, split three ways:
+is meant to affect against the sanitizer TemplateStyles actually builds, split two ways:
 
 * **accepted** — what the extension exists to allow; a failure is a regression
-* **rejected by design** — declarations that must stay rejected, such as relative URLs the
-  TemplateStyles URL policy blocks; a failure is a security regression
 * **not yet implemented** — documented gaps, such as relative colours with `calc()` on a
   channel. Implementing one turns its test red, which is the prompt to move the case into
   the accepted set
+
+The corpus uses URLs that the default `$wgTemplateStylesAllowedUrls` permits, and asserts
+that assumption rather than leaving it implicit, so a wiki with a customised allowlist gets
+one clear failure instead of several that look like regressions.
+`tests/phpunit/integration/UrlPolicyConfigTest.php` covers that separately: it sets an
+allowlist explicitly and checks that the properties this extension adds honour it rather
+than bypassing it or hardcoding a policy of their own.
 
 When you add a matcher, add its declarations to the corpus in the same commit.
 

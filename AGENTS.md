@@ -122,10 +122,25 @@ Note that `getSanitizer()` memoises per wrapper class, so repeated calls return 
 instance and sanitization errors accumulate — clear them before each measurement or every
 check after the first false one looks like a failure.
 
-Cases are split three ways, and the split is the point: **accepted** (a failure is a
-regression), **rejected by design** (a failure is a security regression), and **not yet
+Corpus cases are split two ways: **accepted** (a failure is a regression) and **not yet
 implemented** (a failure means someone implemented it and the case should move). When you
 add a matcher, add its declarations in the same commit.
+
+### Testing anything that depends on configuration
+
+The corpus deliberately uses URLs the default `$wgTemplateStylesAllowedUrls` permits, so it
+asserts nothing about configuration. `tests/phpunit/integration/UrlPolicyConfigTest.php`
+handles that case and shows the pattern.
+
+Two things make it awkward, and both are worth knowing before writing a similar test.
+TemplateStyles memoises its matcher factory and sanitizers in private statics and never
+invalidates them, so `overrideConfigValue()` has no effect until those are reset by
+reflection — do it in both `setUp()` and `tearDown()`, or a sanitizer built from your
+allowlist leaks into later tests. And PHPUnit's `@runInSeparateProcess`, the obvious
+alternative, does not work under MediaWiki's test bootstrap.
+
+Whenever a test resets shared state, check it under `--order-by=random` as well as the
+default order; contamination is invisible otherwise.
 
 ## Coding conventions
 

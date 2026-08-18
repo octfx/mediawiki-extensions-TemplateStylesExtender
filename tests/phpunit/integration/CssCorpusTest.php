@@ -44,18 +44,74 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderExtendCustomPropertiesValues' ),
 			'corpus assumes $wgTemplateStylesExtenderExtendCustomPropertiesValues is enabled'
 		);
+
+		// Some cases carry upload.wikimedia.org URLs, which only pass under the shipped
+		// default allowlist. A wiki that points TemplateStylesAllowedUrls at its own host
+		// would otherwise see those fail as if they were regressions.
+		// UrlPolicyConfigTest is where allowlist behaviour itself is asserted.
+		$this->assertContains(
+			'<^https://upload\.wikimedia\.org/wikipedia/commons/>',
+			$this->getConfVar( 'TemplateStylesAllowedUrls' )['image'] ?? [],
+			'corpus assumes the shipped default $wgTemplateStylesAllowedUrls'
+		);
 	}
 
+	private const COMMONS = 'https://upload.wikimedia.org/wikipedia/commons/a/ab';
+
 	private function isAccepted( string $declaration ): bool {
+		return $this->sanitizes( ".test { $declaration }", explode( ':', $declaration, 2 )[0] );
+	}
+
+	/**
+	 * @param string $css A complete rule or at-rule
+	 * @param string $mustSurvive Text that has to appear in the sanitized output
+	 */
+	private function sanitizes( string $css, string $mustSurvive ): bool {
 		// getSanitizer() memoises per wrapper class, so the same instance comes back on
 		// every call and sanitization errors accumulate across checks. Clear them first.
 		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
 		$sanitizer->clearSanitizationErrors();
 
-		$stylesheet = CSSParser::newFromString( ".test { $declaration }" )->parseStylesheet();
-		$sanitizer->sanitize( $stylesheet );
+		$output = $sanitizer->sanitize( CSSParser::newFromString( $css )->parseStylesheet() );
 
-		return $sanitizer->getSanitizationErrors() === [];
+		// Reporting no error is not the same as keeping the declaration -- the sanitizer
+		// can drop one silently. Require both, so a case cannot pass vacuously.
+		return $sanitizer->getSanitizationErrors() === []
+			&& str_contains( (string)$output, trim( $mustSurvive ) );
+	}
+
+	/**
+	 * The `@font-face` at-rule cannot go through isAccepted()'s rule wrapper.
+	 *
+	 * The family name has to start with "TemplateStyles": TemplateStyles namespaces
+	 * font families so a template cannot redefine a site font.
+	 *
+	 * @dataProvider provideFontFaceDescriptors
+	 */
+	public function testFontFaceDescriptors( string $descriptor, bool $accepted ): void {
+		$css = "@font-face { font-family: 'TemplateStylesCorpus'; $descriptor }";
+		$survives = $this->sanitizes( $css, explode( ':', $descriptor, 2 )[0] );
+
+		$this->assertSame( $accepted, $survives, $descriptor );
+	}
+
+	public static function provideFontFaceDescriptors(): array {
+		return [
+			'ascent-override percentage' => [ 'ascent-override: 100%', true ],
+			'ascent-override normal' => [ 'ascent-override: normal', true ],
+			'descent-override percentage' => [ 'descent-override: 100%', true ],
+			'descent-override normal' => [ 'descent-override: normal', true ],
+			'line-gap-override percentage' => [ 'line-gap-override: 100%', true ],
+			'line-gap-override normal' => [ 'line-gap-override: normal', true ],
+			'size-adjust' => [ 'size-adjust: 100%', true ],
+			'font-display auto' => [ 'font-display: auto', true ],
+			'font-display block' => [ 'font-display: block', true ],
+			'font-display swap' => [ 'font-display: swap', true ],
+			'font-display fallback' => [ 'font-display: fallback', true ],
+			'font-display optional' => [ 'font-display: optional', true ],
+			'nonsense override value' => [ 'ascent-override: notavalue', false ],
+			'nonsense font-display value' => [ 'font-display: notavalue', false ],
+		];
 	}
 
 	/**
@@ -67,19 +123,6 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$this->assertTrue(
 			$this->isAccepted( $declaration ),
 			"Expected to be accepted but was rejected: $declaration"
-		);
-	}
-
-	/**
-	 * Declarations that must stay rejected because allowing them would let a template
-	 * reference an off-wiki resource. A failure here is a security regression.
-	 *
-	 * @dataProvider provideRejectedByDesign
-	 */
-	public function testRejectedByDesign( string $declaration ): void {
-		$this->assertFalse(
-			$this->isAccepted( $declaration ),
-			"Expected to be rejected but was accepted: $declaration"
 		);
 	}
 
@@ -115,7 +158,27 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public static function provideAccepted(): array {
+		// Only URLs under the shipped default allowlist survive; see
+		// testCorpusAssumptionsHold(). Allowlist behaviour itself is
+		// asserted in UrlPolicyConfigTest.
+		$commons = self::COMMONS;
+
 		return array_merge(
+			self::cases( 'Masking 1', [
+				'-webkit-mask-image: none',
+				'-webkit-mask-image: inherit',
+				'-webkit-mask-image: linear-gradient(black, transparent)',
+			] ),
+			self::cases( 'Filter Effects 2', [
+				"backdrop-filter: url(\"$commons/f.svg#filter\")",
+				"backdrop-filter: url(\"$commons/f.svg#filter\") blur(4px) saturate(150%)",
+			] ),
+			self::cases( 'Images 4', [
+				"background-image: image-set(\"$commons/i1.jpg\" 1x, \"$commons/i2.jpg\" 2x)",
+				"background-image: image-set(url(\"$commons/i1.jpg\") 1x, url(\"$commons/i2.jpg\") 2x)",
+				"background-image: image-set( url(\"$commons/i1.avif\") type(\"image/avif\"), " .
+					"url(\"$commons/i2.jpg\") type(\"image/jpeg\") )",
+			] ),
 			self::cases( 'UI 4', [
 				'pointer-events: all',
 				'pointer-events: auto',
@@ -412,25 +475,23 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
-	/** All of these are relative URLs, which TemplateStyles' URL policy blocks. */
-	public static function provideRejectedByDesign(): array {
-		return array_merge(
-			self::cases( 'Filter Effects 2', [
-				'backdrop-filter: url("common-filters.svg#filter")',
-				'backdrop-filter: url("filters.svg#filter") blur(4px) saturate(150%)',
-			] ),
-			self::cases( 'Images 4', [
-				'background-image: image-set( url("image1.avif") type("image/avif"), ' .
-					'url("image2.jpg") type("image/jpeg") )',
-				'background-image: image-set("image1.jpg" 1x, "image2.jpg" 2x)',
-				'background-image: image-set(url("image1.jpg") 1x, url("image2.jpg") 2x)',
-			] )
-		);
-	}
-
-	/** Relative colours with calc() on a channel are not implemented. */
+	/**
+	 * Two separate gaps, both currently rejected.
+	 *
+	 * Relative colours with calc() on a channel are unimplemented, as README says.
+	 *
+	 * var() inside a colour function is a different problem with a different cause, and
+	 * the two look alike in a failure list. StylesheetSanitizerHook constructs the
+	 * StylePropertySanitizerExtender before calling setVarEnabled( true ) on the factory,
+	 * so colorFuncs() has already memoised its matchers with var() support switched off.
+	 * Fixing the calc() gap will not move these; the construction order has to change.
+	 */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
+			self::cases( 'Color 4/5', [
+				'background: hsl(from var(--c) h s l)',
+				'background: rgb(var(--r) 0 0)',
+			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
 				'background: hsl(from #0000FF h s calc(l + 20))',
