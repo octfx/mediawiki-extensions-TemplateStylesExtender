@@ -121,4 +121,69 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 			],
 		];
 	}
+
+	/**
+	 * Every method here documented with `@inheritDoc` is an override of a
+	 * css-sanitizer hook. If the parent declares no method of that name the
+	 * override is silently dead: nothing calls it, and the feature it adds
+	 * simply never applies.
+	 *
+	 * This is not hypothetical. cssGrid1() was renamed to cssGrid3() in v2.2.0,
+	 * which disabled subgrid and masonry support for the whole 2.2.x line
+	 * without failing anything -- css-sanitizer has only ever declared
+	 * cssGrid1(), and StylePropertySanitizer's constructor calls that.
+	 */
+	public function testEveryInheritDocMethodOverridesAParentMethod(): void {
+		$class = new ReflectionClass( StylePropertySanitizerExtender::class );
+		$parent = $class->getParentClass();
+
+		$overrides = [];
+		foreach ( $class->getMethods() as $method ) {
+			if ( $method->getDeclaringClass()->getName() !== $class->getName() ) {
+				continue;
+			}
+			if ( str_contains( (string)$method->getDocComment(), '@inheritDoc' ) ) {
+				$overrides[] = $method->getName();
+			}
+		}
+
+		$this->assertNotEmpty( $overrides, 'expected at least one @inheritDoc override' );
+		foreach ( $overrides as $name ) {
+			$this->assertTrue(
+				$parent->hasMethod( $name ),
+				"StylePropertySanitizerExtender::$name() is documented with @inheritDoc but " .
+				$parent->getName() . " declares no such method, so the override is dead code."
+			);
+		}
+	}
+
+	/**
+	 * @dataProvider provideGridDeclarations
+	 */
+	public function testExtendedGridProperties( string $declarationText, bool $allowed ): void {
+		$factory = new MatcherFactoryExtender( new TemplateStylesMatcherFactory( [] ) );
+		$factory->setVarEnabled( true );
+		$sanitizer = new StylePropertySanitizerExtender( $factory );
+		$sanitizer->setVarEnabled( true );
+		$declaration = Parser::newFromString( $declarationText )->parseDeclaration();
+
+		$this->assertSame( $allowed, $sanitizer->sanitize( $declaration ) !== null );
+	}
+
+	public static function provideGridDeclarations(): array {
+		return [
+			// CSS Grid Module Level 2 -- subgrid
+			'subgrid columns' => [ 'grid-template-columns: subgrid', true ],
+			'subgrid rows with line names' => [ 'grid-template-rows: [row-start] subgrid [row-end]', true ],
+			// CSS Grid Module Level 3 -- masonry
+			'masonry rows' => [ 'grid-template-rows: masonry', true ],
+			'masonry-auto-flow' => [ 'masonry-auto-flow: next definite-first', true ],
+			// variables in track lists
+			'var in track list' => [ 'grid-template-columns: 1fr var(--right-rail-size)', true ],
+			'var as repeat count' => [ 'grid-template-columns: repeat(var(--cols), minmax(0, 1fr))', true ],
+			// still rejected
+			'nonsense keyword' => [ 'grid-template-columns: definitely-not-a-thing', false ],
+		];
+	}
+
 }

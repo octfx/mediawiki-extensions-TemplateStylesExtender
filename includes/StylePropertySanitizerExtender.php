@@ -138,7 +138,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 *
 	 * Allow variables in grid-template-columns and grid-template-rows
 	 */
-	protected function cssGrid3( MatcherFactory $matcherFactory ) {
+	protected function cssGrid1( MatcherFactory $matcherFactory ) {
 		// @codeCoverageIgnoreStart
 		if ( self::$extendedCss3Grid && isset( $this->cache[__METHOD__] ) ) {
 			return $this->cache[__METHOD__];
@@ -147,7 +147,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 		$var = new FunctionMatcher( 'var', new CustomPropertyMatcher() );
 
-		$props = parent::cssGrid3( $matcherFactory );
+		$props = parent::cssGrid1( $matcherFactory );
 
 		$comma = $matcherFactory->comma();
 		$customIdent = $matcherFactory->customIdent( [ 'span' ] );
@@ -236,6 +236,8 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		] );
 
 		$this->cache[__METHOD__] = $props;
+		self::$extendedCss3Grid = true;
+
 		return $props;
 	}
 
