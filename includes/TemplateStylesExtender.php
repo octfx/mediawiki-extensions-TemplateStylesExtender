@@ -116,7 +116,7 @@ class TemplateStylesExtender {
 					new KeywordMatcher( [ 'inter-character' ] ),
 				] )
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -169,7 +169,7 @@ class TemplateStylesExtender {
 					] ),
 				] ),
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -194,7 +194,7 @@ class TemplateStylesExtender {
 					'all',
 				] )
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -209,7 +209,7 @@ class TemplateStylesExtender {
 			$propertySanitizer->addKnownProperties( [
 				'backdrop-filter' => Quantifier::plus( $filter ),
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -244,7 +244,7 @@ class TemplateStylesExtender {
 					] ) )
 				] ),
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -263,7 +263,7 @@ class TemplateStylesExtender {
 				] ),
 				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -298,7 +298,7 @@ class TemplateStylesExtender {
 					] ),
 				] )
 			] );
-		} catch ( InvalidArgumentException $e ) {
+		} catch ( InvalidArgumentException ) {
 			// Fail silently
 		}
 	}
@@ -319,7 +319,6 @@ class TemplateStylesExtender {
 		}
 
 		try {
-			// @phan-suppress-next-line PhanPossiblyNullPropertyReal
 			$value = self::$config->get( $key );
 		} catch ( ConfigException $e ) {
 			wfLogWarning(
