@@ -413,7 +413,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 */
 	public function mathFunction( Matcher $typeMatcher ) {
 		// b/c for css-sanitizer <=5.5.0.
-		if ( !method_exists( get_parent_class( $this ),  'mathFunction' ) ) {
+		if ( !method_exists( get_parent_class( $this ), 'mathFunction' ) ) {
 			return $this->calc( $typeMatcher, 'number' );
 		}
 
@@ -431,24 +431,24 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * Allow variables for numbers if enabled
 	 * @return Alternative|Matcher|Matcher[]|TokenMatcher
 	 */
-   public function rawNumber() {
-	   if ( !$this->varEnabled ) {
-		   return parent::rawNumber();
-	   }
+	public function rawNumber() {
+		if ( !$this->varEnabled ) {
+			return parent::rawNumber();
+		}
 
-	   return $this->cache[__METHOD__]
+		return $this->cache[__METHOD__]
 		   ??= new Alternative( [
 			   new TokenMatcher( Token::T_NUMBER ),
 			   new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
 		   ] );
-   }
+	}
 
-   /**
-	* Backport Ratio values from master branch
-	* This is not present in css-sanitizer 5.5.0
-	*
-	* @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
-	*/
+	/**
+	 * Backport Ratio values from master branch
+	 * This is not present in css-sanitizer 5.5.0
+	 *
+	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
+	 */
 	public function ratio(): Matcher {
 		// Use the parent method if it exists
 		if ( method_exists( parent::class, 'ratio' ) ) {

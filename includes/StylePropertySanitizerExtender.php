@@ -96,7 +96,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 		$props[] = new FunctionMatcher( 'clamp', Quantifier::hash( $calcVal, 3, 3 ) );
 
-		$props[] = new FunctionMatcher( function ( $name ) {
+		$props[] = new FunctionMatcher( static function ( $name ) {
 			$funcNames = [
 				'min',
 				'max'
