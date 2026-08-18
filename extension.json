@@ -28,6 +28,10 @@
 			"description": "Allow to unscope css by changing '.mw-parser-output' to a custom class",
 			"value": false
 		},
+		"TemplateStylesExtenderRequireFontFamilyPrefix": {
+			"description": "Require @font-face family names to start with 'TemplateStyles', as TemplateStyles itself does. Off by default, which is this extension's long-standing behaviour. Note that @font-face is not scoped to .mw-parser-output, so a family declared in a TemplateStyles page applies to the whole rendered page, including skin chrome; enabling this restores TemplateStyles' namespacing. Changing this does not invalidate already-rendered pages, which keep their previous CSS until purged.",
+			"value": false
+		},
 		"TemplateStylesExtenderUnscopingPermission": {
 			"description": "Specify the permission a user must have to use unscoping. Defaults to 'editinterface'.",
 			"value": "editinterface"
