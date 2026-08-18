@@ -38,7 +38,7 @@ class MainHooks implements ParserFirstCallInitHook {
 	 * @inheritDoc TemplateStylesHooks::handleTag()
 	 */
 	public static function handleTag( ?string $text, array $params, Parser $parser, PPFrame $frame ): string {
-		$getOutput = static fn() => TemplateStylesHooks::handleTag( $text, $params, $parser, $frame );
+		$getOutput = static fn () => TemplateStylesHooks::handleTag( $text, $params, $parser, $frame );
 		$options = self::getParserOptions( $parser );
 
 		if (
