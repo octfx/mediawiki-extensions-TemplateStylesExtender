@@ -38,6 +38,11 @@ class MainHooks implements ParserFirstCallInitHook {
 	 * @inheritDoc TemplateStylesHooks::handleTag()
 	 */
 	public static function handleTag( ?string $text, array $params, Parser $parser, PPFrame $frame ): string {
+		// The parser passes null for a self-closing `<templatestyles />`, which is the
+		// normal usage. TemplateStylesHooks::handleTag() ignores the tag content but
+		// documents the parameter as `string`, so normalise null away before delegating.
+		$text ??= '';
+
 		$getOutput = static fn () => TemplateStylesHooks::handleTag( $text, $params, $parser, $frame );
 		$options = self::getParserOptions( $parser );
 
@@ -65,10 +70,11 @@ class MainHooks implements ParserFirstCallInitHook {
 			return $getOutput();
 		}
 
-		if ( !self::isUserAllowedToUnscope( $services, $user, $title ) ) {
-			return self::formatTagError( $parser, [
+		if ( !self::isUserAllowedToUnscope( $services, $user ) ) {
+			return self::formatTagError(
+				$parser,
 				'templatestylesextender-unscoping-no-permission'
-			] ) . $getOutput();
+			) . $getOutput();
 		}
 
 		$wrapClass = $options->getWrapOutputClass();
@@ -101,21 +107,27 @@ class MainHooks implements ParserFirstCallInitHook {
 
 	private static function isUserAllowedToUnscope(
 		MediaWikiServices $services,
-		UserIdentity $user,
-		Title $title
+		UserIdentity $user
 	): bool {
 		$permissionManager = $services->getPermissionManager();
 		$permission = TemplateStylesExtender::getConfigValue( 'TemplateStylesExtenderUnscopingPermission' );
 
-		return $permissionManager->userHasRight( $user, $permission )
-			|| $permissionManager->userCan( $permission, $user, $title );
+		return $permissionManager->userHasRight( $user, $permission );
 	}
 
-	/** @inheritDoc TemplateStylesHooks::formatTagError() */
-	private static function formatTagError( Parser $parser, array $msg ): string {
+	/**
+	 * Format an error in the `<templatestyles>` tag
+	 *
+	 * @see TemplateStylesHooks::formatTagError()
+	 * @param Parser $parser
+	 * @param string $key Message key
+	 * @param string|int|float ...$params Message parameters
+	 * @return string HTML
+	 */
+	private static function formatTagError( Parser $parser, string $key, ...$params ): string {
 		$parser->addTrackingCategory( 'templatestyles-page-error-category' );
 		return '<strong class="error">' .
-			wfMessage( ...$msg )->inContentLanguage()->parse() .
+			wfMessage( $key, ...$params )->inContentLanguage()->parse() .
 			'</strong>';
 	}
 }
