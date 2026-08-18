@@ -2,7 +2,7 @@
 
 Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles) with new selectors and matchers.
 
-TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer) 5.5.0, which is being used by MediaWiki 1.43.
+TemplateStylesExtender is developed against [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer) 6.2.1, which every MediaWiki branch from 1.43.9 onwards ships. css-sanitizer 5.x, used by MediaWiki 1.43.0 to 1.43.8, is no longer supported.
 
 ## Features
 
@@ -13,7 +13,7 @@ TemplateStylesExtender is developed based on [css-sanitizer](https://www.mediawi
 | Module | Changes | Upstream task
 | - | - | - |
 | [Basic User Interface Module Level 4](https://www.w3.org/TR/css-ui-4/) | Added property: [`pointer-events`](https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events) | [T342271](https://phabricator.wikimedia.org/T342271)
-| [Box Sizing Module Level 4](https://www.w3.org/TR/css-sizing-4/) | Backported for `css-sanitizer` 5.5.0 | [T375344](https://phabricator.wikimedia.org/T375344)
+| [Box Sizing Module Level 4](https://www.w3.org/TR/css-sizing-4/) | Provided by `css-sanitizer` 6.2.1 | [T375344](https://phabricator.wikimedia.org/T375344)
 | [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added value: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer) | - |
 | [Color Module Level 4](https://www.w3.org/TR/css-color-4/) | Fully implemented | [T265675](https://phabricator.wikimedia.org/T265675), [T351500](https://phabricator.wikimedia.org/T351500)
 | [Color Module Level 5](https://www.w3.org/TR/css-color-5/) | Added: [Relative color](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) | - |

@@ -2,7 +2,7 @@
 
 ## Overview
 
-TemplateStylesExtender is a MediaWiki extension (requires MW 1.43+ and [TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles)) that widens the set of CSS that TemplateStyles will accept — custom properties, newer colour syntax, grid features, `image-set()`, and similar.
+TemplateStylesExtender is a MediaWiki extension (requires MW 1.43.9+ and [TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles)) that widens the set of CSS that TemplateStyles will accept — custom properties, newer colour syntax, grid features, `image-set()`, and similar.
 
 It does this by subclassing the sanitizer and matcher classes from [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer) and swapping the subclasses in through TemplateStyles' hooks:
 
