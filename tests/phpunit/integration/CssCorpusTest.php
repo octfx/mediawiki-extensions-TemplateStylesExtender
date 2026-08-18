@@ -11,14 +11,13 @@ use Wikimedia\CSS\Parser\Parser as CSSParser;
 
 /**
  * Every CSS declaration this extension is meant to affect, asserted against the sanitizer
- * TemplateStyles actually builds in production.
+ * TemplateStyles builds in production.
  *
- * The sanitizer is obtained from TemplateStylesHooks::getSanitizer() rather than assembled
- * by hand, because assembling it by hand does not reproduce production: the order in which
- * setVarEnabled() is called relative to the first matcher use changes what is accepted, and
- * a hand-built factory never exercises TemplateStyles' URL policy at all. Going through the
- * real hook chain is also the only way to catch an override that is never wired in -- the
- * failure mode that left subgrid and masonry support inert for a whole release series.
+ * Always obtain it from TemplateStylesHooks::getSanitizer(), never by hand. A hand-built
+ * factory does not reproduce production -- when setVarEnabled() is called relative to the
+ * first matcher use changes what is accepted, and TemplateStyles' URL policy is not
+ * exercised at all -- and only the real hook chain catches an override that is never
+ * wired in.
  *
  * @group TemplateStylesExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\Hooks\PropertySanitizerHook
@@ -45,10 +44,8 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			'corpus assumes $wgTemplateStylesExtenderExtendCustomPropertiesValues is enabled'
 		);
 
-		// Some cases carry upload.wikimedia.org URLs, which only pass under the shipped
-		// default allowlist. A wiki that points TemplateStylesAllowedUrls at its own host
-		// would otherwise see those fail as if they were regressions.
-		// UrlPolicyConfigTest is where allowlist behaviour itself is asserted.
+		// Some cases carry upload.wikimedia.org URLs, which only pass under the default
+		// allowlist. UrlPolicyConfigTest asserts allowlist behaviour itself.
 		$this->assertContains(
 			'<^https://upload\.wikimedia\.org/wikipedia/commons/>',
 			$this->getConfVar( 'TemplateStylesAllowedUrls' )['image'] ?? [],
@@ -67,15 +64,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	 * @param string $mustSurvive Text that has to appear in the sanitized output
 	 */
 	private function sanitizes( string $css, string $mustSurvive ): bool {
-		// getSanitizer() memoises per wrapper class, so the same instance comes back on
-		// every call and sanitization errors accumulate across checks. Clear them first.
+		// getSanitizer() memoises, so the same instance returns every call and errors
+		// accumulate. Without clearing, every check after the first failure looks failed.
 		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
 		$sanitizer->clearSanitizationErrors();
 
 		$output = $sanitizer->sanitize( CSSParser::newFromString( $css )->parseStylesheet() );
 
-		// Reporting no error is not the same as keeping the declaration -- the sanitizer
-		// can drop one silently. Require both, so a case cannot pass vacuously.
+		// No error is not the same as kept: a declaration can be dropped silently.
+		// Require both so a case cannot pass vacuously.
 		return $sanitizer->getSanitizationErrors() === []
 			&& str_contains( (string)$output, trim( $mustSurvive ) );
 	}
@@ -176,14 +173,33 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public static function provideAccepted(): array {
-		// Only URLs under the shipped default allowlist survive; see
-		// testCorpusAssumptionsHold(). Allowlist behaviour itself is
-		// asserted in UrlPolicyConfigTest.
+		// URLs here must pass the default allowlist; see testCorpusAssumptionsHold().
 		$commons = self::COMMONS;
 
 		return array_merge(
-			// var() inside a colour function; see StylesheetSanitizerHook's note on
-			// setting setVarEnabled() before the sanitizer is constructed.
+			// Regress if mathFunction() is deleted. addVarSelector's fallback reaches
+			// neither inside a function nor past a token it does not list, which is what
+			// `inset`, `opacity` and the `/` supply in the last three.
+			self::cases( 'Custom properties in math slots', [
+				'transform: translateX(var(--x))',
+				'transform: translate(var(--x), var(--y))',
+				'transform: rotate(var(--a))',
+				'filter: blur(var(--b))',
+				'box-shadow: var(--x) var(--y) 0 red inset',
+				'transition: opacity var(--d) ease-in-out',
+				'border-radius: var(--r) / 1px',
+				'background-image: linear-gradient(red var(--s), blue)',
+			] ),
+			// Reach rawNumber() through upstream ratio(), which calls it late-bound.
+			// `aspect-ratio: var(--r)` is deliberately absent: it passes either way via
+			// addVarSelector, so it would not notice rawNumber() being removed.
+			self::cases( 'Box Sizing 4', [
+				'aspect-ratio: 16 / var(--b)',
+				'aspect-ratio: var(--a) / 9',
+				'aspect-ratio: var(--a) / var(--b)',
+				'aspect-ratio: auto var(--a) / var(--b)',
+			] ),
+			// var() inside a colour function; needs setVarEnabled() before construction.
 			self::cases( 'Color 4/5', [
 				'background: hsl(from var(--c) h s l)',
 				'background: rgb(var(--r) 0 0)',
@@ -384,6 +400,8 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			self::cases( 'Images 4', [
 				'background-image: image-set( linear-gradient(blue, white) 1x, linear-gradient(blue, green) 2x )',
 			] ),
+			// Upstream provides these; kept because StylesheetSanitizerHook replaces the
+			// whole property map, so a wrongly-built extender would drop them.
 			self::cases( 'Ruby 1', [
 				'ruby-align: center',
 				'ruby-align: inherit',
@@ -406,6 +424,8 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'ruby-position: under',
 				'ruby-position: unset',
 			] ),
+			// Upstream provides these; kept because StylesheetSanitizerHook replaces the
+			// whole property map, so a wrongly-built extender would drop them.
 			self::cases( 'Scroll Snap 1', [
 				'scroll-margin-block-end: 10px',
 				'scroll-margin-block-end: 1em',
@@ -502,6 +522,17 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
+			// This extension's var() wrapper takes no fallback; upstream's rawOrCustomProp()
+			// does. So an override replacing an upstream matcher wholesale can be narrower
+			// than what it shadows -- accepted by plain css-sanitizer, rejected here.
+			self::cases( 'Color 4/5', [
+				'color: rgb(var(--r, 0) 0 0)',
+			] ),
+			self::cases( 'Box Sizing 4', [
+				'aspect-ratio: 16 / var(--b, 9)',
+				// upstream ratio() is built from rawNumber(), which excludes math functions
+				'aspect-ratio: calc(16) / var(--b)',
+			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
 				'background: hsl(from #0000FF h s calc(l + 20))',

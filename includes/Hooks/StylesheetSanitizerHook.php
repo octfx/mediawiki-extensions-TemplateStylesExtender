@@ -48,10 +48,8 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 			'TemplateStylesExtenderExtendCustomPropertiesValues'
 		) === true;
 
-		// This has to happen before the sanitizer is constructed. The parent constructor
-		// builds and memoises matchers from this factory -- colorFuncs() among them -- and
-		// each captures whether var() was enabled at the moment it was built. Setting the
-		// flag afterwards leaves those matchers permanently var()-free.
+		// Must precede constructing the sanitizer: its parent constructor memoises matchers
+		// from this factory, each capturing whether var() was enabled at that moment.
 		if ( $extendCustomPropertyValues ) {
 			$factory->setVarEnabled( true );
 		}
@@ -84,8 +82,6 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 
 		$extended->addCssContainment3( $extender );
 		$extended->addCssFonts4( $extender, $factory );
-		$extended->addCssRuby1( $extender );
-		$extended->addCssScrollSnap1( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}

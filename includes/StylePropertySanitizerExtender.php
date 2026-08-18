@@ -47,7 +47,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	];
 
 	private bool $varEnabled = false;
-	private static bool $extendedCssSizingAdditions = false;
 	private static bool $extendedCss1Masking = false;
 	private static bool $extendedCss3Grid = false;
 
@@ -68,48 +67,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 */
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
-	}
-
-	/**
-	 * @inheritDoc
-	 *
-	 * Partly implement clamp, min and max
-	 */
-	protected function getSizingAdditions( MatcherFactory $matcherFactory ) {
-		// @codeCoverageIgnoreStart
-		if ( self::$extendedCssSizingAdditions && isset( $this->cache[__METHOD__] ) ) {
-			return $this->cache[__METHOD__];
-		}
-		// @codeCoverageIgnoreEnd
-
-		$calcVal = new Alternative( [
-			$matcherFactory->length(),
-			$matcherFactory->lengthPercentage(),
-			$matcherFactory->frequency(),
-			$matcherFactory->angle(),
-			$matcherFactory->anglePercentage(),
-			$matcherFactory->time(),
-			$matcherFactory->number(),
-			$matcherFactory->integer(),
-		] );
-
-		$props = parent::getSizingAdditions( $matcherFactory );
-
-		$props[] = new FunctionMatcher( 'clamp', Quantifier::hash( $calcVal, 3, 3 ) );
-
-		$props[] = new FunctionMatcher( static function ( $name ) {
-			$funcNames = [
-				'min',
-				'max'
-			];
-			return in_array( $name, $funcNames );
-		}, Quantifier::hash( $calcVal ) );
-
-		$this->cache[__METHOD__] = $props;
-
-		self::$extendedCssSizingAdditions = true;
-
-		return $this->cache[__METHOD__];
 	}
 
 	/**
@@ -271,10 +228,8 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			}
 		}
 
-		// No clearSanitizationErrors() here. It was needed when this method called the
-		// parent first, which recorded "unknown property" for every custom property; the
-		// early return above means nothing of ours needs clearing now, and clearing would
-		// discard errors recorded for earlier declarations in the same rule.
+		// Deliberately no clearSanitizationErrors(): the early return above means nothing
+		// here needs clearing, and it would discard earlier declarations' errors.
 		// @phan-suppress-next-line PhanTypeMismatchReturn generics weakness, see parent
 		return $object;
 	}

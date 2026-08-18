@@ -13,14 +13,12 @@ use Wikimedia\CSS\Parser\Parser as CSSParser;
  * The properties this extension adds must honour the wiki's $wgTemplateStylesAllowedUrls,
  * not bypass it and not hardcode a policy of their own.
  *
- * This has to be an integration test. A unit test can only show that the extension
- * delegates to whatever matcher factory it is handed; it cannot show that the wiki's
- * configured allowlist actually reaches the properties added through the hook chain, which
- * is the property that a wiring mistake would break.
+ * Integration rather than unit: a unit test can only show the extension delegates to
+ * whatever factory it is handed, not that the configured allowlist reaches the properties
+ * added through the hook chain -- which is what a wiring mistake breaks.
  *
- * The corpus in CssCorpusTest deliberately uses URLs that the default allowlist permits, so
- * it stays silent about configuration. This is where configuration is exercised, with the
- * allowlist set explicitly so the assertions do not depend on the wiki's own settings.
+ * CssCorpusTest uses URLs the default allowlist permits and so says nothing about
+ * configuration. This sets the allowlist explicitly, so it depends on no wiki's settings.
  *
  * @group TemplateStylesExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\Hooks\PropertySanitizerHook
@@ -35,12 +33,10 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 
 	/**
 	 * TemplateStyles memoises its matcher factory and sanitizers in private statics and
-	 * never invalidates them, so a config override has no effect until they are dropped.
-	 *
-	 * Reaching into another extension's internals is not ideal, but the alternative --
-	 * PHPUnit process isolation -- does not work under MediaWiki's test bootstrap. If
-	 * TemplateStyles renames these properties, getProperty() throws and this test fails
-	 * loudly rather than silently asserting against a stale sanitizer.
+	 * never invalidates them, so a config override does nothing until they are dropped.
+	 * PHPUnit process isolation, the obvious alternative, does not work under MediaWiki's
+	 * test bootstrap. A rename upstream makes getProperty() throw, which fails loudly
+	 * rather than asserting against a stale sanitizer.
 	 */
 	private static function resetTemplateStylesCaches(): void {
 		$reflection = new ReflectionClass( TemplateStylesHooks::class );
@@ -84,6 +80,76 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 		$sanitizer->sanitize( CSSParser::newFromString( ".test { $declaration }" )->parseStylesheet() );
 
 		return $sanitizer->getSanitizationErrors() === [];
+	}
+
+	/**
+	 * The density slot of image-set() must not accept var(), or a custom property can
+	 * smuggle a second image-set entry past the URL allowlist.
+	 *
+	 * MatcherFactoryExtender::resolution() is what prevents it. Upstream builds resolution
+	 * as mathFunction( rawResolution() ), and mathFunction() is late-bound to this
+	 * extension's var()-aware override, so inheriting it admits var() into the slot.
+	 * doSanitize() does not help: the payload is a bare string, which is neither a url()
+	 * token nor an external-resource function -- and is exactly what image-set()'s first
+	 * argument accepts as a URL.
+	 *
+	 * @dataProvider provideResolutionSlotPayloads
+	 */
+	public function testResolutionSlotRejectsSubstitution( string $declarations ): void {
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$output = (string)$sanitizer->sanitize(
+			CSSParser::newFromString( ".test { $declarations }" )->parseStylesheet()
+		);
+
+		$this->assertStringNotContainsString(
+			'background-image',
+			$output,
+			'the referencing declaration must be dropped, not just flagged'
+		);
+		$this->assertNotSame(
+			[],
+			$sanitizer->getSanitizationErrors(),
+			'the editor must be told why, not have the rule vanish silently'
+		);
+	}
+
+	public static function provideResolutionSlotPayloads(): array {
+		$evil = self::BLOCKED . '/tracker.png';
+		// Must be a host this test's own allowlist permits, or the declaration is dropped
+		// because of the URL rather than because of the density slot, and the test passes
+		// for the wrong reason.
+		$ok = self::ALLOWED . '/i.png';
+
+		return [
+			'var() carrying a second image-set entry' => [
+				"--r: 2x, \"$evil\" 1x; background-image: image-set(\"$ok\" var(--r))",
+			],
+			'var() in the density slot at all' => [
+				"--r: 1x; background-image: image-set(\"$ok\" var(--r))",
+			],
+		];
+	}
+
+	/**
+	 * Not a bypass: this pins a deliberate narrowing. CSS Values 4 permits a math function
+	 * where a <resolution> is expected; the override does not, and that strictness is what
+	 * keeps var() out of the slot.
+	 *
+	 * Relaxing this at mathFunction() instead would not be equivalent. Upstream's calcSum()
+	 * admits var() on the reasoning that calc() forces values to be numeric, which stops
+	 * holding once the result lands where substitution is textual, as it does here.
+	 */
+	public function testMathFunctionsAreNotAllowedInTheDensitySlot(): void {
+		$ok = self::ALLOWED . '/i.png';
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$output = (string)$sanitizer->sanitize(
+			CSSParser::newFromString( ".test { background-image: image-set(\"$ok\" calc(1dppx * 2)) }" )
+				->parseStylesheet()
+		);
+
+		$this->assertStringNotContainsString( 'background-image', $output );
 	}
 
 	/**

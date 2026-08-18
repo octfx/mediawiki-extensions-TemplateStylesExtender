@@ -57,8 +57,7 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 
 		if ( $requireFamilyPrefix ) {
 			// Mirrors TemplateStylesFontFaceAtRuleSanitizer. @font-face is not scoped to
-			// .mw-parser-output, so a family registered here applies to the whole page --
-			// which is why TemplateStyles namespaces the names.
+			// .mw-parser-output, so a family registered here applies page-wide.
 			$startsWithPrefix = static function ( Token $t ): bool {
 				return str_starts_with( $t->value(), self::FAMILY_PREFIX );
 			};
