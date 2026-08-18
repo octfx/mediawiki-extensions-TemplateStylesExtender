@@ -1,1 +1,27 @@
 * text=auto eol=lf
+
+# Files and directories excluded from the distributed package.
+# `git archive` (used to build Composer/Packagist release tarballs) honours
+# `export-ignore`, so none of the development-only files below ship to users.
+#
+# Kept in the archive (production): includes/, i18n/, extension.json,
+# composer.json, README.md, COPYING, and tests.css (the README tells wiki
+# admins to paste it into a TemplateStyles page to validate an install).
+
+# PHPUnit tests
+/tests                  export-ignore
+
+# CI / repo automation
+/.github                export-ignore
+
+# Static analysis and lint configs
+/.phan                  export-ignore
+/.phpcs.xml             export-ignore
+
+# i18n lint tooling (no JS ships with this extension)
+/package.json           export-ignore
+/package-lock.json      export-ignore
+
+# Git meta
+/.gitignore             export-ignore
+/.gitattributes         export-ignore
