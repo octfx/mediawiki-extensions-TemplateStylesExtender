@@ -46,9 +46,9 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	];
 
 	private bool $varEnabled = false;
-	private static $extendedCssSizingAdditions = false;
-	private static $extendedCss1Masking = false;
-	private static $extendedCss3Grid = false;
+	private static bool $extendedCssSizingAdditions = false;
+	private static bool $extendedCss1Masking = false;
+	private static bool $extendedCss3Grid = false;
 
 	/**
 	 * @param MatcherFactory $matcherFactory
