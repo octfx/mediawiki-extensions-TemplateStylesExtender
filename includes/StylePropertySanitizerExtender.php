@@ -31,6 +31,7 @@ use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Objects\CSSObject;
+use Wikimedia\CSS\Objects\Declaration;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
@@ -245,12 +246,14 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 * @inheritDoc
 	 */
 	protected function doSanitize( CSSObject $object ) {
-		if ( !$this->varEnabled ) {
+		if ( !$this->varEnabled || !$object instanceof Declaration ) {
 			return parent::doSanitize( $object );
 		}
 
+		$name = $object->getName();
+
 		// Not a CSS custom property
-		if ( !str_starts_with( $object->getName(), '--' ) ) {
+		if ( !str_starts_with( $name, '--' ) ) {
 			return parent::doSanitize( $object );
 		}
 
@@ -263,12 +266,14 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 					in_array( strtolower( (string)$token->value() ), self::EXTERNAL_RESOURCE_FUNCTIONS, true )
 				)
 			) {
-				$this->sanitizationError( 'bad-value-for-property', $token, [ $object->getName() ] );
+				$this->sanitizationError( 'bad-value-for-property', $token, [ $name ] );
 				return null;
 			}
 		}
 
 		$this->clearSanitizationErrors();
+
+		// @phan-suppress-next-line PhanTypeMismatchReturn generics weakness, see parent
 		return $object;
 	}
 }

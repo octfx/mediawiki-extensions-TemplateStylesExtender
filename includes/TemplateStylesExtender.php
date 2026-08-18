@@ -32,6 +32,7 @@ use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\UnorderedGroup;
+use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
 
@@ -42,7 +43,7 @@ class TemplateStylesExtender {
 	 * Matches 0-INF preceding CSS declarations at least one var( --content ) and 0-INF following declarations
 	 */
 	public function addVarSelector(
-		StylePropertySanitizerExtender $propertySanitizer,
+		StylePropertySanitizer $propertySanitizer,
 		MatcherFactoryExtender $factory
 	): void {
 		$anyProperty = new Alternative( [
