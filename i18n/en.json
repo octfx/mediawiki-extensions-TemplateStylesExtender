@@ -1,4 +1,9 @@
 {
+	"@metadata": {
+		"authors": [
+			"Octfx"
+		]
+	},
 	"ext-templatestylesextender-desc": "Extends [https://www.mediawiki.org/wiki/Extension:TemplateStyles TemplateStyles] with new selectors and matchers.",
 	"templatestylesextender-unscoping-no-permission": "Only users with 'editinterface' permissions (or a permission set in $wgTemplateStylesExtenderUnscopingPermission) can unscope css."
 }
