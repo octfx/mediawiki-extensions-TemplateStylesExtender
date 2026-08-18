@@ -43,14 +43,22 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 	): void {
 		$factory = new MatcherFactoryExtender( $matcherFactory );
 		$extended = new TemplateStylesExtender();
+
+		$extendCustomPropertyValues = TemplateStylesExtender::getConfigValue(
+			'TemplateStylesExtenderExtendCustomPropertiesValues'
+		) === true;
+
+		// This has to happen before the sanitizer is constructed. The parent constructor
+		// builds and memoises matchers from this factory -- colorFuncs() among them -- and
+		// each captures whether var() was enabled at the moment it was built. Setting the
+		// flag afterwards leaves those matchers permanently var()-free.
+		if ( $extendCustomPropertyValues ) {
+			$factory->setVarEnabled( true );
+		}
+
 		$extender = new StylePropertySanitizerExtender( $factory );
 
-		if (
-			TemplateStylesExtender::getConfigValue(
-				'TemplateStylesExtenderExtendCustomPropertiesValues'
-			) === true
-		) {
-			$factory->setVarEnabled( true );
+		if ( $extendCustomPropertyValues ) {
 			$extended->addVarSelector( $propertySanitizer, $factory );
 		}
 
