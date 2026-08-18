@@ -22,6 +22,10 @@
 /package.json           export-ignore
 /package-lock.json      export-ignore
 
+# Contributor and agent docs
+/AGENTS.md              export-ignore
+/CLAUDE.md              export-ignore
+
 # Git meta
 /.gitignore             export-ignore
 /.gitattributes         export-ignore
