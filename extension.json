@@ -11,9 +11,6 @@
 	"type": "parserhook",
 	"requires": {
 		"MediaWiki": ">= 1.43.0",
-		"platform": {
-			"php": ">=8.0"
-		},
 		"extensions": {
 			"TemplateStyles": ">= 1.0"
 		}

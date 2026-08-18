@@ -1,20 +1,34 @@
 {
 	"name": "octfx/template-styles-extender",
-	"version": "2.2.0",
 	"type": "mediawiki-extension",
 	"description": "Extends TemplateStyles with new CSS properties",
-	"homepage": "http://www.mediawiki.org/wiki/Extension:TemplateStylesExtender",
-	"license": "GPL-2.0+",
+	"keywords": [
+		"MediaWiki",
+		"TemplateStyles",
+		"TemplateStylesExtender",
+		"extension"
+	],
+	"homepage": "https://www.mediawiki.org/wiki/Extension:TemplateStylesExtender",
+	"readme": "README.md",
+	"license": "GPL-2.0-or-later",
 	"authors": [
 		{
 			"name": "Hannes Kruse",
 			"homepage": "https://octofox.de/",
 			"role": "Developer"
+		},
+		{
+			"name": "alistair3149",
+			"role": "Developer"
 		}
 	],
+	"support": {
+		"wiki": "https://www.mediawiki.org/wiki/Extension:TemplateStylesExtender",
+		"forum": "https://www.mediawiki.org/wiki/Extension_talk:TemplateStylesExtender",
+		"issues": "https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender/issues",
+		"source": "https://github.com/octfx/mediawiki-extensions-TemplateStylesExtender"
+	},
 	"require": {
-		"php": ">=8.0",
-		"ext-json": "*",
 		"composer/installers": ">=1.0.1"
 	},
 	"require-dev": {
@@ -25,16 +39,26 @@
 		"php-parallel-lint/php-parallel-lint": "1.4.0"
 	},
 	"scripts": {
-		"test": [
-			"parallel-lint . --exclude vendor --exclude node_modules",
-			"phpcs -p -s",
-			"minus-x check ."
-		],
 		"fix": [
 			"minus-x fix .",
 			"phpcbf"
 		],
-		"phan": "phan -d . --long-progress-bar"
+		"test": [
+			"parallel-lint . --exclude node_modules --exclude vendor",
+			"@phpcs",
+			"minus-x check ."
+		],
+		"phan": "phan -d . --long-progress-bar",
+		"phpcs": [
+			"phpcs --config-set ignore_warnings_on_exit 1",
+			"phpcs -sp --cache"
+		],
+		"phpunit": "cd ../../ && composer phpunit -- extensions/TemplateStylesExtender/tests/phpunit/",
+		"preflight": [
+			"@test",
+			"@phan",
+			"@phpunit"
+		]
 	},
 	"extra": {
 		"installer-name": "TemplateStylesExtender"
