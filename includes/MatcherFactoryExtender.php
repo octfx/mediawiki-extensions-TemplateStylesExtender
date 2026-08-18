@@ -97,8 +97,10 @@ class MatcherFactoryExtender extends MatcherFactory {
 			return $this->cache[__METHOD__];
 		}
 
-		// Channels mirror upstream, which allows var() here unconditionally. The origin
-		// colour below is this extension's own addition, so it stays behind the flag.
+		// Channels mirror upstream, which allows var() here unconditionally, except that
+		// a hue may take an angle fallback -- <hue> is <number> | <angle>, so that is
+		// spec-correct and upstream is the arbitrary one. The origin colour below is this
+		// extension's own addition, so it stays behind the flag.
 		$var = $this->varEnabled
 			? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 			: new NothingMatcher();
@@ -124,7 +126,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 		$optionalAlpha = Quantifier::optional( new Juxtaposition(
 			[ new DelimMatcher( '/' ), new Alternative( [ $nP, $none ] ) ]
 		) );
-		$optionalLegacyAlpha = Quantifier::optional( $nP );
+		$optionalLegacyAlpha = Quantifier::optional( $nPNone );
 
 		// Absolute color syntaxes
 		$rgbSyntax = $this->buildRgbSyntax( $n, $p, $nPNone, $optionalAlpha, $optionalLegacyAlpha );
@@ -282,20 +284,12 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * Helper to build the syntax for rgb() and rgba() functions.
-	 * @param Matcher $n Number matcher (including var)
-	 * @param Matcher $p Percentage matcher (including var)
-	 * @param Matcher $nPNone Number, percentage, or none matcher (including var)
-	 * @param Matcher $optionalAlpha Modern alpha syntax matcher
-	 * @param Matcher $optionalLegacyAlpha Legacy alpha syntax matcher
-	 * @return Alternative
-	 */
-
-	/**
 	 * A value of the given type, or a var() that may carry a fallback of that same type.
 	 *
 	 * Mirrors css-sanitizer's own rawOrCustomProp(). Restricting the fallback to the same
 	 * matcher is what makes it safe: var( --x, url( ... ) ) cannot satisfy a numeric slot.
+	 * Note the type is this factory's, so anything mathFunction() or rawNumber() admit is
+	 * admitted in a fallback too.
 	 *
 	 * @param Matcher $type
 	 * @return Matcher
@@ -310,6 +304,15 @@ class MatcherFactoryExtender extends MatcherFactory {
 		] );
 	}
 
+	/**
+	 * Helper to build the syntax for rgb() and rgba() functions.
+	 * @param Matcher $n Number matcher (including var)
+	 * @param Matcher $p Percentage matcher (including var)
+	 * @param Matcher $nPNone Number, percentage, or none matcher (including var)
+	 * @param Matcher $optionalAlpha Modern alpha syntax matcher
+	 * @param Matcher $optionalLegacyAlpha Legacy alpha syntax matcher
+	 * @return Alternative
+	 */
 	protected function buildRgbSyntax(
 		Matcher $n,
 		Matcher $p,

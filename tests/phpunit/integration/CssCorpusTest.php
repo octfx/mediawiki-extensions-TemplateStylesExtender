@@ -181,8 +181,19 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			// does. The type restriction is the safety property: a fallback that is not
 			// a number/percentage/angle cannot satisfy the slot.
 			self::cases( 'Color 4/5', [
+				// T36: var() per channel in the legacy comma syntax, the shape reported
+				// as "variables in properties not recognized"
+				'background-color: rgb(var(--r), var(--g), var(--b))',
+				'background-color: rgba(var(--r), var(--g), var(--b), 0.5)',
 				'color: rgb(var(--r, 0) 0 0)',
 				'color: rgb(var(--r, 0) var(--g, 0) var(--b, 0))',
+				// a hue may take an angle fallback: <hue> is <number> | <angle>, so this
+				// is spec-correct even though upstream refuses it
+				'color: hsl(var(--h, 30deg) 50% 50%)',
+				// `none` in the legacy alpha slot, which upstream allows
+				'color: rgb(1, 2, 3, none)',
+				// the fallback is this factory's matcher, so a bare var() nests
+				'color: rgb(var(--r, var(--s)) 0 0)',
 				'color: hsl(var(--h, 120) 50% 50%)',
 				'color: hsl(120 var(--s, 50%) 50%)',
 				'color: lab(var(--l, 50%) 40 59.5)',
@@ -552,6 +563,11 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
+			// A fallback inside a fallback: the inner var() is admitted, but not with a
+			// fallback of its own, since only one level goes through rawOrCustomProp().
+			self::cases( 'Color 4/5', [
+				'color: rgb(var(--r, var(--s, 0)) 0 0)',
+			] ),
 			// rawNumber()'s var() wrapper takes no fallback. Unlike the colour channels,
 			// this is not a narrowing -- upstream's ratio() admits no var() at all.
 			self::cases( 'Box Sizing 4', [
