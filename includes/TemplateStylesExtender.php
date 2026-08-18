@@ -269,41 +269,6 @@ class TemplateStylesExtender {
 	}
 
 	/**
-	 * Backport CSS Box Sizing Level 4 from master branch
-	 * @see https://github.com/wikimedia/css-sanitizer/commit/ffe10a21512f00405b4d0d124eb2c4866749e300
-	 */
-	public function addCssSizing4( StylePropertySanitizerExtender $sanitizer, MatcherFactoryExtender $factory ): void {
-		try {
-			$auto = new KeywordMatcher( 'auto' );
-			$containIntrinsic = new Juxtaposition( [
-				Quantifier::optional( $auto ),
-				new Alternative( [
-					new KeywordMatcher( 'none' ),
-					$factory->lengthPercentage(),
-				] ),
-			] );
-
-			$sanitizer->addKnownProperties( [
-				'aspect-ratio' => UnorderedGroup::someOf( [ $auto, $factory->ratio() ] ),
-				'contain-intrinsic-width' => $containIntrinsic,
-				'contain-intrinsic-height' => $containIntrinsic,
-				'contain-intrinsic-block-size' => $containIntrinsic,
-				'contain-intrinsic-inline-size' => $containIntrinsic,
-				'contain-intrinsic-size' => Quantifier::count( $containIntrinsic, 1, 2 ),
-				'min-intrinsic-sizing' => new Alternative( [
-					new KeywordMatcher( 'legacy' ),
-					UnorderedGroup::someOf( [
-						new KeywordMatcher( 'zero-if-scroll' ),
-						new KeywordMatcher( 'zero-if-extrinsic' ),
-					] ),
-				] )
-			] );
-		} catch ( InvalidArgumentException ) {
-			// Fail silently
-		}
-	}
-
-	/**
 	 * Loads a config value for a given key from the main config
 	 * Returns null on if an ConfigException was thrown
 	 *
