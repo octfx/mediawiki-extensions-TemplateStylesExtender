@@ -21,7 +21,7 @@
 			"value": true
 		},
 		"TemplateStylesExtenderExtendCustomPropertiesValues": {
-			"description": "Allow the CSS custom properties (CSS variables) to be used as values in all properties",
+			"description": "Allow the CSS custom properties (CSS variables) to be used as values in all properties. Colour function channels such as rgb() are not affected: css-sanitizer accepts var() there whatever this is set to, and this extension does not restrict what the sanitizer already allows.",
 			"value": true
 		},
 		"TemplateStylesExtenderEnableUnscopingSupport": {

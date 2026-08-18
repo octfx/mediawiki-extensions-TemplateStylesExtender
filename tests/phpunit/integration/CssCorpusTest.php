@@ -177,6 +177,29 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$commons = self::COMMONS;
 
 		return array_merge(
+			// Colour channels take var() with a fallback of the same type, as upstream
+			// does. The type restriction is the safety property: a fallback that is not
+			// a number/percentage/angle cannot satisfy the slot.
+			self::cases( 'Color 4/5', [
+				// T36: var() per channel in the legacy comma syntax, the shape reported
+				// as "variables in properties not recognized"
+				'background-color: rgb(var(--r), var(--g), var(--b))',
+				'background-color: rgba(var(--r), var(--g), var(--b), 0.5)',
+				'color: rgb(var(--r, 0) 0 0)',
+				'color: rgb(var(--r, 0) var(--g, 0) var(--b, 0))',
+				// a hue may take an angle fallback: <hue> is <number> | <angle>, so this
+				// is spec-correct even though upstream refuses it
+				'color: hsl(var(--h, 30deg) 50% 50%)',
+				// `none` in the legacy alpha slot, which upstream allows
+				'color: rgb(1, 2, 3, none)',
+				// the fallback is this factory's matcher, so a bare var() nests
+				'color: rgb(var(--r, var(--s)) 0 0)',
+				'color: hsl(var(--h, 120) 50% 50%)',
+				'color: hsl(120 var(--s, 50%) 50%)',
+				'color: lab(var(--l, 50%) 40 59.5)',
+				'color: oklch(0.5 0.1 var(--h, 40))',
+				'color: rgb(from #36c var(--r, 0) g b)',
+			] ),
 			// Regress if mathFunction() is deleted. addVarSelector's fallback reaches
 			// neither inside a function nor past a token it does not list, which is what
 			// `inset`, `opacity` and the `/` supply in the last three.
@@ -519,15 +542,34 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
+	/**
+	 * A var() fallback in a colour channel is restricted to that channel's own type, so a
+	 * fallback cannot be used to reach a value the slot would otherwise refuse.
+	 *
+	 * @dataProvider provideRejectedFallbacks
+	 */
+	public function testChannelFallbacksAreTypeRestricted( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideRejectedFallbacks(): array {
+		return [
+			'url fallback' => [ 'color: rgb(var(--r, url("https://upload.wikimedia.org/x.png")) 0 0)' ],
+			'colour-word fallback in a numeric slot' => [ 'color: rgb(var(--r, red) 0 0)' ],
+			'string fallback' => [ 'color: rgb(var(--r, "0") 0 0)' ],
+		];
+	}
+
 	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
-			// This extension's var() wrapper takes no fallback; upstream's rawOrCustomProp()
-			// does. So an override replacing an upstream matcher wholesale can be narrower
-			// than what it shadows -- accepted by plain css-sanitizer, rejected here.
+			// A fallback inside a fallback: the inner var() is admitted, but not with a
+			// fallback of its own, since only one level goes through rawOrCustomProp().
 			self::cases( 'Color 4/5', [
-				'color: rgb(var(--r, 0) 0 0)',
+				'color: rgb(var(--r, var(--s, 0)) 0 0)',
 			] ),
+			// rawNumber()'s var() wrapper takes no fallback. Unlike the colour channels,
+			// this is not a narrowing -- upstream's ratio() admits no var() at all.
 			self::cases( 'Box Sizing 4', [
 				'aspect-ratio: 16 / var(--b, 9)',
 				// upstream ratio() is built from rawNumber(), which excludes math functions

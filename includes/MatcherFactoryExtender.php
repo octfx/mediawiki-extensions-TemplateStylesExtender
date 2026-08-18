@@ -97,14 +97,17 @@ class MatcherFactoryExtender extends MatcherFactory {
 			return $this->cache[__METHOD__];
 		}
 
-		// Common var matcher
+		// Channels mirror upstream, which allows var() here unconditionally, except that
+		// a hue may take an angle fallback -- <hue> is <number> | <angle>, so that is
+		// spec-correct and upstream is the arbitrary one. The origin colour below is this
+		// extension's own addition, so it stays behind the flag.
 		$var = $this->varEnabled
 			? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 			: new NothingMatcher();
 
-		$n = new Alternative( [ $this->number(), $var ] );
-		$p = new Alternative( [ $this->percentage(), $var ] );
-		$a = new Alternative( [ $this->angle(), $var ] );
+		$n = $this->rawOrCustomProp( $this->number() );
+		$p = $this->rawOrCustomProp( $this->percentage() );
+		$a = $this->rawOrCustomProp( $this->angle() );
 		$nP = new Alternative( [ $n, $p ] );
 		$hueWithVar = new Alternative( [ $n, $a ] );
 
@@ -123,7 +126,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 		$optionalAlpha = Quantifier::optional( new Juxtaposition(
 			[ new DelimMatcher( '/' ), new Alternative( [ $nP, $none ] ) ]
 		) );
-		$optionalLegacyAlpha = Quantifier::optional( $nP );
+		$optionalLegacyAlpha = Quantifier::optional( $nPNone );
 
 		// Absolute color syntaxes
 		$rgbSyntax = $this->buildRgbSyntax( $n, $p, $nPNone, $optionalAlpha, $optionalLegacyAlpha );
@@ -278,6 +281,27 @@ class MatcherFactoryExtender extends MatcherFactory {
 		] );
 
 		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * A value of the given type, or a var() that may carry a fallback of that same type.
+	 *
+	 * Mirrors css-sanitizer's own rawOrCustomProp(). Restricting the fallback to the same
+	 * matcher is what makes it safe: var( --x, url( ... ) ) cannot satisfy a numeric slot.
+	 * Note the type is this factory's, so anything mathFunction() or rawNumber() admit is
+	 * admitted in a fallback too.
+	 *
+	 * @param Matcher $type
+	 * @return Matcher
+	 */
+	protected function rawOrCustomProp( Matcher $type ): Matcher {
+		return new Alternative( [
+			$type,
+			new FunctionMatcher( 'var', new Juxtaposition( [
+				new CustomPropertyMatcher(),
+				Quantifier::optional( $type ),
+			], true ) ),
+		] );
 	}
 
 	/**
