@@ -2,7 +2,7 @@
 
 ## Overview
 
-TemplateStylesExtender is a MediaWiki extension (requires MW 1.43.9+ and [TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles)) that widens the set of CSS that TemplateStyles will accept — custom properties, newer colour syntax, grid features, `image-set()`, and similar.
+TemplateStylesExtender is a MediaWiki extension (see `requires` in `extension.json` for the supported MediaWiki floor, which tracks the current LTS; it also requires [TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles)) that widens the set of CSS that TemplateStyles will accept — custom properties, newer colour syntax, grid features, `image-set()`, and similar.
 
 It does this by subclassing the sanitizer and matcher classes from [css-sanitizer](https://www.mediawiki.org/wiki/Css-sanitizer) and swapping the subclasses in through TemplateStyles' hooks:
 
@@ -79,7 +79,7 @@ Three places have an opinion and only one of them decides:
 
 | Where | Declares | Effect |
 | --- | --- | --- |
-| MediaWiki core `composer.json` | an exact pin (`6.2.1` on every branch from REL1_43 to master) | **decides** what lands in `../../vendor/` |
+| MediaWiki core `composer.json` | an exact pin, currently the same version on every branch from the LTS to master | **decides** what lands in `../../vendor/` |
 | TemplateStyles `composer.json` | a compatibility range (`^6.0.0`) | only binding where `composer.local.json` merges it via composer-merge-plugin |
 | This extension | nothing | — |
 
@@ -90,6 +90,8 @@ This extension deliberately declares no css-sanitizer dependency, even though it
 - CI runs `composer install` in this directory, so a runtime requirement would install a second copy under `vendor/` while Phan analyses `../../vendor/` — two copies, only one of them checked.
 
 `extension.json` cannot express it either: TemplateStyles' own `version` has been `1.0` for its entire history, so `requires.extensions.TemplateStyles` can never encode a css-sanitizer floor.
+
+The support policy is: this extension targets the css-sanitizer shipped by the **current MediaWiki LTS**, and support for older css-sanitizer versions is dropped once the LTS moves past them — which can happen in a *point* release of the LTS, not only at a major upgrade. When you drop such support, raise `requires.MediaWiki` in `extension.json` to the first point release carrying the new css-sanitizer, or wikis on older point releases take a fatal rather than degrading.
 
 The practical consequence is that **the available parent API is whatever the target MediaWiki branch ships**, and nothing will tell you at install time if that changes. Check what is actually installed — that is what Phan and the tests see, and it may differ from the constraint if the checkout is stale:
 
