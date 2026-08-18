@@ -13,14 +13,12 @@ use Wikimedia\CSS\Parser\Parser as CSSParser;
  * The properties this extension adds must honour the wiki's $wgTemplateStylesAllowedUrls,
  * not bypass it and not hardcode a policy of their own.
  *
- * This has to be an integration test. A unit test can only show that the extension
- * delegates to whatever matcher factory it is handed; it cannot show that the wiki's
- * configured allowlist actually reaches the properties added through the hook chain, which
- * is the property that a wiring mistake would break.
+ * Integration rather than unit: a unit test can only show the extension delegates to
+ * whatever factory it is handed, not that the configured allowlist reaches the properties
+ * added through the hook chain -- which is what a wiring mistake breaks.
  *
- * The corpus in CssCorpusTest deliberately uses URLs that the default allowlist permits, so
- * it stays silent about configuration. This is where configuration is exercised, with the
- * allowlist set explicitly so the assertions do not depend on the wiki's own settings.
+ * CssCorpusTest uses URLs the default allowlist permits and so says nothing about
+ * configuration. This sets the allowlist explicitly, so it depends on no wiki's settings.
  *
  * @group TemplateStylesExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\Hooks\PropertySanitizerHook
@@ -35,12 +33,10 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 
 	/**
 	 * TemplateStyles memoises its matcher factory and sanitizers in private statics and
-	 * never invalidates them, so a config override has no effect until they are dropped.
-	 *
-	 * Reaching into another extension's internals is not ideal, but the alternative --
-	 * PHPUnit process isolation -- does not work under MediaWiki's test bootstrap. If
-	 * TemplateStyles renames these properties, getProperty() throws and this test fails
-	 * loudly rather than silently asserting against a stale sanitizer.
+	 * never invalidates them, so a config override does nothing until they are dropped.
+	 * PHPUnit process isolation, the obvious alternative, does not work under MediaWiki's
+	 * test bootstrap. A rename upstream makes getProperty() throw, which fails loudly
+	 * rather than asserting against a stale sanitizer.
 	 */
 	private static function resetTemplateStylesCaches(): void {
 		$reflection = new ReflectionClass( TemplateStylesHooks::class );
@@ -87,17 +83,15 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
-	 * The density slot of image-set() must not accept var(), or a template can smuggle a
-	 * second image-set entry past the URL allowlist.
+	 * The density slot of image-set() must not accept var(), or a custom property can
+	 * smuggle a second image-set entry past the URL allowlist.
 	 *
-	 * MatcherFactoryExtender::resolution() is what prevents this. It looks redundant --
-	 * deleting it fails no other test -- but upstream's resolution() is built as
-	 * mathFunction( rawResolution() ), and mathFunction() is late-bound to this extension's
-	 * var()-aware override. Inheriting it therefore admits var() into the density slot.
-	 *
-	 * doSanitize() does not help here: it rejects url() tokens and external-resource
-	 * functions inside a custom property, but the payload below is a bare string, which is
-	 * neither -- and a bare string IS a URL in image-set()'s first argument.
+	 * MatcherFactoryExtender::resolution() is what prevents it. Upstream builds resolution
+	 * as mathFunction( rawResolution() ), and mathFunction() is late-bound to this
+	 * extension's var()-aware override, so inheriting it admits var() into the slot.
+	 * doSanitize() does not help: the payload is a bare string, which is neither a url()
+	 * token nor an external-resource function -- and is exactly what image-set()'s first
+	 * argument accepts as a URL.
 	 *
 	 * @dataProvider provideResolutionSlotPayloads
 	 */
@@ -139,14 +133,12 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 
 	/**
 	 * Not a bypass: this pins a deliberate narrowing. CSS Values 4 permits a math function
-	 * where a <resolution> is expected, and inheriting upstream's resolution() would accept
-	 * one. The override does not, and that strictness is what keeps var() out of the slot.
+	 * where a <resolution> is expected; the override does not, and that strictness is what
+	 * keeps var() out of the slot.
 	 *
-	 * Worth knowing if anyone tries to fix this by changing mathFunction() instead: with
-	 * both resolution() and mathFunction() inherited, image-set( "<allowed>" calc(var(--r)) )
-	 * is still accepted, because upstream's own calcSum() admits var() on the reasoning that
-	 * calc() forces values to be numeric. That holds until the result lands in a slot where
-	 * substitution is textual, as it does here.
+	 * Relaxing this at mathFunction() instead would not be equivalent. Upstream's calcSum()
+	 * admits var() on the reasoning that calc() forces values to be numeric, which stops
+	 * holding once the result lands where substitution is textual, as it does here.
 	 */
 	public function testMathFunctionsAreNotAllowedInTheDensitySlot(): void {
 		$ok = self::ALLOWED . '/i.png';
