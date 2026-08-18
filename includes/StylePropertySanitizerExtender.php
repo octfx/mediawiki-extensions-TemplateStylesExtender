@@ -271,8 +271,10 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			}
 		}
 
-		$this->clearSanitizationErrors();
-
+		// No clearSanitizationErrors() here. It was needed when this method called the
+		// parent first, which recorded "unknown property" for every custom property; the
+		// early return above means nothing of ours needs clearing now, and clearing would
+		// discard errors recorded for earlier declarations in the same rule.
 		// @phan-suppress-next-line PhanTypeMismatchReturn generics weakness, see parent
 		return $object;
 	}

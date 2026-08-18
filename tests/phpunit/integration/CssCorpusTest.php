@@ -81,6 +81,24 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * A custom property must not wipe the errors recorded for its neighbours.
+	 *
+	 * Every other case here is a single declaration in its own rule, so an error-clearing
+	 * bug is invisible to them: the invalid declaration is dropped from the output but the
+	 * editor is told nothing.
+	 */
+	public function testInvalidNeighbourStillReportsAnError(): void {
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$sanitizer->sanitize(
+			CSSParser::newFromString( '.a { color: notacolor; --x: 1px }' )->parseStylesheet()
+		);
+
+		$this->assertCount( 1, $sanitizer->getSanitizationErrors(),
+			'the invalid color should still be reported after the custom property is sanitized' );
+	}
+
+	/**
 	 * The `@font-face` at-rule cannot go through isAccepted()'s rule wrapper.
 	 *
 	 * The family name has to start with "TemplateStyles": TemplateStyles namespaces
