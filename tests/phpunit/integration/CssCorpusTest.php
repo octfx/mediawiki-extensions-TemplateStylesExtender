@@ -182,6 +182,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$commons = self::COMMONS;
 
 		return array_merge(
+			// var() inside a colour function; see StylesheetSanitizerHook's note on
+			// setting setVarEnabled() before the sanitizer is constructed.
+			self::cases( 'Color 4/5', [
+				'background: hsl(from var(--c) h s l)',
+				'background: rgb(var(--r) 0 0)',
+			] ),
 			self::cases( 'Masking 1', [
 				'-webkit-mask-image: none',
 				'-webkit-mask-image: inherit',
@@ -493,23 +499,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
-	/**
-	 * Two separate gaps, both currently rejected.
-	 *
-	 * Relative colours with calc() on a channel are unimplemented, as README says.
-	 *
-	 * var() inside a colour function is a different problem with a different cause, and
-	 * the two look alike in a failure list. StylesheetSanitizerHook constructs the
-	 * StylePropertySanitizerExtender before calling setVarEnabled( true ) on the factory,
-	 * so colorFuncs() has already memoised its matchers with var() support switched off.
-	 * Fixing the calc() gap will not move these; the construction order has to change.
-	 */
+	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
-			self::cases( 'Color 4/5', [
-				'background: hsl(from var(--c) h s l)',
-				'background: rgb(var(--r) 0 0)',
-			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
 				'background: hsl(from #0000FF h s calc(l + 20))',
