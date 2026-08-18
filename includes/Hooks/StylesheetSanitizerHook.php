@@ -63,7 +63,12 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		}
 
 		$newRules = $sanitizer->getRuleSanitizers();
-		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender( $factory );
+		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender(
+			$factory,
+			(bool)TemplateStylesExtender::getConfigValue(
+				'TemplateStylesExtenderRequireFontFamilyPrefix'
+			)
+		);
 		$sanitizer->setRuleSanitizers( $newRules );
 
 		$extended->addBackdropFilter( $extender );

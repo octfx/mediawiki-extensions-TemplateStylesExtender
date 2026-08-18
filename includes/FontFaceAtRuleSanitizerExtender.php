@@ -21,16 +21,26 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
+use Wikimedia\CSS\Grammar\Quantifier;
+use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\FontFaceAtRuleSanitizer;
 
 class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 
+	/** TemplateStyles requires this prefix on @font-face family names. */
+	private const FAMILY_PREFIX = 'TemplateStyles';
+
 	/**
 	 * @param MatcherFactory $matcherFactory
+	 * @param bool $requireFamilyPrefix Require @font-face family names to start with
+	 *   "TemplateStyles", as TemplateStyles itself does. Off by default, which is this
+	 *   extension's long-standing behaviour; see $wgTemplateStylesExtenderRequireFontFamilyPrefix.
 	 */
-	public function __construct( MatcherFactory $matcherFactory ) {
+	public function __construct( MatcherFactory $matcherFactory, bool $requireFamilyPrefix = false ) {
 		parent::__construct( $matcherFactory );
 
 		$matcher = new Alternative( [ new KeywordMatcher( 'normal' ), $matcherFactory->percentage() ] );
@@ -44,5 +54,24 @@ class FontFaceAtRuleSanitizerExtender extends FontFaceAtRuleSanitizer {
 			// CSS Fonts Module Level 5
 			'size-adjust' => $matcher,
 		] + $this->propertySanitizer->getKnownProperties() );
+
+		if ( $requireFamilyPrefix ) {
+			// Mirrors TemplateStylesFontFaceAtRuleSanitizer. @font-face is not scoped to
+			// .mw-parser-output, so a family registered here applies to the whole page --
+			// which is why TemplateStyles namespaces the names.
+			$startsWithPrefix = static function ( Token $t ): bool {
+				return str_starts_with( $t->value(), self::FAMILY_PREFIX );
+			};
+
+			$this->propertySanitizer->setKnownProperties( [
+				'font-family' => new Alternative( [
+					new TokenMatcher( Token::T_STRING, $startsWithPrefix ),
+					new Juxtaposition( [
+						new TokenMatcher( Token::T_IDENT, $startsWithPrefix ),
+						Quantifier::star( $matcherFactory->ident() ),
+					] ),
+				] ),
+			] + $this->propertySanitizer->getKnownProperties() );
+		}
 	}
 }
