@@ -84,8 +84,6 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 
 		$extended->addCssContainment3( $extender );
 		$extended->addCssFonts4( $extender, $factory );
-		$extended->addCssRuby1( $extender );
-		$extended->addCssScrollSnap1( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
 	}

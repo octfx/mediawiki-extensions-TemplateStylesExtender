@@ -88,18 +88,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * Add alpha support to hex-color
-	 */
-	public function colorHex(): TokenMatcher {
-		$this->cache[__METHOD__]
-			??= new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
-				return preg_match( '/^([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $t->value() );
-			} );
-
-		return $this->cache[__METHOD__];
-	}
-
-	/**
 	 * Partially implements CSS Color Module Level 4 and 5
 	 *
 	 * @return Matcher|Matcher[]
