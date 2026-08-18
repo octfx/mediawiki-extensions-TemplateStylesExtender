@@ -79,20 +79,24 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @inheritDoc
 	 */
 	public function cssWideKeywords(): Matcher {
-		return $this->cache[__METHOD__]
+		$this->cache[__METHOD__]
 			??= new KeywordMatcher( [
 				'initial', 'inherit', 'unset', 'revert', 'revert-layer'
 			] );
+
+		return $this->cache[__METHOD__];
 	}
 
 	/**
 	 * Add alpha support to hex-color
 	 */
 	public function colorHex(): TokenMatcher {
-		return $this->cache[__METHOD__]
+		$this->cache[__METHOD__]
 			??= new TokenMatcher( Token::T_HASH, static function ( Token $t ) {
 				return preg_match( '/^([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i', $t->value() );
 			} );
+
+		return $this->cache[__METHOD__];
 	}
 
 	/**
@@ -259,10 +263,12 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	/** @inheritDoc */
 	public function resolution(): Matcher {
-		return $this->cache[__METHOD__]
+		$this->cache[__METHOD__]
 			??= new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
 				return preg_match( '/^(dpi|dpcm|dppx|x)$/i', $t->unit() );
 			} );
+
+		return $this->cache[__METHOD__];
 	}
 
 	/**
@@ -436,11 +442,13 @@ class MatcherFactoryExtender extends MatcherFactory {
 			return parent::rawNumber();
 		}
 
-		return $this->cache[__METHOD__]
-		   ??= new Alternative( [
-			   new TokenMatcher( Token::T_NUMBER ),
-			   new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
-		   ] );
+		$this->cache[__METHOD__]
+			??= new Alternative( [
+				new TokenMatcher( Token::T_NUMBER ),
+				new FunctionMatcher( 'var', new CustomPropertyMatcher() ),
+			] );
+
+		return $this->cache[__METHOD__];
 	}
 
 	/**
@@ -455,7 +463,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 			return parent::ratio();
 		}
 
-		return $this->cache[__METHOD__]
+		$this->cache[__METHOD__]
 			// <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
 			??= new Alternative( [
 				$this->rawNumber(),
@@ -467,5 +475,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 					$this->rawNumber(),
 				] ),
 			] );
+
+		return $this->cache[__METHOD__];
 	}
 }
