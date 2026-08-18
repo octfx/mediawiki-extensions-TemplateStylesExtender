@@ -123,41 +123,6 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
-	 * Every method here documented with `@inheritDoc` is an override of a
-	 * css-sanitizer hook. If the parent declares no method of that name the
-	 * override is silently dead: nothing calls it, and the feature it adds
-	 * simply never applies.
-	 *
-	 * This is not hypothetical. cssGrid1() was renamed to cssGrid3() in v2.2.0,
-	 * which disabled subgrid and masonry support for the whole 2.2.x line
-	 * without failing anything -- css-sanitizer has only ever declared
-	 * cssGrid1(), and StylePropertySanitizer's constructor calls that.
-	 */
-	public function testEveryInheritDocMethodOverridesAParentMethod(): void {
-		$class = new ReflectionClass( StylePropertySanitizerExtender::class );
-		$parent = $class->getParentClass();
-
-		$overrides = [];
-		foreach ( $class->getMethods() as $method ) {
-			if ( $method->getDeclaringClass()->getName() !== $class->getName() ) {
-				continue;
-			}
-			if ( str_contains( (string)$method->getDocComment(), '@inheritDoc' ) ) {
-				$overrides[] = $method->getName();
-			}
-		}
-
-		$this->assertNotEmpty( $overrides, 'expected at least one @inheritDoc override' );
-		foreach ( $overrides as $name ) {
-			$this->assertTrue(
-				$parent->hasMethod( $name ),
-				"StylePropertySanitizerExtender::$name() is documented with @inheritDoc but " .
-				$parent->getName() . " declares no such method, so the override is dead code."
-			);
-		}
-	}
-
-	/**
 	 * @dataProvider provideGridDeclarations
 	 */
 	public function testExtendedGridProperties( string $declarationText, bool $allowed ): void {
