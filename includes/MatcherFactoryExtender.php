@@ -97,14 +97,15 @@ class MatcherFactoryExtender extends MatcherFactory {
 			return $this->cache[__METHOD__];
 		}
 
-		// Common var matcher
+		// Channels mirror upstream, which allows var() here unconditionally. The origin
+		// colour below is this extension's own addition, so it stays behind the flag.
 		$var = $this->varEnabled
 			? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
 			: new NothingMatcher();
 
-		$n = new Alternative( [ $this->number(), $var ] );
-		$p = new Alternative( [ $this->percentage(), $var ] );
-		$a = new Alternative( [ $this->angle(), $var ] );
+		$n = $this->rawOrCustomProp( $this->number() );
+		$p = $this->rawOrCustomProp( $this->percentage() );
+		$a = $this->rawOrCustomProp( $this->angle() );
 		$nP = new Alternative( [ $n, $p ] );
 		$hueWithVar = new Alternative( [ $n, $a ] );
 
@@ -289,6 +290,26 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @param Matcher $optionalLegacyAlpha Legacy alpha syntax matcher
 	 * @return Alternative
 	 */
+
+	/**
+	 * A value of the given type, or a var() that may carry a fallback of that same type.
+	 *
+	 * Mirrors css-sanitizer's own rawOrCustomProp(). Restricting the fallback to the same
+	 * matcher is what makes it safe: var( --x, url( ... ) ) cannot satisfy a numeric slot.
+	 *
+	 * @param Matcher $type
+	 * @return Matcher
+	 */
+	protected function rawOrCustomProp( Matcher $type ): Matcher {
+		return new Alternative( [
+			$type,
+			new FunctionMatcher( 'var', new Juxtaposition( [
+				new CustomPropertyMatcher(),
+				Quantifier::optional( $type ),
+			], true ) ),
+		] );
+	}
+
 	protected function buildRgbSyntax(
 		Matcher $n,
 		Matcher $p,
