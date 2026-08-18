@@ -87,6 +87,55 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * The density slot of image-set() must not accept var(), or a template can smuggle a
+	 * second image-set entry past the URL allowlist.
+	 *
+	 * MatcherFactoryExtender::resolution() is what prevents this. It looks redundant --
+	 * deleting it fails no other test -- but upstream's resolution() is built as
+	 * mathFunction( rawResolution() ), and mathFunction() is late-bound to this extension's
+	 * var()-aware override. Inheriting it therefore admits var() into the density slot.
+	 *
+	 * doSanitize() does not help here: it rejects url() tokens and external-resource
+	 * functions inside a custom property, but the payload below is a bare string, which is
+	 * neither -- and a bare string IS a URL in image-set()'s first argument.
+	 *
+	 * @dataProvider provideResolutionSlotPayloads
+	 */
+	public function testResolutionSlotRejectsSubstitution( string $declarations ): void {
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$output = (string)$sanitizer->sanitize(
+			CSSParser::newFromString( ".test { $declarations }" )->parseStylesheet()
+		);
+
+		$this->assertStringNotContainsString(
+			'background-image',
+			$output,
+			'the referencing declaration must be dropped, not just flagged'
+		);
+	}
+
+	public static function provideResolutionSlotPayloads(): array {
+		$evil = self::BLOCKED . '/tracker.png';
+		// Must be a host this test's own allowlist permits, or the declaration is dropped
+		// because of the URL rather than because of the density slot, and the test passes
+		// for the wrong reason.
+		$ok = self::ALLOWED . '/i.png';
+
+		return [
+			'var() carrying a second image-set entry' => [
+				"--r: 2x, \"$evil\" 1x; background-image: image-set(\"$ok\" var(--r))",
+			],
+			'var() in the density slot at all' => [
+				"--r: 1x; background-image: image-set(\"$ok\" var(--r))",
+			],
+			'math function in the density slot' => [
+				"background-image: image-set(\"$ok\" calc(1dppx * 2))",
+			],
+		];
+	}
+
+	/**
 	 * @dataProvider provideUrls
 	 */
 	public function testConfiguredAllowlistApplies( string $declaration, bool $allowed ): void {

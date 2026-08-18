@@ -182,6 +182,29 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$commons = self::COMMONS;
 
 		return array_merge(
+			// var() inside math-typed slots. These are the cases that regress if
+			// MatcherFactoryExtender::mathFunction() is deleted; addVarSelector's
+			// top-level fallback does not reach inside a function.
+			self::cases( 'Custom properties in math slots', [
+				'transform: translateX(var(--x))',
+				'transform: translate(var(--x), var(--y))',
+				'transform: rotate(var(--a))',
+				'filter: blur(var(--b))',
+				'box-shadow: var(--x) var(--y) 0 red inset',
+				'transition: opacity var(--d) ease-in-out',
+				'border-radius: var(--r) / 1px',
+				'background-image: linear-gradient(red var(--s), blue)',
+			] ),
+			// var() in a ratio. These reach MatcherFactoryExtender::rawNumber() through
+			// upstream ratio(), which calls $this->rawNumber() late-bound.
+			// `aspect-ratio: var(--r)` is deliberately NOT here: it passes either way via
+			// addVarSelector, so it would not detect rawNumber() being removed.
+			self::cases( 'Box Sizing 4', [
+				'aspect-ratio: 16 / var(--b)',
+				'aspect-ratio: var(--a) / 9',
+				'aspect-ratio: var(--a) / var(--b)',
+				'aspect-ratio: auto var(--a) / var(--b)',
+			] ),
 			// var() inside a colour function; see StylesheetSanitizerHook's note on
 			// setting setVarEnabled() before the sanitizer is constructed.
 			self::cases( 'Color 4/5', [
@@ -502,6 +525,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
+			self::cases( 'Box Sizing 4', [
+				// CustomPropertyMatcher takes no fallback argument
+				'aspect-ratio: 16 / var(--b, 9)',
+				// upstream ratio() is built from rawNumber(), which excludes math functions
+				'aspect-ratio: calc(16) / var(--b)',
+			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
 				'background: hsl(from #0000FF h s calc(l + 20))',
