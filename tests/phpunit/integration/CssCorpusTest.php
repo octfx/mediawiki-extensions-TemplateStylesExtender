@@ -182,9 +182,13 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$commons = self::COMMONS;
 
 		return array_merge(
-			// var() inside math-typed slots. These are the cases that regress if
-			// MatcherFactoryExtender::mathFunction() is deleted; addVarSelector's
-			// top-level fallback does not reach inside a function.
+			// These regress if MatcherFactoryExtender::mathFunction() is deleted.
+			// addVarSelector's top-level fallback covers neither the interior of a
+			// function (the transform/filter/gradient cases) nor a declaration carrying
+			// a token absent from its $anyProperty alternative -- which is what the
+			// `inset`, `opacity` and `/` in the remaining three supply. Dropping those
+			// tokens makes the case pass with or without the override, so they are load
+			// bearing rather than decoration.
 			self::cases( 'Custom properties in math slots', [
 				'transform: translateX(var(--x))',
 				'transform: translate(var(--x), var(--y))',
@@ -407,6 +411,10 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			self::cases( 'Images 4', [
 				'background-image: image-set( linear-gradient(blue, white) 1x, linear-gradient(blue, green) 2x )',
 			] ),
+			// css-sanitizer 6.2.1 declares these; this extension no longer adds them.
+			// They stay because StylesheetSanitizerHook replaces the whole property map
+			// via setKnownProperties(), so a wrongly-built extender could drop upstream
+			// properties wholesale -- these cases would catch that.
 			self::cases( 'Ruby 1', [
 				'ruby-align: center',
 				'ruby-align: inherit',
@@ -429,6 +437,10 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'ruby-position: under',
 				'ruby-position: unset',
 			] ),
+			// css-sanitizer 6.2.1 declares these; this extension no longer adds them.
+			// They stay because StylesheetSanitizerHook replaces the whole property map
+			// via setKnownProperties(), so a wrongly-built extender could drop upstream
+			// properties wholesale -- these cases would catch that.
 			self::cases( 'Scroll Snap 1', [
 				'scroll-margin-block-end: 10px',
 				'scroll-margin-block-end: 1em',
@@ -525,8 +537,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/** Relative colours with calc() on a channel are not implemented. */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
+			// This extension wraps var() as FunctionMatcher( 'var', new CustomPropertyMatcher() ),
+			// which takes no fallback argument. Upstream 6.2.1 uses rawOrCustomProp(), which
+			// does -- so wherever this extension replaces an upstream matcher wholesale, it is
+			// NARROWER than the code it shadows. colorFuncs() is the live instance:
+			// `color: rgb(var(--r, 0) 0 0)` is accepted by plain upstream and rejected here.
+			self::cases( 'Color 4/5', [
+				'color: rgb(var(--r, 0) 0 0)',
+			] ),
 			self::cases( 'Box Sizing 4', [
-				// CustomPropertyMatcher takes no fallback argument
 				'aspect-ratio: 16 / var(--b, 9)',
 				// upstream ratio() is built from rawNumber(), which excludes math functions
 				'aspect-ratio: calc(16) / var(--b)',

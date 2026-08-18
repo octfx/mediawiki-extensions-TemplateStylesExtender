@@ -113,6 +113,11 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 			$output,
 			'the referencing declaration must be dropped, not just flagged'
 		);
+		$this->assertNotSame(
+			[],
+			$sanitizer->getSanitizationErrors(),
+			'the editor must be told why, not have the rule vanish silently'
+		);
 	}
 
 	public static function provideResolutionSlotPayloads(): array {
@@ -129,10 +134,30 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 			'var() in the density slot at all' => [
 				"--r: 1x; background-image: image-set(\"$ok\" var(--r))",
 			],
-			'math function in the density slot' => [
-				"background-image: image-set(\"$ok\" calc(1dppx * 2))",
-			],
 		];
+	}
+
+	/**
+	 * Not a bypass: this pins a deliberate narrowing. CSS Values 4 permits a math function
+	 * where a <resolution> is expected, and inheriting upstream's resolution() would accept
+	 * one. The override does not, and that strictness is what keeps var() out of the slot.
+	 *
+	 * Worth knowing if anyone tries to fix this by changing mathFunction() instead: with
+	 * both resolution() and mathFunction() inherited, image-set( "<allowed>" calc(var(--r)) )
+	 * is still accepted, because upstream's own calcSum() admits var() on the reasoning that
+	 * calc() forces values to be numeric. That holds until the result lands in a slot where
+	 * substitution is textual, as it does here.
+	 */
+	public function testMathFunctionsAreNotAllowedInTheDensitySlot(): void {
+		$ok = self::ALLOWED . '/i.png';
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$output = (string)$sanitizer->sanitize(
+			CSSParser::newFromString( ".test { background-image: image-set(\"$ok\" calc(1dppx * 2)) }" )
+				->parseStylesheet()
+		);
+
+		$this->assertStringNotContainsString( 'background-image', $output );
 	}
 
 	/**
