@@ -84,6 +84,8 @@ class NotNarrowerThanUpstreamTest extends MediaWikiIntegrationTestCase {
 			'color: color(srgb var(--r, 0) 0 0)',
 			'color: #aabbccdd',
 			'color: var(--c, red)',
+			'color: light-dark(red, blue)',
+			'color: light-dark(rgb(1 2 3), #aabbcc)',
 
 			// grid, where grid-template-* are replaced wholesale
 			'grid-template-columns: repeat(auto-fit, minmax(100px, 1fr))',

@@ -87,6 +87,22 @@ Wikitext
 ### Relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
 
+The origin colour — the value after `from` — accepts a colour word or hex, a colour
+function, `light-dark()`, or a `var()` carrying a colour fallback:
+
+```css
+color: rgb(from red r g b);
+color: rgb(from #36c r g b);
+color: rgb(from hsl(120 75% 25%) r g b);
+color: rgb(from light-dark(red, blue) r g b);
+color: rgb(from var(--c) r g b);       /* needs the config option in footnote 4 */
+color: rgb(from var(--c, red) r g b);  /* likewise */
+```
+
+The colour functions accepted there are the absolute ones only, so a relative colour cannot
+itself be an origin, directly or as a `light-dark()` argument. `calc()` on a channel is not
+implemented either. `CssCorpusTest` lists the gaps case by case.
+
 
 ## Development
 

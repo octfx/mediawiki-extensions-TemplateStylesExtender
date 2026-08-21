@@ -165,9 +165,15 @@ class MatcherFactoryExtender extends MatcherFactory {
 		// costs: css-sanitizer accepts var() in a channel, so gating one would reject CSS
 		// plain TemplateStyles takes; it accepts nothing after `from`, so gating this
 		// rejects nothing.
-		$originColor = $this->varEnabled
-			? $this->rawOrCustomProp( $safeOriginColor )
-			: $safeOriginColor;
+		$originColor = new Alternative( [
+			$this->varEnabled ? $this->rawOrCustomProp( $safeOriginColor ) : $safeOriginColor,
+			// ungated: the option gates var(), and this is not one. Upstream has it in
+			// color() but not safeColor(), so it is an origin but not an origin's fallback.
+			new FunctionMatcher( 'light-dark', new Juxtaposition( [
+				$safeOriginColor,
+				$safeOriginColor
+			], true ) )
+		] );
 
 		$optionalAlphaCalc = new Alternative( [
 			$optionalAlpha,

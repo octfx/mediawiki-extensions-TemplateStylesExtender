@@ -212,6 +212,17 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				// a colour function is a colour, so one with var() channels of its own fits
 				'color: rgb(from var(--c, rgb(var(--r) 0 0)) r g b)',
 			] ),
+			// light-dark() is in upstream's color(); the origin was missing it (#63).
+			self::cases( 'Color 4/5', [
+				'color: rgb(from light-dark(red, blue) r g b)',
+				'color: rgb(from light-dark(red, blue) r g b / 0.5)',
+				'color: hsl(from light-dark(red, blue) h s l)',
+				'color: hwb(from light-dark(#36c, rgb(1 2 3)) h w b)',
+				'color: rgb(from light-dark(rgb(var(--r) 0 0), blue) r g b)',
+				// upstream's own, kept so the origin is not the only place it is asserted
+				'color: light-dark(red, blue)',
+				'color: light-dark(rgb(from red r g b), blue)',
+			] ),
 			// Regress if mathFunction() is deleted. addVarSelector's fallback reaches
 			// neither inside a function nor past a token it does not list, which is what
 			// `inset`, `opacity` and the `/` supply in the last three.
@@ -591,7 +602,36 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		];
 	}
 
-	/** Relative colours with calc() on a channel are not implemented. */
+	/**
+	 * The origin accepts colour functions, so what light-dark() refuses there is worth
+	 * pinning rather than assuming.
+	 *
+	 * @dataProvider provideRejectedLightDarkOrigins
+	 */
+	public function testLightDarkOriginTakesTwoColours( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideRejectedLightDarkOrigins(): array {
+		// See provideRejectedFallbacks().
+		$commons = self::COMMONS;
+
+		return [
+			'url instead of a colour' => [
+				"color: rgb(from light-dark(url(\"$commons/x.png\"), blue) r g b)",
+			],
+			'length instead of a colour' => [ 'color: rgb(from light-dark(red, 10px) r g b)' ],
+			'no arguments' => [ 'color: rgb(from light-dark() r g b)' ],
+			'one argument' => [ 'color: rgb(from light-dark(red) r g b)' ],
+			'three arguments' => [ 'color: rgb(from light-dark(red, blue, green) r g b)' ],
+			'no comma' => [ 'color: rgb(from light-dark(red blue) r g b)' ],
+		];
+	}
+
+	/**
+	 * Documented gaps. Several are shapes upstream lacks too, kept so an upstream
+	 * improvement turns a test red rather than passing unnoticed.
+	 */
 	public static function provideNotYetImplemented(): array {
 		return array_merge(
 			// A fallback inside a fallback: the inner var() is admitted, but not with a
@@ -608,6 +648,14 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				// a relative colour is not an origin -- see colorFuncs()
 				'color: rgb(from rgb(from red r g b) r g b)',
 				'color: rgb(from var(--c, rgb(from red r g b)) r g b)',
+				'color: rgb(from light-dark(rgb(from red r g b), blue) r g b)',
+			] ),
+			// light-dark() admits no var() in its arguments and cannot be a var() fallback,
+			// in an origin as at the top level. Both mirror upstream.
+			self::cases( 'Color 4/5', [
+				'color: light-dark(var(--l), var(--d))',
+				'color: rgb(from light-dark(var(--l), var(--d)) r g b)',
+				'color: rgb(from var(--c, light-dark(red, blue)) r g b)',
 			] ),
 			// rawNumber()'s var() wrapper takes no fallback. Unlike the colour channels,
 			// this is not a narrowing -- upstream's ratio() admits no var() at all.
