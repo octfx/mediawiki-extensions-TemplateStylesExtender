@@ -32,6 +32,7 @@ class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 		MatcherFactoryExtender::class => [
 			'cssWideKeywords',
 			'colorFuncs',
+			'cssNegation',
 			'cssPseudo',
 			'image',
 			'mathFunction',

@@ -130,6 +130,34 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
+	 * `:not()` over a selector list, as Selectors Level 4 has it
+	 *
+	 * Takes a full cssPseudo() rather than the bounded one :is() gets: nothing calls back
+	 * into cssNegation(), so there is no cycle to break here.
+	 *
+	 * @inheritDoc
+	 */
+	public function cssNegation(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		$ows = $this->optionalWhitespace();
+
+		$this->cache[__METHOD__] = new Juxtaposition( [
+			new TokenMatcher( Token::T_COLON ),
+			new FunctionMatcher( 'not', new Juxtaposition( [
+				$ows,
+				$this->boundedSelectorList( $this->cssPseudo() ),
+				$ows,
+			] ) ),
+		] );
+		$this->cache[__METHOD__]->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
 	 * The pseudo-classes this extension adds that are a bare keyword.
 	 *
 	 * Scope is the web-platform baseline's "widely available".

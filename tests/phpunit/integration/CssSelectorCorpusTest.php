@@ -80,9 +80,11 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 			':where(.a) .b',
 			'.a:is(.b .c)',
 
-			// upstream's :not() is late-bound to cssPseudo(), so it widens with it
-			'.a:not(:focus-visible)',
+			// :not() over a selector list, which upstream refuses
+			'.a:not(.b, .c)',
+			'.a:not(.b .c)',
 			'.a:not(:has(.b))',
+			'.a:not(:focus-visible)',
 
 			// form and input state
 			'input:read-only',
@@ -176,6 +178,7 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 			'.a:has(:has(.b))',
 			'.a:is(.b:has(.c))',
 			'.a:is(.b:is(.c))',
+			'.a:where(.b:not(.c, .d))',
 		] );
 	}
 
@@ -200,6 +203,7 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 			'@media, level 3' => [ '@media screen { .card:hover { color: red } }', true ],
 			'@media, :focus-within' => [ '@media screen { .card:focus-within { color: red } }', true ],
 			'@media, :has()' => [ '@media screen { .card:has(.x) { color: red } }', true ],
+			'@media, :not() list' => [ '@media screen { .a:not(.b, .c) { color: red } }', true ],
 			'@media, nested @media' => [
 				'@media screen { @media print { .card:focus-within { color: red } } }', true,
 			],
@@ -250,8 +254,8 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 				'.mw-parser-output .card:has(> .title)',
 			],
 			'the argument of :not() is not separately scoped' => [
-				'.a:not(:has(.b))',
-				'.mw-parser-output .a:not(:has(.b))',
+				'.a:not(.b, .c)',
+				'.mw-parser-output .a:not(.b, .c)',
 			],
 			'every selector in a list is scoped' => [
 				'.a:is(.b), .d:focus-within',
