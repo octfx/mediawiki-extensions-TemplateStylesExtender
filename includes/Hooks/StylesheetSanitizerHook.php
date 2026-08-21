@@ -25,10 +25,12 @@ use MediaWiki\Extension\TemplateStyles\Hooks\TemplateStylesStylesheetSanitizerHo
 use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use MediaWiki\Extension\TemplateStylesExtender\StyleRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
+use Wikimedia\CSS\Sanitizer\StyleRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
 use Wikimedia\CSS\Sanitizer\SupportsAtRuleSanitizer;
 
@@ -71,6 +73,11 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		}
 
 		$newRules = $sanitizer->getRuleSanitizers();
+		if ( isset( $newRules['styles'] ) && $newRules['styles'] instanceof StyleRuleSanitizer ) {
+			$newRules['styles'] = StyleRuleSanitizerExtender::fromOriginal(
+				$newRules['styles'], $factory
+			);
+		}
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender(
 			$factory,
 			(bool)TemplateStylesExtender::getConfigValue(
