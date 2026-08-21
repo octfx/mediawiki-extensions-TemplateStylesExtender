@@ -110,6 +110,16 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( $accepted, $survives, $descriptor );
 	}
 
+	/**
+	 * `@media` holds its own copy of the rule-sanitizer list, taken before the hook that
+	 * replaces `@font-face` runs, so this extension's descriptors did not reach inside it.
+	 */
+	public function testFontFaceDescriptorsInsideMedia(): void {
+		$css = "@media screen { @font-face { font-family: 'TemplateStylesCorpus'; ascent-override: 100% } }";
+
+		$this->assertTrue( $this->sanitizes( $css, 'ascent-override' ) );
+	}
+
 	public static function provideFontFaceDescriptors(): array {
 		return [
 			'ascent-override percentage' => [ 'ascent-override: 100%', true ],

@@ -73,6 +73,16 @@ grep -Fn '$this-><name>' ../../vendor/wikimedia/css-sanitizer/src/Sanitizer/Styl
 
 The same applies to `MatcherFactory`. Methods documented `@inheritDoc` are overrides and must exist on the parent; anything else is a new method.
 
+### `@media` and `@supports` keep their own copy of the rule-sanitizer list
+
+`StylesheetSanitizerHook` swaps entries in the stylesheet's rule-sanitizer list, but
+TemplateStyles hands that list to `@media` and `@supports` before the hook runs, so the
+nested copies still point at the objects TemplateStyles built. The symptom is a rule that
+sanitizes at the top level and is refused one line deeper -- and a refused selector takes
+the whole stylesheet with it. `propagateToNestedAtRules()` pushes the replacements down;
+anything added to `$newRules` in future needs to go through it too. This is why `@font-face`
+inside `@media` did not get this extension's descriptors for several releases.
+
 ### Which css-sanitizer version you get
 
 Three places have an opinion and only one of them decides:
