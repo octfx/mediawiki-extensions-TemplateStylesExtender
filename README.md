@@ -44,7 +44,15 @@ wfLoadExtension( 'TemplateStylesExtender' );
 | `$wgTemplateStylesExtenderRequireFontFamilyPrefix` | Require `@font-face` family names to start with `TemplateStyles`, as TemplateStyles itself does.[^3] | `false` |
 | `$wgTemplateStylesExtenderUnscopingPermission` | Specify a permission group that is allowed to unscope CSS. | `editinterface` |
 
-[^4]: Colour function channels such as `rgb()` are not affected. `css-sanitizer` accepts `var()` there whatever this is set to, and this extension does not restrict what the sanitizer already allows.
+[^4]: Not every `var()` depends on this. `css-sanitizer` accepts `var()` as a whole colour and inside a colour function, so `color: var(--c, red)` and `color: rgb(var(--r) 0 0)` keep working whatever this is set to. Turning it off removes `var()` from everywhere else:
+
+    ```css
+    width: var(--w);                  /* gone */
+    transform: translateX(var(--x));  /* gone */
+    color: rgb(from var(--c) r g b);  /* gone -- the colour a relative colour starts from */
+    color: rgb(var(--r) 0 0);         /* kept */
+    color: var(--c, red);             /* kept */
+    ```
 
 [^3]: `@font-face` is not scoped to `.mw-parser-output`, so a family declared on a TemplateStyles page applies to the whole rendered page, including skin chrome. Leaving this off keeps this extension's long-standing behaviour of allowing any family name. Changing it does not invalidate already-rendered pages, which keep their previous CSS until purged.
 
