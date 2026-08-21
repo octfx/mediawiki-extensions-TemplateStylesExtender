@@ -200,6 +200,18 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: oklch(0.5 0.1 var(--h, 40))',
 				'color: rgb(from #36c var(--r, 0) g b)',
 			] ),
+			// The origin takes a var() with a same-type fallback, as the channels do. Unlike
+			// them it needs the option this corpus assumes enabled; colorFuncs() says why.
+			self::cases( 'Color 4/5', [
+				'color: rgb(from var(--c, red) r g b)',
+				'color: rgb(from var(--c, red) r g b / 0.5)',
+				'background: hsl(from var(--c, #36c) h s l)',
+				'color: color(from var(--c, red) srgb r g b)',
+				'color: oklch(from var(--c, oklch(0.5 0.1 40)) l c h)',
+				'color: rgb(from var(--c, currentcolor) r g b)',
+				// a colour function is a colour, so one with var() channels of its own fits
+				'color: rgb(from var(--c, rgb(var(--r) 0 0)) r g b)',
+			] ),
 			// Regress if mathFunction() is deleted. addVarSelector's fallback reaches
 			// neither inside a function nor past a token it does not list, which is what
 			// `inset`, `opacity` and the `/` supply in the last three.
@@ -543,20 +555,39 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
-	 * A var() fallback in a colour channel is restricted to that channel's own type, so a
-	 * fallback cannot be used to reach a value the slot would otherwise refuse.
+	 * A var() fallback is restricted to its slot's own type, so it cannot reach a value the
+	 * slot would otherwise refuse. The origin is the wider slot: it takes colour functions.
 	 *
 	 * @dataProvider provideRejectedFallbacks
 	 */
-	public function testChannelFallbacksAreTypeRestricted( string $declaration ): void {
+	public function testFallbacksAreTypeRestricted( string $declaration ): void {
 		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
 	}
 
 	public static function provideRejectedFallbacks(): array {
+		// A URL the default allowlist permits, so these are refused for their type, not
+		// their host.
+		$commons = self::COMMONS;
+
 		return [
-			'url fallback' => [ 'color: rgb(var(--r, url("https://upload.wikimedia.org/x.png")) 0 0)' ],
+			// numeric slots
+			'url fallback' => [ "color: rgb(var(--r, url(\"$commons/x.png\")) 0 0)" ],
 			'colour-word fallback in a numeric slot' => [ 'color: rgb(var(--r, red) 0 0)' ],
 			'string fallback' => [ 'color: rgb(var(--r, "0") 0 0)' ],
+
+			// the origin: a colour slot, so a different refused set, same rule
+			'url fallback in an origin' => [
+				"color: rgb(from var(--c, url(\"$commons/x.png\")) r g b)",
+			],
+			'image-set fallback in an origin' => [
+				"color: rgb(from var(--c, image-set(\"$commons/i.png\" 1x)) r g b)",
+			],
+			'string fallback in an origin' => [ 'color: rgb(from var(--c, "red") r g b)' ],
+			'length fallback in an origin' => [ 'color: rgb(from var(--c, 10px) r g b)' ],
+			'number fallback in an origin' => [ 'color: rgb(from var(--c, 0) r g b)' ],
+			'unknown keyword fallback in an origin' => [ 'color: rgb(from var(--c, notacolor) r g b)' ],
+			// one <color>, not a list: a fallback cannot supply the channels as well
+			'two-value fallback in an origin' => [ 'color: rgb(from var(--c, red 0) r g b)' ],
 		];
 	}
 
@@ -567,6 +598,16 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			// fallback of its own, since only one level goes through rawOrCustomProp().
 			self::cases( 'Color 4/5', [
 				'color: rgb(var(--r, var(--s, 0)) 0 0)',
+			] ),
+			// The origin's fallback is a <color>, and a bare var() is not one. A channel
+			// nests one because anything mathFunction() or rawNumber() admit is admitted in
+			// its fallback; no colour matcher is built through either. Upstream's color()
+			// is the same shape, so this is not a narrowing.
+			self::cases( 'Color 4/5', [
+				'color: rgb(from var(--c, var(--d)) r g b)',
+				// a relative colour is not an origin -- see colorFuncs()
+				'color: rgb(from rgb(from red r g b) r g b)',
+				'color: rgb(from var(--c, rgb(from red r g b)) r g b)',
 			] ),
 			// rawNumber()'s var() wrapper takes no fallback. Unlike the colour channels,
 			// this is not a narrowing -- upstream's ratio() admits no var() at all.

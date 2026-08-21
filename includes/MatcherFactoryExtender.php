@@ -29,7 +29,6 @@ use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
-use Wikimedia\CSS\Grammar\NothingMatcher;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Objects\Token;
@@ -99,12 +98,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 		// Channels mirror upstream, which allows var() here unconditionally, except that
 		// a hue may take an angle fallback -- <hue> is <number> | <angle>, so that is
-		// spec-correct and upstream is the arbitrary one. The origin colour below is this
-		// extension's own addition, so it stays behind the flag.
-		$var = $this->varEnabled
-			? new FunctionMatcher( 'var', new CustomPropertyMatcher() )
-			: new NothingMatcher();
-
+		// spec-correct and upstream is the arbitrary one.
 		$n = $this->rawOrCustomProp( $this->number() );
 		$p = $this->rawOrCustomProp( $this->percentage() );
 		$a = $this->rawOrCustomProp( $this->angle() );
@@ -157,12 +151,23 @@ class MatcherFactoryExtender extends MatcherFactory {
 		];
 
 		// Relative color syntax components
-		$originColor = new Alternative( [
+		//
+		// Shaped like upstream's color(), but built by hand: color() and safeColor() both
+		// call colorFuncs(), which is this method, so either would recurse. That is also
+		// why a relative colour cannot itself be an origin.
+		$safeOriginColor = new Alternative( [
 			$this->colorWords(),
 			$this->colorHex(),
-			$var,
 			...$absoluteColorFuncs
 		] );
+
+		// var() is gated here and not in the channels above, because of what each gate
+		// costs: css-sanitizer accepts var() in a channel, so gating one would reject CSS
+		// plain TemplateStyles takes; it accepts nothing after `from`, so gating this
+		// rejects nothing.
+		$originColor = $this->varEnabled
+			? $this->rawOrCustomProp( $safeOriginColor )
+			: $safeOriginColor;
 
 		$optionalAlphaCalc = new Alternative( [
 			$optionalAlpha,
