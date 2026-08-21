@@ -191,8 +191,6 @@ class TemplateStylesExtender {
 	 * Returns null on if an ConfigException was thrown
 	 *
 	 * @param string $key The config key
-	 * @param null $default
-	 * @return mixed|null
 	 */
 	public static function getConfigValue( string $key, mixed $default = null ): mixed {
 		if ( self::$config === null ) {

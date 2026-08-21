@@ -38,18 +38,13 @@ class MatcherFactoryExtender extends MatcherFactory {
 	private bool $varEnabled = false;
 	private MatcherFactory $baseMatcherFactory;
 
-	/**
-	 * @param MatcherFactory $baseMatcherFactory
-	 */
 	public function __construct( MatcherFactory $baseMatcherFactory ) {
 		$this->baseMatcherFactory = $baseMatcherFactory;
 	}
 
 	/**
 	 * Preserve URL validation supplied by TemplateStyles.
-	 *
-	 * @param string $type
-	 * @return Matcher
+	 * @inheritDoc
 	 */
 	public function urlstring( $type ): Matcher {
 		return $this->baseMatcherFactory->urlstring( $type );
@@ -57,18 +52,12 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	/**
 	 * Preserve URL validation supplied by TemplateStyles.
-	 *
-	 * @param string $type
-	 * @return Matcher
+	 * @inheritDoc
 	 */
 	public function url( $type ): Matcher {
 		return $this->baseMatcherFactory->url( $type );
 	}
 
-	/**
-	 * @param bool $varEnabled
-	 * @return void
-	 */
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
 	}
@@ -461,9 +450,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * matcher is what makes it safe: var( --x, url( ... ) ) cannot satisfy a numeric slot.
 	 * Note the type is this factory's, so anything mathFunction() or rawNumber() admit is
 	 * admitted in a fallback too.
-	 *
-	 * @param Matcher $type
-	 * @return Matcher
 	 */
 	protected function rawOrCustomProp( Matcher $type ): Matcher {
 		return new Alternative( [
@@ -482,7 +468,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @param Matcher $nPNone Number, percentage, or none matcher (including var)
 	 * @param Matcher $optionalAlpha Modern alpha syntax matcher
 	 * @param Matcher $optionalLegacyAlpha Legacy alpha syntax matcher
-	 * @return Alternative
 	 */
 	protected function buildRgbSyntax(
 		Matcher $n,
@@ -508,7 +493,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @param Matcher $nPNone Number, percentage, or none matcher (including var)
 	 * @param Matcher $optionalAlpha Modern alpha syntax matcher
 	 * @param Matcher $optionalLegacyAlpha Legacy alpha syntax matcher
-	 * @return Alternative
 	 */
 	protected function buildHslSyntax(
 		Matcher $hueWithVar,
@@ -529,8 +513,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	/**
 	 * Helper to build standard color syntax (components + optional alpha).
 	 * @param Matcher[] $components
-	 * @param Matcher $optionalAlpha
-	 * @return Juxtaposition
 	 */
 	protected function buildStandardColorSyntax( array $components, Matcher $optionalAlpha ): Juxtaposition {
 		return new Juxtaposition( [ ...$components, $optionalAlpha ] );
@@ -540,7 +522,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * Helper to create a relative color channel matcher.
 	 * @param string $channel Character representing the channel (e.g., 'r', 'h')
 	 * @param Matcher $typeMatcher Matcher for the channel's type (e.g., $nPNone, $hueNone)
-	 * @return Alternative
 	 */
 	protected function createRelativeColorChannel(
 		string $channel,
@@ -558,7 +539,6 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 * @param Matcher $originColor Matcher for the base color
 	 * @param Matcher[] $componentMatchers Array of matchers for the color components
 	 * @param Matcher $optionalAlphaCalc Matcher for the optional alpha calculation
-	 * @return Juxtaposition
 	 */
 	protected function buildRelativeColorSyntax(
 		Matcher $originColor,
@@ -575,9 +555,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	/**
 	 * Wraps the parent `mathFunction` to allow using variables in the $typeMatcher
-	 *
-	 * @param Matcher $typeMatcher
-	 * @return Matcher
+	 * @inheritDoc
 	 */
 	public function mathFunction( Matcher $typeMatcher ) {
 		if ( !$this->varEnabled ) {
@@ -592,7 +570,11 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	/**
 	 * Allow variables for numbers if enabled
-	 * @return Alternative|Matcher|Matcher[]|TokenMatcher
+	 *
+	 * Alternative and TokenMatcher are both Matchers, so the union upstream's $cache
+	 * declares -- Matcher|Matcher[] -- already covers what this returns.
+	 *
+	 * @return Matcher|Matcher[]
 	 */
 	public function rawNumber() {
 		if ( !$this->varEnabled ) {
