@@ -50,9 +50,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	private static bool $extendedCss1Masking = false;
 	private static bool $extendedCss3Grid = false;
 
-	/**
-	 * @param MatcherFactory $matcherFactory
-	 */
 	public function __construct( MatcherFactory $matcherFactory ) {
 		$extendedMatcherFactory = $matcherFactory instanceof MatcherFactoryExtender
 			? $matcherFactory
@@ -61,10 +58,6 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 		parent::__construct( $extendedMatcherFactory );
 	}
 
-	/**
-	 * @param bool $varEnabled
-	 * @return void
-	 */
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
 	}
