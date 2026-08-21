@@ -293,6 +293,85 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * Nothing may escape the wrapper class, whatever it is asked to select.
+	 *
+	 * This is the guarantee TemplateStyles exists for: a template may style the content it
+	 * is transcluded into and nothing else. The selectors below all reach for something
+	 * outside that -- `html`, `body`, `:root`, a bare universal -- from inside a functional
+	 * pseudo-class, which is the part of the grammar this extension added. Whether each one
+	 * is accepted is not the point; what matters is that if it is, every selector in the
+	 * rewritten prelude still carries the wrapper.
+	 *
+	 * @dataProvider provideScopeEscapeAttempts
+	 */
+	public function testNothingEscapesTheWrapper( string $selector ): void {
+		[ $accepted, $output ] = $this->sanitize( $selector );
+		if ( !$accepted ) {
+			// Refusing is a fine answer; the assertion is about what happens if it is not.
+			$this->addToAssertionCount( 1 );
+			return;
+		}
+
+		$prelude = trim( explode( '{', $output, 2 )[0] );
+		foreach ( self::splitSelectorList( $prelude ) as $entry ) {
+			$this->assertStringContainsString(
+				'.mw-parser-output',
+				$entry,
+				"unscoped selector produced from: $selector"
+			);
+		}
+	}
+
+	public static function provideScopeEscapeAttempts(): array {
+		return self::cases( [
+			'.a:is(html, .b)',
+			'.a:is(.b, html *)',
+			'.a:has(html)',
+			':is(html) .a',
+			':where(html, body) .a',
+			'.a:not(html)',
+			'html:has(.a)',
+			'body:focus-within',
+			'.a:where(:root)',
+			':root:has(.a)',
+			':has(> html)',
+			':is(*)',
+			'*:has(.a)',
+		] );
+	}
+
+	/**
+	 * Split a selector list on its separating commas only.
+	 *
+	 * A comma inside `:is(...)` separates arguments, not selectors, so splitting naively
+	 * reports the tail of every functional pseudo-class as an unscoped selector -- a test
+	 * that fails on correct output.
+	 *
+	 * @return string[]
+	 */
+	private static function splitSelectorList( string $prelude ): array {
+		$parts = [];
+		$depth = 0;
+		$current = '';
+		foreach ( str_split( $prelude ) as $char ) {
+			if ( $char === '(' ) {
+				$depth++;
+			} elseif ( $char === ')' ) {
+				$depth--;
+			}
+			if ( $char === ',' && $depth === 0 ) {
+				$parts[] = $current;
+				$current = '';
+				continue;
+			}
+			$current .= $char;
+		}
+		$parts[] = $current;
+
+		return $parts;
+	}
+
+	/**
 	 * @param string[] $selectors
 	 * @return array<string,array{string}>
 	 */
