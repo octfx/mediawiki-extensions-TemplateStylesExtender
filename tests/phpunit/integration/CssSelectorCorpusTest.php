@@ -59,6 +59,44 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 
 	public static function provideAccepted(): array {
 		return self::cases( [
+			// Selectors 4 state pseudo-classes (#67)
+			'.card:focus-within',
+			'.card:focus-visible',
+			'a:any-link',
+			// the issue's motivating case: draw the focus ring on the container
+			'.card:has(a:focus-visible)',
+
+			// :has(), including the relative forms
+			'.card:has(.title)',
+			'.card:has(> .title)',
+			'.card:has(+ .sibling)',
+			'.card:has(~ .later)',
+			'.card:has(.a, .b)',
+			'.card:has(:focus-visible)',
+
+			// :is() and :where(), used to keep specificity flat
+			':is(.a, .b) .c',
+			'.a:where(.b, .c)',
+			':where(.a) .b',
+			'.a:is(.b .c)',
+
+			// upstream's :not() is late-bound to cssPseudo(), so it widens with it
+			'.a:not(:focus-visible)',
+			'.a:not(:has(.b))',
+
+			// form and input state
+			'input:read-only',
+			'input:read-write',
+			'input:placeholder-shown',
+			'input:required',
+			'input:optional',
+			'input:valid',
+			'input:invalid',
+			'input:in-range',
+			'input:out-of-range',
+			'option:default',
+			'.form-row:has(input:invalid)',
+
 			// Level 3, which must keep working -- cssPseudo() and cssNegation() replace
 			// upstream's wholesale, so a mistake here silently drops what it shadowed
 			'.a:hover',
@@ -103,7 +141,41 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 		return self::cases( [
 			'.a:nonsense',
 			'.a::nonsense',
+			'.a:has()',
+			'.a:not()',
 			// an argument that is not a selector at all
+			'.a:is("string")',
+			'.a:has(12px)',
+			'.a:is(url("https://upload.wikimedia.org/wikipedia/commons/a/ab/x.png"))',
+		] );
+	}
+
+	/**
+	 * Documented gaps. The argument of a functional pseudo-class is deliberately bounded:
+	 * it cannot be built from the grammar that contains it without recursing, and a bounded
+	 * one also cannot be driven to backtrack, which matters for a grammar that runs on every
+	 * save. See MatcherFactoryExtender::cssPseudo().
+	 *
+	 * @dataProvider provideNotYetImplemented
+	 */
+	public function testNotYetImplemented( string $selector ): void {
+		$this->assertFalse(
+			$this->isAccepted( $selector ),
+			"Now accepted -- move this case to provideAccepted(): $selector"
+		);
+	}
+
+	public static function provideNotYetImplemented(): array {
+		return self::cases( [
+			// :is() and :where() take a forgiving selector list, which may be empty, so a
+			// browser accepts these. Refusing them is this grammar being behind, not a line
+			// worth holding.
+			'.a:is()',
+			'.a:where()',
+
+			'.a:has(:has(.b))',
+			'.a:is(.b:has(.c))',
+			'.a:is(.b:is(.c))',
 		] );
 	}
 
@@ -126,12 +198,21 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 	public static function provideNestedAtRules(): array {
 		return [
 			'@media, level 3' => [ '@media screen { .card:hover { color: red } }', true ],
+			'@media, :focus-within' => [ '@media screen { .card:focus-within { color: red } }', true ],
+			'@media, :has()' => [ '@media screen { .card:has(.x) { color: red } }', true ],
+			'@media, nested @media' => [
+				'@media screen { @media print { .card:focus-within { color: red } } }', true,
+			],
+			'@supports, :focus-within' => [
+				'@supports (display: grid) { .card:focus-within { color: red } }', true,
+			],
 			// the same replacement reaches @font-face, which this extension also widens
 			'@media, @font-face descriptor this extension adds' => [
 				"@media screen { @font-face { font-family: 'TemplateStylesX'; ascent-override: 100% } }",
 				true,
 			],
 			// a nonsense selector must still be refused there, not waved through
+			'@media, nonsense selector' => [ '@media screen { .a:nonsense { color: red } }', false ],
 			// and nothing gains an at-rule it was not given
 			'@media, @namespace stays refused' => [ '@media screen { @namespace x "y"; }', false ],
 		];
@@ -152,62 +233,59 @@ class CssSelectorCorpusTest extends MediaWikiIntegrationTestCase {
 
 	public static function provideScoping(): array {
 		return [
+			'level 4 pseudo-class is scoped like any other' => [
+				'.card:focus-within',
+				'.mw-parser-output .card:focus-within',
+			],
+			'the argument of :is() is not separately scoped' => [
+				'.a:is(.b, .c)',
+				'.mw-parser-output .a:is(.b, .c)',
+			],
+			'a leading :is() is still scoped' => [
+				':is(.a, .b) .c',
+				'.mw-parser-output :is(.a, .b) .c',
+			],
+			'the argument of :has() is not separately scoped' => [
+				'.card:has(> .title)',
+				'.mw-parser-output .card:has(> .title)',
+			],
+			'the argument of :not() is not separately scoped' => [
+				'.a:not(:has(.b))',
+				'.mw-parser-output .a:not(:has(.b))',
+			],
 			'every selector in a list is scoped' => [
-				'.a, .b:hover',
-				'.mw-parser-output .a, .mw-parser-output .b:hover',
+				'.a:is(.b), .d:focus-within',
+				'.mw-parser-output .a:is(.b), .mw-parser-output .d:focus-within',
 			],
 			// Hoisting moves the wrapper after an html/body prefix, so that a theme class
 			// on <html> can still gate a rule. StyleRuleSanitizerExtender has to rebuild
 			// that matcher; without it these are accepted but scoped under .mw-parser-output,
 			// where they can never match.
-			'html prefix is hoisted' => [
+			'html prefix is hoisted, level 3' => [
 				'html.night .card',
 				'html.night .mw-parser-output .card',
 			],
-			'body prefix is hoisted' => [
-				'body.rtl .card',
-				'body.rtl .mw-parser-output .card',
+			'html prefix is hoisted, level 4' => [
+				'html.night .card:focus-within',
+				'html.night .mw-parser-output .card:focus-within',
+			],
+			'body prefix is hoisted with :has()' => [
+				'body.rtl .card:has(a:focus-visible)',
+				'body.rtl .mw-parser-output .card:has(a:focus-visible)',
 			],
 			// Known dead, and pinned so it stays visible: the hoist test reads the 'element'
 			// capture, which a functional pseudo-class does not set, so this is scoped under
 			// the wrapper where it can never match. Teaching the predicate to look inside
 			// :is() is more logic than the case is worth.
+			'a leading :is() does not hoist' => [
+				':is(html, body) .card',
+				'.mw-parser-output :is(html, body) .card',
+			],
 			'a non-hoistable prefix is not hoisted' => [
-				'div.night .card',
-				'.mw-parser-output div.night .card',
+				'div.night .card:focus-within',
+				'.mw-parser-output div.night .card:focus-within',
 			],
 		];
-	}
-
-	/**
-	 * Split a selector list on its separating commas only.
-	 *
-	 * A comma inside `:is(...)` separates arguments, not selectors, so splitting naively
-	 * reports the tail of every functional pseudo-class as an unscoped selector -- a test
-	 * that fails on correct output.
-	 *
-	 * @return string[]
-	 */
-	private static function splitSelectorList( string $prelude ): array {
-		$parts = [];
-		$depth = 0;
-		$current = '';
-		foreach ( str_split( $prelude ) as $char ) {
-			if ( $char === '(' ) {
-				$depth++;
-			} elseif ( $char === ')' ) {
-				$depth--;
-			}
-			if ( $char === ',' && $depth === 0 ) {
-				$parts[] = $current;
-				$current = '';
-				continue;
-			}
-			$current .= $char;
-		}
-		$parts[] = $current;
-
-		return $parts;
 	}
 
 	/**

@@ -6,7 +6,7 @@ Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:Temp
 
 * Declare CSS custom properties/variables
 * Use CSS custom properties/variables in most properties
-* Implement additional properties and values as listed below
+* Implement additional selectors, properties and values as listed below
 
 | Module | Changes | Upstream task
 | - | - | - |
@@ -22,6 +22,7 @@ Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:Temp
 | [Grid Layout Module Level 3](https://www.w3.org/TR/css-grid-3/) | Added value: `masonry`; added property: `masonry-auto-flow` | - |
 | [Images Module Level 4](https://www.w3.org/TR/css-images-4/) | Added function: [`image-set()`](https://developer.mozilla.org/en-US/docs/Web/CSS/image/image-set) | - |
 | [Masking Module Level 1](https://www.w3.org/TR/css-masking/) | Added property: `-webkit-mask-image` | - |
+| [Selectors Level 4](https://www.w3.org/TR/selectors-4/) | Added pseudo-classes: [`:has()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:has), [`:is()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:is), [`:where()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:where), [`:focus-within`](https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-within), [`:focus-visible`](https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible), `:any-link`, and the form-state ones (`:read-only`, `:read-write`, `:placeholder-shown`, `:default`, `:required`, `:optional`, `:valid`, `:invalid`, `:in-range`, `:out-of-range`) | - |
 
 
 ## Installation
@@ -83,6 +84,40 @@ Wikitext
 	</div>
 </div>
 ```
+
+### Selectors
+`css-sanitizer` implements Selectors Level 3, and a selector it rejects costs the editor the
+whole stylesheet rather than the one rule, so this extension widens the selector grammar as
+well as the property grammar.
+
+One limitation is worth knowing. The argument of a functional pseudo-class takes Level 4
+keywords but not another functional pseudo-class:
+
+```css
+.card:has(a:focus-visible) { }  /* fine */
+.card:has(:has(.b)) { }         /* rejected */
+.a:is(.b:has(.c)) { }           /* rejected */
+```
+
+The grammar for that argument cannot be built from the grammar that contains it — it would
+recurse — so it is built one level deep on purpose. Keeping it bounded also means the
+matcher cannot be driven to backtrack, which matters for something that runs on every save.
+
+A second limitation is about scoping rather than grammar. TemplateStyles hoists a leading
+`html` or `body` so that a theme class can gate a rule — `html.night .card` becomes
+`html.night .mw-parser-output .card`. It recognises that prefix by its element name, so a
+functional pseudo-class in that position is not hoisted:
+
+```css
+html.night .card { }        /* hoisted, works */
+:is(html, body) .card { }   /* accepted, scoped under .mw-parser-output, matches nothing */
+```
+
+Note also that `:has()` widens what a hoisted prefix can test. `html.no-js .card` could
+already gate a rule on a class on `<html>`; `html:has(#some-id) .card` can gate it on
+anything in the document. The rule it applies is still scoped to the wrapper, and no CSS
+here can fetch a URL that `$wgTemplateStylesAllowedUrls` does not permit, so this widens an
+existing channel rather than opening a new one.
 
 ### Relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
