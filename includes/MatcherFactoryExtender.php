@@ -87,6 +87,166 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
+	 * Pseudo-classes from Selectors Level 4 (#67)
+	 * @inheritDoc
+	 */
+	public function cssPseudo(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		$ows = $this->optionalWhitespace();
+
+		// Not cssSelector(): it reaches cssSimpleSelectorSeq(), which calls this method, so
+		// the argument grammar is built here instead -- as colorFuncs() has to. That bounds
+		// it one level deep, which also keeps it from backtracking on hostile input.
+		$innerPseudo = new Alternative( [
+			new Juxtaposition( [ new TokenMatcher( Token::T_COLON ), $this->level4Keywords() ] ),
+			parent::cssPseudo(),
+		] );
+		$inner = $this->boundedSelectorList( $innerPseudo );
+
+		// :has() takes relative selectors, so an entry may open with a combinator
+		$relative = Quantifier::hash( new Juxtaposition( [
+			Quantifier::optional( $this->cssCombinator() ),
+			$this->boundedSelector( $innerPseudo ),
+		] ) );
+
+		$this->cache[__METHOD__] = new Alternative( [
+			new Juxtaposition( [
+				new TokenMatcher( Token::T_COLON ),
+				new Alternative( [
+					$this->level4Keywords(),
+					new FunctionMatcher( 'is', new Juxtaposition( [ $ows, $inner, $ows ] ) ),
+					new FunctionMatcher( 'where', new Juxtaposition( [ $ows, $inner, $ows ] ) ),
+					new FunctionMatcher( 'has', new Juxtaposition( [ $ows, $relative, $ows ] ) ),
+				] ),
+			] ),
+			parent::cssPseudo(),
+		] );
+		$this->cache[__METHOD__]->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * `:not()` over a selector list, as Selectors Level 4 has it
+	 *
+	 * Takes a full cssPseudo() rather than the bounded one :is() gets: nothing calls back
+	 * into cssNegation(), so there is no cycle to break here.
+	 *
+	 * @inheritDoc
+	 */
+	public function cssNegation(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		$ows = $this->optionalWhitespace();
+
+		$this->cache[__METHOD__] = new Juxtaposition( [
+			new TokenMatcher( Token::T_COLON ),
+			new FunctionMatcher( 'not', new Juxtaposition( [
+				$ows,
+				$this->boundedSelectorList( $this->cssPseudo() ),
+				$ows,
+			] ) ),
+		] );
+		$this->cache[__METHOD__]->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * The pseudo-classes this extension adds that are a bare keyword.
+	 *
+	 * Scope is the web-platform baseline's "widely available".
+	 */
+	private function level4Keywords(): Matcher {
+		$this->cache[__METHOD__] ??= new KeywordMatcher( [
+			// state
+			'focus-visible', 'focus-within', 'any-link',
+			// form and input state
+			'read-only', 'read-write', 'placeholder-shown', 'default', 'required',
+			'optional', 'valid', 'invalid', 'in-range', 'out-of-range',
+		] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * A comma-separated list of the complex selectors boundedSelector() builds over $pseudo.
+	 */
+	private function boundedSelectorList( Matcher $pseudo ): Matcher {
+		$list = Quantifier::hash( $this->boundedSelector( $pseudo ) );
+		$list->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $list;
+	}
+
+	/**
+	 * Upstream's cssSelector(), over a supplied pseudo-class matcher and without captures.
+	 *
+	 * Keep it capture-free. StyleRuleSanitizer scopes whatever it finds captured as
+	 * 'selector'; an inner one is absorbed before reaching it today, but only because
+	 * upstream happens to capture the enclosing pseudo-class.
+	 */
+	private function boundedSelector( Matcher $pseudo ): Matcher {
+		$seq = $this->boundedSimpleSelectorSeq( $pseudo );
+		$selector = new Juxtaposition( [
+			$seq,
+			Quantifier::star( new Juxtaposition( [ $this->cssCombinator(), $seq ] ) ),
+		] );
+		$selector->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $selector;
+	}
+
+	/**
+	 * Upstream's cssSimpleSelectorSeq(), over a supplied pseudo-class matcher.
+	 *
+	 * cssPseudo() and cssNegation() are the only parts that reach back into this chain, so
+	 * negation is rebuilt from $pseudo and everything else comes from the factory.
+	 */
+	private function boundedSimpleSelectorSeq( Matcher $pseudo ): Matcher {
+		$ows = $this->optionalWhitespace();
+		$negation = new Juxtaposition( [
+			new TokenMatcher( Token::T_COLON ),
+			new FunctionMatcher( 'not', new Juxtaposition( [
+				$ows,
+				new Alternative( [
+					$this->cssTypeSelector(),
+					$this->cssUniversal(),
+					$this->cssID(),
+					$this->cssClass(),
+					$this->cssAttrib(),
+					$pseudo,
+				] ),
+				$ows,
+			] ) ),
+		] );
+
+		$hashEtc = new Alternative( [
+			$this->cssID(),
+			$this->cssClass(),
+			$this->cssAttrib(),
+			$pseudo,
+			$negation,
+		] );
+
+		$seq = new Alternative( [
+			new Juxtaposition( [
+				new Alternative( [ $this->cssTypeSelector(), $this->cssUniversal() ] ),
+				Quantifier::star( $hashEtc ),
+			] ),
+			Quantifier::plus( $hashEtc ),
+		] );
+		$seq->setDefaultOptions( [ 'skip-whitespace' => false ] );
+
+		return $seq;
+	}
+
+	/**
 	 * Partially implements CSS Color Module Level 4 and 5
 	 *
 	 * @return Matcher|Matcher[]

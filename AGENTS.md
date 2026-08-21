@@ -11,6 +11,7 @@ It does this by subclassing the sanitizer and matcher classes from [css-sanitize
 | `MatcherFactoryExtender` | `Wikimedia\CSS\Grammar\MatcherFactory` | Builds the grammar matchers for individual CSS values |
 | `StylePropertySanitizerExtender` | `Wikimedia\CSS\Sanitizer\StylePropertySanitizer` | Decides which declarations are allowed |
 | `FontFaceAtRuleSanitizerExtender` | `Wikimedia\CSS\Sanitizer\FontFaceAtRuleSanitizer` | Widens `@font-face` |
+| `StyleRuleSanitizerExtender` | `Wikimedia\CSS\Sanitizer\StyleRuleSanitizer` | Rebuilds the rule sanitizer over this extension's selector grammar |
 
 The swap happens in `includes/Hooks/`: `PropertySanitizerHook` and `StylesheetSanitizerHook` implement TemplateStyles' hook interfaces, and `MainHooks` re-registers the `<templatestyles>` tag to support the `wrapclass` unscoping feature.
 
@@ -72,6 +73,29 @@ grep -Fn '$this-><name>' ../../vendor/wikimedia/css-sanitizer/src/Sanitizer/Styl
 ```
 
 The same applies to `MatcherFactory`. Methods documented `@inheritDoc` are overrides and must exist on the parent; anything else is a new method.
+
+### The selector grammar is not reachable through the matcher factory
+
+TemplateStyles builds `$matcherFactory->cssSelectorList()` into a `StyleRuleSanitizer`
+*before* it fires the stylesheet hook, so a selector override on `MatcherFactoryExtender` is
+never consulted -- the factory it belongs to is not the one the selectors came from. The
+rule sanitizer has to be replaced instead. `StyleRuleSanitizerExtender` does that, and
+copies `prependSelectors` off the original rather than rebuilding it: it carries the wrapper
+class the rule gets scoped to, and the hook is not told what that is.
+
+It also reaches two protected properties. A renamed one is worth particular care: assigning
+to a property that no longer exists creates a dynamic property, which PHP only deprecates,
+so hoisting would silently stop. `OverrideIntegrityTest` asserts both still exist.
+
+### `@media` and `@supports` keep their own copy of the rule-sanitizer list
+
+`StylesheetSanitizerHook` swaps entries in the stylesheet's rule-sanitizer list, but
+TemplateStyles hands that list to `@media` and `@supports` before the hook runs, so the
+nested copies still point at the objects TemplateStyles built. The symptom is a rule that
+sanitizes at the top level and is refused one line deeper -- and a refused selector takes
+the whole stylesheet with it. `propagateToNestedAtRules()` pushes the replacements down;
+anything added to `$newRules` in future needs to go through it too. This is why `@font-face`
+inside `@media` did not get this extension's descriptors for several releases.
 
 ### Which css-sanitizer version you get
 

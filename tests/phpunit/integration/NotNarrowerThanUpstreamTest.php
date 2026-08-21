@@ -9,6 +9,7 @@ use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
 use MediaWikiIntegrationTestCase;
 use Wikimedia\CSS\Parser\Parser as CSSParser;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
+use Wikimedia\CSS\Sanitizer\StyleRuleSanitizer;
 
 /**
  * This extension may accept more than css-sanitizer does. It must never accept less.
@@ -56,6 +57,96 @@ class NotNarrowerThanUpstreamTest extends MediaWikiIntegrationTestCase {
 			"css-sanitizer accepts this and the extension does not, so an override is "
 				. "shadowing upstream with something narrower: $declaration"
 		);
+	}
+
+	private function selectorAcceptedByExtension( string $selector ): bool {
+		$sanitizer = TemplateStylesHooks::getSanitizer( 'mw-parser-output' );
+		$sanitizer->clearSanitizationErrors();
+		$sanitizer->sanitize( CSSParser::newFromString( "$selector { color: red }" )->parseStylesheet() );
+
+		return $sanitizer->getSanitizationErrors() === [];
+	}
+
+	private function selectorAcceptedByUpstream( string $selector ): bool {
+		$factory = new TemplateStylesMatcherFactory( $this->getConfVar( 'TemplateStylesAllowedUrls' ) );
+		$ruleSanitizer = new StyleRuleSanitizer(
+			$factory->cssSelectorList(),
+			new StylePropertySanitizer( $factory )
+		);
+		$rules = CSSParser::newFromString( "$selector { color: red }" )->parseStylesheet()->getRuleList();
+
+		return $ruleSanitizer->sanitize( $rules[0] ) !== null;
+	}
+
+	/**
+	 * cssPseudo() and cssNegation() replace upstream's versions outright, so a Level 3
+	 * selector upstream still accepts can be lost without any test of this extension alone
+	 * noticing -- deleting a too-narrow override makes the suite greener, not redder.
+	 *
+	 * @dataProvider provideSelectors
+	 */
+	public function testSelectorsNotNarrowerThanUpstream( string $selector ): void {
+		if ( !$this->selectorAcceptedByUpstream( $selector ) ) {
+			$this->addToAssertionCount( 1 );
+			return;
+		}
+
+		$this->assertTrue(
+			$this->selectorAcceptedByExtension( $selector ),
+			"css-sanitizer accepts this selector and the extension does not, so an override "
+				. "is shadowing upstream with something narrower: $selector"
+		);
+	}
+
+	/**
+	 * Level 3 selectors, which the pseudo-class overrides must not drop. Anything upstream
+	 * rejects is skipped, so Level 4 entries can sit here harmlessly.
+	 */
+	public static function provideSelectors(): array {
+		$selectors = [
+			'.a:hover',
+			'.a:focus',
+			'.a:active',
+			'.a:visited',
+			'.a:target',
+			'.a:enabled',
+			'.a:disabled',
+			'.a:checked',
+			'.a:indeterminate',
+			'.a:root',
+			'.a:empty',
+			'.a:first-child',
+			'.a:last-child',
+			'.a:only-child',
+			'.a:first-of-type',
+			'.a:last-of-type',
+			'.a:only-of-type',
+			'.a:nth-child(2n+1)',
+			'.a:nth-last-child(3)',
+			'.a:nth-of-type(odd)',
+			'.a:nth-last-of-type(2)',
+			'.a:lang(en)',
+			'.a:dir(rtl)',
+			'.a:not(.b)',
+			'.a:not(*)',
+			'.a:not(:hover)',
+			'.a:not([href])',
+			'.a::before',
+			'.a::after',
+			'.a::first-line',
+			'.a::first-letter',
+			'.a::selection',
+			'.a::marker',
+			'.a::placeholder',
+			'.a::file-selector-button',
+			'.a:first-letter',
+			'.a > .b + .c ~ .d',
+			'a[href^="https"]',
+			'#id.class',
+			'*',
+		];
+
+		return array_combine( $selectors, array_map( static fn ( $s ) => [ $s ], $selectors ) );
 	}
 
 	/**

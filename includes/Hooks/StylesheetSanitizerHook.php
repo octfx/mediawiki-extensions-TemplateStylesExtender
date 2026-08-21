@@ -25,10 +25,14 @@ use MediaWiki\Extension\TemplateStyles\Hooks\TemplateStylesStylesheetSanitizerHo
 use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use MediaWiki\Extension\TemplateStylesExtender\StyleRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use Wikimedia\CSS\Grammar\MatcherFactory;
+use Wikimedia\CSS\Sanitizer\MediaAtRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
+use Wikimedia\CSS\Sanitizer\StyleRuleSanitizer;
 use Wikimedia\CSS\Sanitizer\StylesheetSanitizer;
+use Wikimedia\CSS\Sanitizer\SupportsAtRuleSanitizer;
 
 class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 
@@ -69,6 +73,11 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		}
 
 		$newRules = $sanitizer->getRuleSanitizers();
+		if ( isset( $newRules['styles'] ) && $newRules['styles'] instanceof StyleRuleSanitizer ) {
+			$newRules['styles'] = StyleRuleSanitizerExtender::fromOriginal(
+				$newRules['styles'], $factory
+			);
+		}
 		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender(
 			$factory,
 			(bool)TemplateStylesExtender::getConfigValue(
@@ -76,6 +85,7 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 			)
 		);
 		$sanitizer->setRuleSanitizers( $newRules );
+		self::propagateToNestedAtRules( $sanitizer );
 
 		$extended->addBackdropFilter( $extender );
 		$extended->addPointerEvents( $extender );
@@ -84,5 +94,31 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addCssFonts4( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
+	}
+
+	/**
+	 * Push the replaced rule sanitizers down into `@media` and `@supports`.
+	 *
+	 * Both hold their own copy of the list, taken before this hook runs, so replacing an
+	 * entry on the stylesheet alone leaves them on the original. Anything added to
+	 * $newRules needs to come through here too.
+	 */
+	private static function propagateToNestedAtRules( StylesheetSanitizer $sanitizer ): void {
+		$outer = $sanitizer->getRuleSanitizers();
+
+		foreach ( [ '@media', '@supports' ] as $atRule ) {
+			$nested = $outer[$atRule] ?? null;
+			if ( !$nested instanceof MediaAtRuleSanitizer && !$nested instanceof SupportsAtRuleSanitizer ) {
+				continue;
+			}
+
+			$inner = $nested->getRuleSanitizers();
+			foreach ( $inner as $name => $_ ) {
+				if ( isset( $outer[$name] ) ) {
+					$inner[$name] = $outer[$name];
+				}
+			}
+			$nested->setRuleSanitizers( $inner );
+		}
 	}
 }

@@ -3,6 +3,7 @@
 use MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use MediaWiki\Extension\TemplateStylesExtender\StyleRuleSanitizerExtender;
 
 /**
  * These classes work by overriding methods css-sanitizer calls internally. An override
@@ -17,6 +18,7 @@ use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
  * @covers \MediaWiki\Extension\TemplateStylesExtender\FontFaceAtRuleSanitizerExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender
+ * @covers \MediaWiki\Extension\TemplateStylesExtender\StyleRuleSanitizerExtender
  */
 class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 
@@ -30,6 +32,8 @@ class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 		MatcherFactoryExtender::class => [
 			'cssWideKeywords',
 			'colorFuncs',
+			'cssNegation',
+			'cssPseudo',
 			'image',
 			'mathFunction',
 			'rawNumber',
@@ -43,6 +47,9 @@ class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 			'doSanitize',
 		],
 		FontFaceAtRuleSanitizerExtender::class => [],
+		// Adds no override: it replaces the selector matcher a StyleRuleSanitizer was built
+		// with, rather than changing how one behaves.
+		StyleRuleSanitizerExtender::class => [],
 	];
 
 	/**
@@ -81,6 +88,24 @@ class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 				. "missing from the actual set overrides nothing and is never called; a name "
 				. "missing from the register is an override nobody declared."
 		);
+	}
+
+	/**
+	 * StyleRuleSanitizerExtender reads two protected properties off the sanitizer
+	 * TemplateStyles built and assigns one of them. If upstream renames either, the read
+	 * becomes an error and the assignment quietly creates a dynamic property instead --
+	 * PHP deprecates that rather than failing, so hoisting would simply stop. Same class of
+	 * silent inertness as a renamed override, so it is registered in the same place.
+	 */
+	public function testStyleRuleSanitizerStillDeclaresTheFieldsWeReach(): void {
+		$reflection = new ReflectionClass( \Wikimedia\CSS\Sanitizer\StyleRuleSanitizer::class );
+
+		foreach ( [ 'prependSelectors', 'hoistableMatcher', 'propertySanitizer' ] as $name ) {
+			$this->assertTrue( $reflection->hasProperty( $name ),
+				"StyleRuleSanitizer no longer declares \$$name" );
+			$this->assertTrue( $reflection->getProperty( $name )->isProtected(),
+				"StyleRuleSanitizer::\$$name is no longer protected" );
+		}
 	}
 
 	public static function provideClasses(): array {
