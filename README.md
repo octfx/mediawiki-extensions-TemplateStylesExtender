@@ -119,6 +119,19 @@ anything in the document. The rule it applies is still scoped to the wrapper, an
 here can fetch a URL that `$wgTemplateStylesAllowedUrls` does not permit, so this widens an
 existing channel rather than opening a new one.
 
+### `image-set()`
+The density argument takes a resolution or a math function, but no `var()` — not even inside
+`calc()`:
+
+```css
+image-set(url(…) calc(1x * 2));            /* fine */
+image-set(url(…) calc(1x * var(--scale)))  /* rejected */
+```
+
+`image-set()` reads a bare string as a URL, so a custom property substituted next to one can
+add a second entry pointing anywhere, past `$wgTemplateStylesAllowedUrls`. Every other
+numeric slot takes `var()` inside `calc()` normally.
+
 ### Relative colors
 The relative colors module is quite extensive, not every feature is currently implemented.
 
