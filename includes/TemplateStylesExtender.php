@@ -28,12 +28,14 @@ use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
 use Wikimedia\CSS\Grammar\CheckedMatcher;
 use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
+use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
 use Wikimedia\CSS\Grammar\GrammarMatch;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\Quantifier;
+use Wikimedia\CSS\Grammar\TokenMatcher;
 use Wikimedia\CSS\Objects\ComponentValueList;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
@@ -45,15 +47,18 @@ class TemplateStylesExtender {
 	/**
 	 * Whole-value matcher for a declaration that contains a var().
 	 *
-	 * TemplateStyles reaches this only once the property's own grammar has refused the
-	 * value. It is not told which property it is on, so it checks nothing against one --
-	 * which is why it applies only where a var() is present. Without one the property's
-	 * own grammar is the better judge, and is left to be it.
+	 * Reached only once a known property's own grammar has refused the value, and never
+	 * told which property that was -- so it applies only where a var() is present, and
+	 * leaves the property's own grammar to judge anything else.
 	 *
-	 * Every alternative in the list must consume exactly one component value. A
-	 * variable-length one makes the Quantifier::plus below enumerate every way of
-	 * splitting a value that ends up failing, which gets expensive fast; one that can
-	 * match nothing makes Quantifier throw.
+	 * A value holding a var() is unknowable, since a custom property may hold any token
+	 * stream. So the list admits keywords, strings and dimensions whole and draws the line
+	 * at functions: an arbitrary one, a url() outside $wgTemplateStylesAllowedUrls and a
+	 * block stay out.
+	 *
+	 * Every alternative must consume exactly one component value. A variable-length one
+	 * makes the Quantifier::plus enumerate every way of splitting a failing value, which
+	 * gets expensive fast; one that can match nothing makes Quantifier throw.
 	 */
 	public function addVarSelector(
 		StylePropertySanitizer $propertySanitizer,
@@ -68,14 +73,22 @@ class TemplateStylesExtender {
 			$factory->number(),
 			$factory->angle(),
 			$factory->frequency(),
+			$factory->time(),
 			$factory->resolution(),
 			$factory->cssSingleEasingFunction(),
+			// A bare string is a URL only inside image-set(), and a function's arguments
+			// are matched by its own grammar, never by this list.
+			$factory->string(),
+			// Which keywords a property takes is its business, and it is not known here.
+			// Subsumes the css-wide keywords, the line styles and <position>.
+			$factory->ident(),
 			$factory->comma(),
-			$factory->cssWideKeywords(),
-			// <position> one keyword at a time: position() itself matches one, two or
-			// four values, which this list may not hold.
-			new KeywordMatcher( [ 'left', 'center', 'right', 'top', 'bottom' ] ),
-			new KeywordMatcher( [ 'solid', 'double', 'dotted', 'dashed', 'wavy' ] ),
+			// <flex>, which no factory method builds
+			new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
+				return strcasecmp( (string)$t->unit(), 'fr' ) === 0;
+			} ),
+			// the separator in `font`, `grid-area` and `border-radius`
+			new DelimMatcher( [ '/' ] ),
 		] );
 
 		$propertySanitizer->setCssWideKeywordsMatcher( new Alternative( [
@@ -105,9 +118,9 @@ class TemplateStylesExtender {
 	/**
 	 * A var() whose fallback is a list of values, as the spec has it, rather than one.
 	 *
-	 * The list may be empty -- `var( --x, )` is the guaranteed-invalid value -- so it is a
-	 * Quantifier::star, kept behind the comma so the Juxtaposition still consumes a token
-	 * and no enclosing quantifier is offered an empty match.
+	 * The list may be empty -- `var( --x, )` is the guaranteed-invalid value -- hence the
+	 * star, kept behind the comma so the Juxtaposition always consumes a token and no
+	 * enclosing quantifier is offered an empty match.
 	 *
 	 * Nesting is spelled out rather than recursive: a fallback may hold a var(), and that
 	 * one a fallback of its own, and no deeper.

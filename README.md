@@ -85,6 +85,28 @@ Wikitext
 </div>
 ```
 
+### `var()` in a value
+
+Where a property's own grammar has no `var()` slot, a value containing one is matched as a
+whole instead. That matcher is not told which property it is on, so it does not check the
+value against one — a `var()` may sit beside any keyword, and carry any value list as its
+fallback, including an empty one:
+
+```css
+pointer-events: var(--pe, none);        /* the property's own default as a fallback */
+border: var(--border, 1px solid red);   /* a fallback of several values */
+flex-flow: var(--direction) wrap;       /* a keyword beside a var() */
+font-family: var(--stack), "Some Font";
+color: var(--x, );                      /* the guaranteed-invalid value */
+```
+
+It applies only where a `var()` is actually present, so `width: red` is still reported to the
+editor as a bad value. And it admits no function beyond the ones this extension already
+allows, so `attr()`, `expression()` and a `url()` outside `$wgTemplateStylesAllowedUrls` are
+refused in a fallback as at the top level.
+
+Needs the config option in footnote 4.
+
 ### Selectors
 `css-sanitizer` implements Selectors Level 3, and a selector it rejects costs the editor the
 whole stylesheet rather than the one rule, so this extension widens the selector grammar as
