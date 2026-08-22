@@ -3,12 +3,14 @@
 use MediaWiki\Extension\TemplateStyles\TemplateStylesMatcherFactory;
 use MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender;
 use MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender;
+use MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender;
 use Wikimedia\CSS\Parser\Parser;
 
 /**
  * @group TemplateStylesExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\MatcherFactoryExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\StylePropertySanitizerExtender
+ * @covers \MediaWiki\Extension\TemplateStylesExtender\TemplateStylesExtender
  */
 class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 
@@ -148,6 +150,49 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 			'var as repeat count' => [ 'grid-template-columns: repeat(var(--cols), minmax(0, 1fr))', true ],
 			// still rejected
 			'nonsense keyword' => [ 'grid-template-columns: definitely-not-a-thing', false ],
+		];
+	}
+
+	/**
+	 * The scroll properties are added through addKnownProperties(), so the grammar each one
+	 * gets is this extension's own and nothing upstream constrains it. These pin the shape:
+	 * how many values a shorthand takes, and which types its slots hold.
+	 *
+	 * @dataProvider provideScrollDeclarations
+	 */
+	public function testScrollProperties( string $declarationText, bool $allowed ): void {
+		$factory = new MatcherFactoryExtender( new TemplateStylesMatcherFactory( [] ) );
+		$sanitizer = new StylePropertySanitizerExtender( $factory );
+		$extender = new TemplateStylesExtender();
+		$extender->addCssOverscrollBehavior1( $sanitizer );
+		$extender->addCssScrollbars1( $sanitizer, $factory );
+		$declaration = Parser::newFromString( $declarationText )->parseDeclaration();
+
+		$this->assertSame( $allowed, $sanitizer->sanitize( $declaration ) !== null );
+	}
+
+	public static function provideScrollDeclarations(): array {
+		return [
+			// CSS Overscroll Behavior Module Level 1 -- [ contain | none | auto ]{1,2}
+			'overscroll-behavior one value' => [ 'overscroll-behavior: contain', true ],
+			'overscroll-behavior two values' => [ 'overscroll-behavior: none auto', true ],
+			'overscroll-behavior three values' => [ 'overscroll-behavior: none auto contain', false ],
+			'overscroll-behavior longhand' => [ 'overscroll-behavior-x: none', true ],
+			'overscroll-behavior longhand takes one value' => [ 'overscroll-behavior-y: none auto', false ],
+			'overscroll-behavior is not a length' => [ 'overscroll-behavior: 10px', false ],
+			// `chain` is in the editor's draft but not the published one, and ships in no
+			// engine but Blink, where it is still experimental
+			'overscroll-behavior chain is not in the published spec' => [ 'overscroll-behavior: chain', false ],
+			// CSS Scrollbars Styling Module Level 1 -- auto | <color>{2}
+			'scrollbar-color auto' => [ 'scrollbar-color: auto', true ],
+			'scrollbar-color pair' => [ 'scrollbar-color: red blue', true ],
+			'scrollbar-color needs both colours' => [ 'scrollbar-color: red', false ],
+			'scrollbar-color takes no third' => [ 'scrollbar-color: red blue green', false ],
+			'scrollbar-color is not a keyword' => [ 'scrollbar-color: thin', false ],
+			// dropped from the spec in favour of letting `auto` follow color-scheme
+			'scrollbar-color light and dark are gone' => [ 'scrollbar-color: light dark', false ],
+			'scrollbar-width thin' => [ 'scrollbar-width: thin', true ],
+			'scrollbar-width is not a length' => [ 'scrollbar-width: 10px', false ],
 		];
 	}
 
