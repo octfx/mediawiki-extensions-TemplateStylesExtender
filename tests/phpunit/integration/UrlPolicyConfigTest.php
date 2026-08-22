@@ -86,10 +86,12 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 	 * The density slot of image-set() must not accept var(), or a custom property can
 	 * smuggle a second image-set entry past the URL allowlist.
 	 *
-	 * resolution() calls parent::mathFunction() rather than this extension's override, which
-	 * is what would put a bare var() in the slot. doSanitize() does not help: the payload is
-	 * a bare string, which is neither a url() token nor an external-resource function -- and
-	 * is exactly what image-set()'s first argument accepts as a URL.
+	 * Two things prevent it. resolution() calls parent::mathFunction() rather than this
+	 * extension's override, which is what would put a bare var() in the slot; and
+	 * imageSetDensity() refuses a var() anywhere in the matched value, calc() included.
+	 * doSanitize() does not help: the payload is a bare string, which is neither a url()
+	 * token nor an external-resource function -- and is exactly what image-set()'s first
+	 * argument accepts as a URL.
 	 *
 	 * @dataProvider provideResolutionSlotPayloads
 	 */
@@ -125,6 +127,27 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 			],
 			'var() in the density slot at all' => [
 				"--r: 1x; background-image: image-set(\"$ok\" var(--r))",
+			],
+			// calc() is allowed here now, so the var() it can carry has to be refused
+			// separately. A custom property cannot close the parens it lands in, so this
+			// payload would turn the declaration invalid rather than into a second entry --
+			// but the slot sits next to a URL, so it does not get to depend on that.
+			'var() wrapped in calc()' => [
+				"--r: 2x, \"$evil\" 1x; background-image: image-set(\"$ok\" calc(var(--r)))",
+			],
+			'var() as a factor inside calc()' => [
+				"--d: 2; background-image: image-set(\"$ok\" calc(1x * var(--d)))",
+			],
+			'var() inside min()' => [
+				"--r: 2x; background-image: image-set(\"$ok\" min(var(--r), 3x))",
+			],
+			// The check compares CSSFunction::getName(), which the tokenizer has already
+			// lowercased and unescaped. Both of these would slip past a raw-source match.
+			'var() in mixed case' => [
+				"--r: 2x, \"$evil\" 1x; background-image: image-set(\"$ok\" calc(VAR(--r)))",
+			],
+			'var() spelled with an escape' => [
+				"--r: 2x, \"$evil\" 1x; background-image: image-set(\"$ok\" calc(\\76 ar(--r)))",
 			],
 		];
 	}

@@ -22,15 +22,18 @@ declare( strict_types=1 );
 namespace MediaWiki\Extension\TemplateStylesExtender;
 
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\CheckedMatcher;
 use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
 use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
+use Wikimedia\CSS\Grammar\GrammarMatch;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Objects\ComponentValueList;
 use Wikimedia\CSS\Objects\Token;
 
 class MatcherFactoryExtender extends MatcherFactory {
@@ -437,9 +440,41 @@ class MatcherFactoryExtender extends MatcherFactory {
 			$image,
 			new FunctionMatcher( 'image-set', Quantifier::hash( new Juxtaposition( [
 				new Alternative( [ $image, $this->urlstring( 'image' ) ] ),
-				new Alternative( [ $this->resolution(), new FunctionMatcher( 'type', $this->string() ) ] )
+				$this->imageSetDensity(),
 			] ) ) ),
 		] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * The second argument of image-set(): a resolution or a type(), with no var() in it.
+	 *
+	 * resolution() keeps a bare var() out; this keeps one inside calc() out too. That costs
+	 * `calc(1x * var(--d))` and buys not trusting the browser to reject the malformed calc
+	 * the payload above becomes. attr() is the other substitution to watch; it cannot reach
+	 * here today.
+	 */
+	private function imageSetDensity(): Matcher {
+		$this->cache[__METHOD__] ??= new CheckedMatcher(
+			new Alternative( [
+				$this->resolution(),
+				new FunctionMatcher( 'type', $this->string() ),
+			] ),
+			static function ( ComponentValueList $values, GrammarMatch $match, array $options ) {
+				foreach ( $match->getValues() as $value ) {
+					foreach ( $value->toTokenArray() as $token ) {
+						if ( $token->type() === Token::T_FUNCTION
+							&& strcasecmp( (string)$token->value(), 'var' ) === 0
+						) {
+							return false;
+						}
+					}
+				}
+
+				return true;
+			}
+		);
 
 		return $this->cache[__METHOD__];
 	}
