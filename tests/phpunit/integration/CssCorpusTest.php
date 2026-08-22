@@ -140,6 +140,19 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * A scroll-driven animation is only useful if its `@keyframes` survive with it, and
+	 * those go through a sanitizer of their own that this extension does not replace.
+	 */
+	public function testScrollDrivenAnimationAndItsKeyframesBothSurvive(): void {
+		$css = '@keyframes reveal { from { opacity: 0 } to { opacity: 1 } } '
+			. '.card { animation: reveal linear both; animation-timeline: view(); '
+			. 'animation-range: entry 0% cover 40% }';
+
+		$this->assertTrue( $this->sanitizes( $css, 'animation-timeline' ) );
+		$this->assertTrue( $this->sanitizes( $css, '@keyframes' ) );
+	}
+
+	/**
 	 * Declarations the extension exists to allow. A failure here is a regression.
 	 *
 	 * @dataProvider provideAccepted
@@ -148,6 +161,53 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$this->assertTrue(
 			$this->isAccepted( $declaration ),
 			"Expected to be accepted but was rejected: $declaration"
+		);
+	}
+
+	/**
+	 * Values the shipped sanitizer has to keep refusing.
+	 *
+	 * Every one is a value some draft or older spec offers, so the risk is a contributor
+	 * reading a newer document and "restoring" it. None carries a var(), which is what keeps
+	 * addVarSelector()'s whole-value matcher out of the way -- with one in, the matcher
+	 * answers for any known property and these would pass whatever the grammar held.
+	 *
+	 * @dataProvider provideRejected
+	 */
+	public function testRejected( string $declaration ): void {
+		$this->assertFalse(
+			$this->isAccepted( $declaration ),
+			"Expected to be rejected but was accepted: $declaration"
+		);
+	}
+
+	public static function provideRejected(): array {
+		return array_merge(
+			// `chain` is in the editor's draft only, and ships in no engine but Blink,
+			// where it is still experimental.
+			self::cases( 'Overscroll Behavior 1', [
+				'overscroll-behavior-x: contain none',
+				'overscroll-behavior: auto contain none',
+				'overscroll-behavior: chain',
+			] ),
+			// `light` and `dark` were dropped in favour of letting `auto` follow color-scheme.
+			self::cases( 'Scrollbars 1', [
+				'scrollbar-color: light dark',
+				'scrollbar-color: red',
+				'scrollbar-width: 8px',
+			] ),
+			// The named half of the module is deliberately absent, so a timeline can be
+			// referred to only by one of the anonymous functions. `scroll` as a named range
+			// is editor's-draft-only and ships nowhere, like `chain` above.
+			self::cases( 'Scroll-driven Animations 1', [
+				'animation-range: scroll',
+				'animation-timeline: --my-timeline',
+				'animation-timeline: view(nearest)',
+				'scroll-timeline-name: --my-timeline',
+				'scroll-timeline: --my-timeline block',
+				'timeline-scope: all',
+				'view-timeline-name: --my-timeline',
+			] )
 		);
 	}
 
@@ -643,6 +703,29 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'scroll-snap-type: x mandatory',
 				'scroll-snap-type: y',
 				'scroll-snap-type: y mandatory',
+			] ),
+			self::cases( 'Scroll-driven Animations 1', [
+				'animation-range-end: exit',
+				'animation-range-start: entry 25%',
+				'animation-range: contain',
+				'animation-range: cover 20%',
+				'animation-range: entry 10% exit 90%',
+				'animation-range: entry-crossing exit-crossing',
+				'animation-range: inherit',
+				'animation-range: initial',
+				'animation-range: normal',
+				'animation-range: revert',
+				'animation-range: revert-layer',
+				'animation-range: unset',
+				'animation-timeline: auto',
+				'animation-timeline: none',
+				'animation-timeline: scroll()',
+				'animation-timeline: scroll(nearest block)',
+				'animation-timeline: scroll(root)',
+				'animation-timeline: view()',
+				'animation-timeline: view(auto 10px)',
+				'animation-timeline: view(block 20%)',
+				'animation-timeline: view(inline)',
 			] ),
 			self::cases( 'Scrollbars 1', [
 				'scrollbar-color: #fff #0645ad',

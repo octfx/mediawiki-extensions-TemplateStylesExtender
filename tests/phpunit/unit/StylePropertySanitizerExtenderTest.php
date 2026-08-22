@@ -154,21 +154,39 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
-	 * The scroll properties are added through addKnownProperties(), so the grammar each one
-	 * gets is this extension's own and nothing upstream constrains it. These pin the shape:
-	 * how many values a shorthand takes, and which types its slots hold.
-	 *
-	 * @dataProvider provideScrollDeclarations
+	 * A sanitizer carrying every scroll property this extension adds. Wiring all three
+	 * together is also the only way a case would notice one shadowing another.
 	 */
-	public function testScrollProperties( string $declarationText, bool $allowed ): void {
+	private function scrollSanitizer(): StylePropertySanitizerExtender {
 		$factory = new MatcherFactoryExtender( new TemplateStylesMatcherFactory( [] ) );
 		$sanitizer = new StylePropertySanitizerExtender( $factory );
 		$extender = new TemplateStylesExtender();
 		$extender->addCssOverscrollBehavior1( $sanitizer );
 		$extender->addCssScrollbars1( $sanitizer, $factory );
-		$declaration = Parser::newFromString( $declarationText )->parseDeclaration();
+		$extender->addCssScrollDrivenAnimations1( $sanitizer, $factory );
 
-		$this->assertSame( $allowed, $sanitizer->sanitize( $declaration ) !== null );
+		return $sanitizer;
+	}
+
+	private function accepts( string $declarationText ): bool {
+		return $this->scrollSanitizer()->sanitize(
+			Parser::newFromString( $declarationText )->parseDeclaration()
+		) !== null;
+	}
+
+	/**
+	 * These properties are added through addKnownProperties(), so the grammar each one gets
+	 * is this extension's own and nothing upstream constrains it. What is pinned here is that
+	 * grammar alone: how many values a shorthand takes, and which types its slots hold.
+	 *
+	 * A refusal here is the property's own grammar refusing. In production a value holding a
+	 * var() reaches addVarSelector()'s whole-value matcher instead, so CssCorpusTest is where
+	 * a refusal that has to hold for the shipped sanitizer belongs.
+	 *
+	 * @dataProvider provideScrollDeclarations
+	 */
+	public function testOverscrollAndScrollbarGrammar( string $declarationText, bool $allowed ): void {
+		$this->assertSame( $allowed, $this->accepts( $declarationText ) );
 	}
 
 	public static function provideScrollDeclarations(): array {
@@ -193,6 +211,54 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 			'scrollbar-color light and dark are gone' => [ 'scrollbar-color: light dark', false ],
 			'scrollbar-width thin' => [ 'scrollbar-width: thin', true ],
 			'scrollbar-width is not a length' => [ 'scrollbar-width: 10px', false ],
+		];
+	}
+
+	/**
+	 * Only the anonymous half of Scroll-driven Animations is allowed: a <dashed-ident>
+	 * timeline name has no place in the grammar, and each function takes only its own
+	 * arguments.
+	 *
+	 * @dataProvider provideScrollDrivenAnimationDeclarations
+	 */
+	public function testScrollDrivenAnimationGrammar( string $declarationText, bool $allowed ): void {
+		$this->assertSame( $allowed, $this->accepts( $declarationText ) );
+	}
+
+	public static function provideScrollDrivenAnimationDeclarations(): array {
+		return [
+			// animation-timeline: [ auto | none | scroll() | view() ]#
+			'timeline auto' => [ 'animation-timeline: auto', true ],
+			'timeline none' => [ 'animation-timeline: none', true ],
+			'scroll without arguments' => [ 'animation-timeline: scroll()', true ],
+			'scroll with a scroller' => [ 'animation-timeline: scroll(root)', true ],
+			'scroll with scroller and axis' => [ 'animation-timeline: scroll(nearest block)', true ],
+			'scroll takes them in either order' => [ 'animation-timeline: scroll(y self)', true ],
+			'view without arguments' => [ 'animation-timeline: view()', true ],
+			'view with an axis' => [ 'animation-timeline: view(inline)', true ],
+			'view with axis and one inset' => [ 'animation-timeline: view(block 20%)', true ],
+			'view with two insets' => [ 'animation-timeline: view(10px 20%)', true ],
+			'view with an auto inset' => [ 'animation-timeline: view(auto 10px)', true ],
+			'timeline is a list' => [ 'animation-timeline: view(), scroll()', true ],
+			// the named half is deliberately out
+			'no named timeline' => [ 'animation-timeline: --my-timeline', false ],
+			'view takes no scroller' => [ 'animation-timeline: view(nearest)', false ],
+			'scroll takes no inset' => [ 'animation-timeline: scroll(20%)', false ],
+			'timeline is not a length' => [ 'animation-timeline: 10px', false ],
+			// animation-range*: [ normal | <length-percentage> | <timeline-range-name> <length-percentage>? ]#
+			'range normal' => [ 'animation-range: normal', true ],
+			'range name alone' => [ 'animation-range: entry', true ],
+			'range name and percentage' => [ 'animation-range: cover 20%', true ],
+			'range start and end' => [ 'animation-range: entry 10% exit 90%', true ],
+			'range crossing names' => [ 'animation-range: entry-crossing exit-crossing', true ],
+			// the editor's draft adds `scroll` to the named ranges; no engine takes it, so it
+			// is refused on the same rule that refuses `overscroll-behavior: chain`
+			'range scroll is not in the published spec' => [ 'animation-range: scroll', false ],
+			'range start longhand' => [ 'animation-range-start: entry 25%', true ],
+			'range end longhand' => [ 'animation-range-end: exit', true ],
+			'range is a bare length' => [ 'animation-range-start: 100px', true ],
+			'range name is not free-form' => [ 'animation-range-start: sideways', false ],
+			'range takes no third value' => [ 'animation-range: entry 10% exit 90% cover', false ],
 		];
 	}
 
