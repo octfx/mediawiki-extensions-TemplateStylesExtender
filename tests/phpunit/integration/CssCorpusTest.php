@@ -252,6 +252,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			// has no fallback slot.
 			self::cases( 'Custom properties, whole value', [
 				'border: 1px var(--border-style) black',
+				// the fallback is a value list, as the spec has it, and may be empty
+				'border: var(--border, 1px solid red)',
+				'color: var(--x, )',
 				'border: var(--width) var(--style) var(--color)',
 				'border-image-source: var(--image)',
 				'box-shadow: var(--shadow-sm), var(--shadow-lg)',
@@ -733,6 +736,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	 * or arbitrary function, and its image() is this factory's, so
 	 * $wgTemplateStylesAllowedUrls still applies to whatever reaches a slot through it.
 	 *
+	 * Every row carries a var(), or the matcher is never consulted and the row would pass
+	 * whatever the list held.
+	 *
 	 * @dataProvider provideWideMatcherRefusals
 	 */
 	public function testWideMatcherStillRefuses( string $declaration ): void {
@@ -755,9 +761,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			],
 			'attr()' => [ 'pointer-events: var(--x) attr(data-x)' ],
 			'expression()' => [ 'width: var(--w) expression(alert(1))' ],
-			'an unknown function' => [ 'pointer-events: notafunction(1px)' ],
+			'an unknown function' => [ 'pointer-events: var(--x) notafunction(1px)' ],
 			'an unknown keyword beside a var()' => [ 'border: 1px var(--style) notacolor' ],
-			'a block' => [ 'pointer-events: [auto]' ],
+			'a block' => [ 'pointer-events: var(--x) [auto]' ],
 			'var() with no custom property' => [ 'color: var()' ],
 		];
 	}
@@ -800,8 +806,8 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/**
 	 * The matcher is not told which property it is on, so nothing here is checked against
 	 * one: not the value's type, not how many values there are, not a fallback's type, and
-	 * not which allowlist the property's own slot would have used. Nor does it require a
-	 * var() to be present. Tightening any of that turns these red.
+	 * not which allowlist the property's own slot would have used. Tightening any of that
+	 * turns these red.
 	 *
 	 * @dataProvider provideAcceptedRegardlessOfProperty
 	 */
@@ -813,20 +819,67 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 		$commons = self::COMMONS;
 
 		return [
-			'a colour as a width' => [ 'width: red' ],
-			'an angle as pointer-events' => [ 'pointer-events: 30deg' ],
-			'a resolution as a display' => [ 'display: 2x' ],
-			'a comma alone' => [ 'color: ,' ],
-			'more values than the property takes' => [ 'border-width: 1px 2px 3px 4px 5px' ],
+			'a colour as a width' => [ 'width: var(--w) red' ],
+			'an angle as pointer-events' => [ 'pointer-events: var(--x) 30deg' ],
+			'a resolution as a display' => [ 'display: var(--d) 2x' ],
+			'a comma alone' => [ 'color: var(--c) ,' ],
+			'more values than the property takes' => [
+				'border-width: var(--w) 1px 2px 3px 4px 5px',
+			],
 			// provideRejectedFallbacks() pins the opposite one level down: inside rgb(), a
 			// fallback is held to the slot's own type.
 			'a length as a colour fallback' => [ 'color: var(--c, 10px)' ],
 			// url( 'image' ), where the property's own slot is url( 'svg' ) -- upstream's
 			// filter included. A wiki that narrows only the svg allowlist loses it here.
 			'an image where the property wants an svg' => [
+				"backdrop-filter: var(--f) url(\"$commons/x.png\")",
+			],
+		];
+	}
+
+	/**
+	 * What it does check is that a var() is there at all. Every row below is a row of
+	 * provideAcceptedRegardlessOfProperty() with the var() taken out, so the property's
+	 * own grammar judges it and an editor is told the value is wrong.
+	 *
+	 * @dataProvider provideRefusedWithoutAVar
+	 */
+	public function testWideMatcherNeedsAVar( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideRefusedWithoutAVar(): array {
+		$commons = self::COMMONS;
+
+		return [
+			'a colour as a width' => [ 'width: red' ],
+			'an angle as pointer-events' => [ 'pointer-events: 30deg' ],
+			'a resolution as a display' => [ 'display: 2x' ],
+			'a comma alone' => [ 'color: ,' ],
+			'more values than the property takes' => [ 'border-width: 1px 2px 3px 4px 5px' ],
+			'an image where the property wants an svg' => [
 				"backdrop-filter: url(\"$commons/x.png\")",
 			],
 		];
+	}
+
+	/**
+	 * Every alternative in the value list consumes exactly one component value, so a value
+	 * that fails has one decomposition. A variable-length one -- position(), which matches
+	 * one, two or four -- puts the Quantifier::plus back to enumerating every way of
+	 * splitting the value, and this takes seconds rather than milliseconds. The bound is
+	 * three orders of magnitude above what it costs today, so it is the shape that turns
+	 * this red, not the machine it runs on.
+	 */
+	public function testAFailingValueIsNotEnumerated(): void {
+		$declaration = 'pointer-events: ' . str_repeat( 'left top ', 12 ) . '[x]';
+
+		$started = hrtime( true );
+		$accepted = $this->isAccepted( $declaration );
+		$elapsedMs = ( hrtime( true ) - $started ) / 1e6;
+
+		$this->assertFalse( $accepted, $declaration );
+		$this->assertLessThan( 2000, $elapsedMs, 'the value list has a variable-length alternative' );
 	}
 
 	/**
@@ -875,14 +928,10 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				// upstream ratio() is built from rawNumber(), which excludes math functions
 				'aspect-ratio: calc(16) / var(--b)',
 			] ),
-			// The fallback is one value from $anyProperty: an empty one does not fit, nor
-			// does a multi-value one, and a type the list omits does not reach a slot --
-			// `1rem` does, `0.3s` does not. A keyword the list omits blocks the whole value
-			// the same way.
+			// A type the value list omits does not reach a slot -- `1rem` does, `0.3s`
+			// does not -- and a keyword it omits blocks the whole value the same way.
 			self::cases( 'Custom properties, whole value', [
 				'background-image: var(--image, none)',
-				'border: var(--border, 1px solid red)',
-				'color: var(--x, )',
 				'content: "x" var(--suffix)',
 				'flex-flow: var(--direction) wrap',
 				'grid-template-columns: var(--tracks, 1fr)',
