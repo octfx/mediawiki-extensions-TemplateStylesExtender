@@ -36,6 +36,7 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\ComponentValueList;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
@@ -276,6 +277,77 @@ class TemplateStylesExtender {
 					Quantifier::count( $factory->color(), 2, 2 ),
 				] ),
 				'scrollbar-width' => new KeywordMatcher( [ 'auto', 'thin', 'none' ] ),
+			] );
+		} catch ( InvalidArgumentException ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the anonymous half of CSS Scroll-driven Animations Module Level 1
+	 *
+	 * `scroll()` and `view()` name no timeline, so nothing here leaves an identifier behind.
+	 * The named half -- scroll-timeline-*, view-timeline-* and timeline-scope -- stays out:
+	 * TemplateStyles concatenates every transcluded page's CSS into one scope and namespaces
+	 * no identifier, so a timeline name would be page-global. It buys little in return, since
+	 * a named timeline is only needed where the animated element is neither the scroller nor
+	 * the subject, which inside one component it usually is.
+	 *
+	 * These add no capability: everything they can animate is already animatable, and
+	 * `@keyframes` is already allowed. What changes is what drives the animation -- a scroll
+	 * offset rather than a clock.
+	 */
+	public function addCssScrollDrivenAnimations1(
+		StylePropertySanitizerExtender $sanitizer,
+		MatcherFactoryExtender $factory
+	): void {
+		try {
+			$axis = new KeywordMatcher( [ 'block', 'inline', 'x', 'y' ] );
+			$inset = Quantifier::count( new Alternative( [
+				new KeywordMatcher( 'auto' ),
+				$factory->lengthPercentage(),
+			] ), 1, 2 );
+
+			$timeline = new Alternative( [
+				new KeywordMatcher( [ 'auto', 'none' ] ),
+				new FunctionMatcher( 'scroll', Quantifier::optional( UnorderedGroup::someOf( [
+					new KeywordMatcher( [ 'root', 'nearest', 'self' ] ),
+					$axis,
+				] ) ) ),
+				new FunctionMatcher( 'view', Quantifier::optional( UnorderedGroup::someOf( [
+					$axis,
+					$inset,
+				] ) ) ),
+			] );
+
+			// <timeline-range-name>, per the published draft:
+			// https://www.w3.org/TR/scroll-animations-1/#named-ranges
+			// The editor's draft adds `scroll`, which no engine takes; see AGENTS.md.
+			$rangeName = new KeywordMatcher( [
+				'contain',
+				'cover',
+				'entry',
+				'entry-crossing',
+				'exit',
+				'exit-crossing',
+			] );
+			$range = new Alternative( [
+				new KeywordMatcher( 'normal' ),
+				$factory->lengthPercentage(),
+				new Juxtaposition( [
+					$rangeName,
+					Quantifier::optional( $factory->lengthPercentage() ),
+				] ),
+			] );
+
+			$sanitizer->addKnownProperties( [
+				'animation-range' => Quantifier::hash( new Juxtaposition( [
+					$range,
+					Quantifier::optional( $range ),
+				] ) ),
+				'animation-range-end' => Quantifier::hash( $range ),
+				'animation-range-start' => Quantifier::hash( $range ),
+				'animation-timeline' => Quantifier::hash( $timeline ),
 			] );
 		} catch ( InvalidArgumentException ) {
 			// Fail silently
