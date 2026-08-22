@@ -237,6 +237,52 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Adds the overscroll-behavior matchers (#75)
+	 *
+	 * Keywords only. The property decides whether a scroll gesture that reaches the end of a
+	 * scroll container chains to the page behind it, and can neither move nor size anything.
+	 */
+	public function addCssOverscrollBehavior1( StylePropertySanitizerExtender $sanitizer ): void {
+		try {
+			$behavior = new KeywordMatcher( [ 'auto', 'contain', 'none' ] );
+
+			$sanitizer->addKnownProperties( [
+				'overscroll-behavior' => Quantifier::count( $behavior, 1, 2 ),
+				'overscroll-behavior-block' => $behavior,
+				'overscroll-behavior-inline' => $behavior,
+				'overscroll-behavior-x' => $behavior,
+				'overscroll-behavior-y' => $behavior,
+			] );
+		} catch ( InvalidArgumentException ) {
+			// Fail silently
+		}
+	}
+
+	/**
+	 * Adds the scrollbar-color and scrollbar-width matchers (#75)
+	 *
+	 * The colours come from the factory rather than a matcher of their own, so they carry
+	 * whatever colour syntax the rest of this extension allows.
+	 */
+	public function addCssScrollbars1(
+		StylePropertySanitizerExtender $sanitizer,
+		MatcherFactoryExtender $factory
+	): void {
+		try {
+			$sanitizer->addKnownProperties( [
+				// thumb then track, both required: one colour is not a valid value
+				'scrollbar-color' => new Alternative( [
+					new KeywordMatcher( 'auto' ),
+					Quantifier::count( $factory->color(), 2, 2 ),
+				] ),
+				'scrollbar-width' => new KeywordMatcher( [ 'auto', 'thin', 'none' ] ),
+			] );
+		} catch ( InvalidArgumentException ) {
+			// Fail silently
+		}
+	}
+
+	/**
 	 * Loads a config value for a given key from this extension's config
 	 *
 	 * Returns $default if the lookup throws a ConfigException, as a missing key does.
