@@ -26,11 +26,18 @@ use MediaWiki\Config\Config;
 use MediaWiki\Config\ConfigException;
 use MediaWiki\MediaWikiServices;
 use Wikimedia\CSS\Grammar\Alternative;
+use Wikimedia\CSS\Grammar\CheckedMatcher;
 use Wikimedia\CSS\Grammar\CustomPropertyMatcher;
+use Wikimedia\CSS\Grammar\DelimMatcher;
 use Wikimedia\CSS\Grammar\FunctionMatcher;
+use Wikimedia\CSS\Grammar\GrammarMatch;
 use Wikimedia\CSS\Grammar\Juxtaposition;
 use Wikimedia\CSS\Grammar\KeywordMatcher;
+use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\Quantifier;
+use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Objects\ComponentValueList;
+use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
 
 class TemplateStylesExtender {
@@ -38,14 +45,26 @@ class TemplateStylesExtender {
 	private static ?Config $config = null;
 
 	/**
-	 * Adds a CSS wide keyword matcher for CSS variables
-	 * Matches 0-INF preceding CSS declarations at least one var( --content ) and 0-INF following declarations
+	 * Whole-value matcher for a declaration that contains a var().
+	 *
+	 * Reached only once a known property's own grammar has refused the value, and never
+	 * told which property that was -- so it applies only where a var() is present, and
+	 * leaves the property's own grammar to judge anything else.
+	 *
+	 * A value holding a var() is unknowable, since a custom property may hold any token
+	 * stream. So the list admits keywords, strings and dimensions whole and draws the line
+	 * at functions: an arbitrary one, a url() outside $wgTemplateStylesAllowedUrls and a
+	 * block stay out.
+	 *
+	 * Every alternative must consume exactly one component value. A variable-length one
+	 * makes the Quantifier::plus enumerate every way of splitting a failing value, which
+	 * gets expensive fast; one that can match nothing makes Quantifier throw.
 	 */
 	public function addVarSelector(
 		StylePropertySanitizer $propertySanitizer,
 		MatcherFactoryExtender $factory
 	): void {
-		$anyProperty = new Alternative( [
+		$anyValue = new Alternative( [
 			$factory->color(),
 			$factory->image(),
 			$factory->length(),
@@ -54,42 +73,73 @@ class TemplateStylesExtender {
 			$factory->number(),
 			$factory->angle(),
 			$factory->frequency(),
+			$factory->time(),
 			$factory->resolution(),
-			$factory->position(),
 			$factory->cssSingleEasingFunction(),
+			// A bare string is a URL only inside image-set(), and a function's arguments
+			// are matched by its own grammar, never by this list.
+			$factory->string(),
+			// Which keywords a property takes is its business, and it is not known here.
+			// Subsumes the css-wide keywords, the line styles and <position>.
+			$factory->ident(),
 			$factory->comma(),
-			$factory->cssWideKeywords(),
-			new KeywordMatcher( [
-				'solid', 'double', 'dotted', 'dashed', 'wavy'
-			] )
+			// <flex>, which no factory method builds
+			new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
+				return strcasecmp( (string)$t->unit(), 'fr' ) === 0;
+			} ),
+			// the separator in `font`, `grid-area` and `border-radius`
+			new DelimMatcher( [ '/' ] ),
 		] );
 
-		$var = new FunctionMatcher(
-			'var',
-			new Juxtaposition( [
-				new CustomPropertyMatcher(),
-				Quantifier::optional( new Juxtaposition( [
-					$factory->comma(),
-					$anyProperty,
+		$propertySanitizer->setCssWideKeywordsMatcher( new Alternative( [
+			$factory->cssWideKeywords(),
+			new CheckedMatcher(
+				Quantifier::plus( new Alternative( [
+					$anyValue,
+					$this->varFunction( $factory, $anyValue ),
 				] ) ),
-			] )
-		);
+				static function ( ComponentValueList $values, GrammarMatch $match, array $options ) {
+					foreach ( $match->getValues() as $value ) {
+						foreach ( $value->toTokenArray() as $token ) {
+							if ( $token->type() === Token::T_FUNCTION
+								&& strcasecmp( (string)$token->value(), 'var' ) === 0
+							) {
+								return true;
+							}
+						}
+					}
 
-		// Match anything*\s?[var anything|anything var]+\s?anything*(!important)?
-		// The problem is, that var() can be used more or less anywhere
-		// Setting ONLY var as a CssWideKeywordMatcher would limit the matching to one property
-		// E.g.: color: var( --color-base );             would work
-		//       border: 1px var( --border-type ) black; would not
-		// So we need to construct a matcher that matches anything + var somewhere
-		$propertySanitizer->setCssWideKeywordsMatcher(
-			new Alternative( [
-				$factory->cssWideKeywords(),
-				new Juxtaposition( [
-					Quantifier::plus( new Alternative( [ $anyProperty, $var ] ) ),
-					Quantifier::optional( new KeywordMatcher( [ '!important' ] ) )
-				] ),
-			] ),
-		);
+					return false;
+				}
+			),
+		] ) );
+	}
+
+	/**
+	 * A var() whose fallback is a list of values, as the spec has it, rather than one.
+	 *
+	 * The list may be empty -- `var( --x, )` is the guaranteed-invalid value -- hence the
+	 * star, kept behind the comma so the Juxtaposition always consumes a token and no
+	 * enclosing quantifier is offered an empty match.
+	 *
+	 * Nesting is spelled out rather than recursive: a fallback may hold a var(), and that
+	 * one a fallback of its own, and no deeper.
+	 */
+	private function varFunction( MatcherFactoryExtender $factory, Matcher $anyValue ): Matcher {
+		return $this->varFunctionOver( $factory, new Alternative( [
+			$anyValue,
+			$this->varFunctionOver( $factory, $anyValue ),
+		] ) );
+	}
+
+	private function varFunctionOver( MatcherFactoryExtender $factory, Matcher $fallback ): Matcher {
+		return new FunctionMatcher( 'var', new Juxtaposition( [
+			new CustomPropertyMatcher(),
+			Quantifier::optional( new Juxtaposition( [
+				$factory->comma(),
+				Quantifier::star( $fallback ),
+			] ) ),
+		] ) );
 	}
 
 	/**
