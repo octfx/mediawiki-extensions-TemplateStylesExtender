@@ -246,6 +246,36 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'border-radius: var(--r) / 1px',
 				'background-image: linear-gradient(red var(--s), blue)',
 			] ),
+			// The whole-value matcher addVarSelector() installs, reached only once the
+			// property's own grammar has refused the value. It is what carries a var() into
+			// a keyword slot, and a fallback into a numeric one -- mathFunction()'s var()
+			// has no fallback slot.
+			self::cases( 'Custom properties, whole value', [
+				'border: 1px var(--border-style) black',
+				'border: var(--width) var(--style) var(--color)',
+				'border-image-source: var(--image)',
+				'box-shadow: var(--shadow-sm), var(--shadow-lg)',
+				'display: var(--display)',
+				'font-family: var(--font-stack)',
+				'padding: var(--gutter, 1rem)',
+				'text-align: var(--align)',
+				'transition: var(--property) var(--duration) var(--easing)',
+				'transition-timing-function: var(--easing)',
+				'width: var(--w, 100%)',
+				'z-index: var(--z, 10)',
+			] ),
+			// None of this extension's own properties takes a var() in a slot of its own
+			// either, so one in them arrives at that same matcher.
+			self::cases( 'Custom properties, whole value', [
+				'-webkit-mask-image: var(--mask)',
+				'backdrop-filter: var(--filter)',
+				'contain: var(--containment)',
+				'content-visibility: var(--visibility)',
+				'font-optical-sizing: var(--optical-sizing)',
+				'font-variation-settings: var(--variations)',
+				'masonry-auto-flow: var(--flow)',
+				'pointer-events: var(--pointer-events)',
+			] ),
 			// Reach rawNumber() through upstream ratio(), which calls it late-bound.
 			// `aspect-ratio: var(--r)` is deliberately absent: it passes either way via
 			// addVarSelector, so it would not notice rawNumber() being removed.
@@ -645,6 +675,161 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * $anyProperty, the list of value types the whole-value matcher is built from. The
+	 * vehicle is one of this extension's own keyword-only properties, so nothing else can
+	 * satisfy the slot and dropping a type from the list turns a row red. `integer()` is the
+	 * exception: `number()` matches an integer too, so no value isolates it.
+	 *
+	 * @dataProvider provideWideMatcherValueTypes
+	 */
+	public function testWideMatcherValueTypes( string $declaration, bool $accepted ): void {
+		$this->assertSame( $accepted, $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideWideMatcherValueTypes(): array {
+		// A URL the default allowlist permits, so the refused rows are refused for their
+		// type rather than their host.
+		$commons = self::COMMONS;
+
+		return [
+			'colour' => [ 'pointer-events: var(--x, red)', true ],
+			'hex colour' => [ 'pointer-events: var(--x, #36c)', true ],
+			'image' => [ "pointer-events: var(--x, url(\"$commons/i.png\"))", true ],
+			'image-set' => [ "pointer-events: var(--x, image-set(\"$commons/i.png\" 1x))", true ],
+			'gradient' => [ 'pointer-events: var(--x, linear-gradient(red, blue))', true ],
+			'length' => [ 'pointer-events: var(--x, 1px)', true ],
+			'integer' => [ 'pointer-events: var(--x, 2)', true ],
+			'number' => [ 'pointer-events: var(--x, 2.5)', true ],
+			'percentage' => [ 'pointer-events: var(--x, 50%)', true ],
+			'angle' => [ 'pointer-events: var(--x, 30deg)', true ],
+			'frequency' => [ 'pointer-events: var(--x, 3khz)', true ],
+			'resolution' => [ 'pointer-events: var(--x, 2x)', true ],
+			'position' => [ 'pointer-events: var(--x, left top)', true ],
+			'easing function' => [ 'pointer-events: var(--x, ease-in-out)', true ],
+			'css-wide keyword' => [ 'pointer-events: var(--x, revert-layer)', true ],
+			'line style' => [ 'pointer-events: var(--x, solid)', true ],
+			'line style, wavy' => [ 'pointer-events: var(--x, wavy)', true ],
+
+			// Not in the list, and nor is a plain ident -- so the natural
+			// `var( --x, <the property's default> )` works only where that default happens
+			// to be a line style or a css-wide keyword.
+			'a keyword of the property itself' => [ 'pointer-events: var(--x, visible)', false ],
+			'none' => [ 'pointer-events: var(--x, none)', false ],
+			'auto' => [ 'pointer-events: var(--x, auto)', false ],
+			'a line style outside the five' => [ 'pointer-events: var(--x, groove)', false ],
+			'a line width' => [ 'pointer-events: var(--x, thin)', false ],
+			'string' => [ 'pointer-events: var(--x, "s")', false ],
+			'time' => [ 'pointer-events: var(--x, 1s)', false ],
+			'attr()' => [ 'pointer-events: var(--x, attr(data-x))', false ],
+			'a url the policy refuses' => [
+				'pointer-events: var(--x, url("https://evil.example.org/x.png"))',
+				false,
+			],
+		];
+	}
+
+	/**
+	 * What the whole-value matcher must still refuse. Its list holds no bare ident, string
+	 * or arbitrary function, and its image() is this factory's, so
+	 * $wgTemplateStylesAllowedUrls still applies to whatever reaches a slot through it.
+	 *
+	 * @dataProvider provideWideMatcherRefusals
+	 */
+	public function testWideMatcherStillRefuses( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideWideMatcherRefusals(): array {
+		// evil.example.org matches no entry of the default allowlist. src() is not what
+		// refuses those rows: UrlMatcher takes `src` as it takes `url`, so the same URL on
+		// a permitted host is accepted.
+		return [
+			'a url the policy refuses, beside a var()' => [
+				'background: var(--x) url("https://evil.example.org/x.png")',
+			],
+			'an image-set the policy refuses' => [
+				'background: var(--x) image-set("https://evil.example.org/x.png" 1x)',
+			],
+			'an src() the policy refuses' => [
+				'background-image: var(--x) src("https://evil.example.org/x.png")',
+			],
+			'attr()' => [ 'pointer-events: var(--x) attr(data-x)' ],
+			'expression()' => [ 'width: var(--w) expression(alert(1))' ],
+			'an unknown function' => [ 'pointer-events: notafunction(1px)' ],
+			'an unknown keyword beside a var()' => [ 'border: 1px var(--style) notacolor' ],
+			'a block' => [ 'pointer-events: [auto]' ],
+			'var() with no custom property' => [ 'color: var()' ],
+		];
+	}
+
+	/**
+	 * The matcher goes on the property sanitizer TemplateStyles shares with `@media`,
+	 * `@supports` and `@keyframes`. `@font-face` builds its own, and `@page` clones the
+	 * shared one before this hook runs, so neither of those gets it.
+	 *
+	 * @dataProvider provideWideMatcherInAtRules
+	 */
+	public function testWideMatcherInsideAtRules(
+		string $css,
+		string $mustSurvive,
+		bool $accepted
+	): void {
+		$this->assertSame( $accepted, $this->sanitizes( $css, $mustSurvive ), $css );
+	}
+
+	public static function provideWideMatcherInAtRules(): array {
+		return [
+			'@media' => [ '@media screen { .a { display: var(--d) } }', 'display', true ],
+			'@supports' => [
+				'@supports (display: grid) { .a { display: var(--d) } }', 'display', true,
+			],
+			'@keyframes' => [
+				'@keyframes TemplateStylesCorpus { from { display: var(--d) } }', 'display', true,
+			],
+			'@font-face' => [
+				"@font-face { font-family: 'TemplateStylesCorpus'; font-display: var(--d) }",
+				'font-display',
+				false,
+			],
+			// The clone costs `@page` every property this extension adds as well, not only
+			// this matcher.
+			'@page' => [ '@page { color: var(--c, 10px) }', 'color', false ],
+		];
+	}
+
+	/**
+	 * The matcher is not told which property it is on, so nothing here is checked against
+	 * one: not the value's type, not how many values there are, not a fallback's type, and
+	 * not which allowlist the property's own slot would have used. Nor does it require a
+	 * var() to be present. Tightening any of that turns these red.
+	 *
+	 * @dataProvider provideAcceptedRegardlessOfProperty
+	 */
+	public function testWideMatcherIgnoresTheProperty( string $declaration ): void {
+		$this->assertTrue( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideAcceptedRegardlessOfProperty(): array {
+		$commons = self::COMMONS;
+
+		return [
+			'a colour as a width' => [ 'width: red' ],
+			'an angle as pointer-events' => [ 'pointer-events: 30deg' ],
+			'a resolution as a display' => [ 'display: 2x' ],
+			'a comma alone' => [ 'color: ,' ],
+			'more values than the property takes' => [ 'border-width: 1px 2px 3px 4px 5px' ],
+			// provideRejectedFallbacks() pins the opposite one level down: inside rgb(), a
+			// fallback is held to the slot's own type.
+			'a length as a colour fallback' => [ 'color: var(--c, 10px)' ],
+			// url( 'image' ), where the property's own slot is url( 'svg' ) -- upstream's
+			// filter included. A wiki that narrows only the svg allowlist loses it here.
+			'an image where the property wants an svg' => [
+				"backdrop-filter: url(\"$commons/x.png\")",
+			],
+		];
+	}
+
+	/**
 	 * Documented gaps. Several are shapes upstream lacks too, kept so an upstream
 	 * improvement turns a test red rather than passing unnoticed.
 	 */
@@ -689,6 +874,21 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'aspect-ratio: 16 / var(--b, 9)',
 				// upstream ratio() is built from rawNumber(), which excludes math functions
 				'aspect-ratio: calc(16) / var(--b)',
+			] ),
+			// The fallback is one value from $anyProperty: an empty one does not fit, nor
+			// does a multi-value one, and a type the list omits does not reach a slot --
+			// `1rem` does, `0.3s` does not. A keyword the list omits blocks the whole value
+			// the same way.
+			self::cases( 'Custom properties, whole value', [
+				'background-image: var(--image, none)',
+				'border: var(--border, 1px solid red)',
+				'color: var(--x, )',
+				'content: "x" var(--suffix)',
+				'flex-flow: var(--direction) wrap',
+				'grid-template-columns: var(--tracks, 1fr)',
+				'list-style: var(--type) inside',
+				'text-decoration: underline var(--style) red',
+				'transition-duration: var(--duration, 0.3s)',
 			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
