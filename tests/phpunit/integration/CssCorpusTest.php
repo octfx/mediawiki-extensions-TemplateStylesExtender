@@ -270,6 +270,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				"backdrop-filter: url(\"$commons/f.svg#filter\") blur(4px) saturate(150%)",
 			] ),
 			self::cases( 'Images 4', [
+				// a math function in the density slot; refused before #62, and worth nothing
+				// to refuse, since it evaluates to a number and cannot add an entry. The
+				// shape is checked, not the unit -- upstream leaves that to the browser, so
+				// calc(1px) reaches here too.
+				"background-image: image-set(\"$commons/i1.jpg\" calc(1x * 2))",
+				"background-image: image-set(url(\"$commons/i1.jpg\") calc(1dppx * 2))",
 				"background-image: image-set(\"$commons/i1.jpg\" 1x, \"$commons/i2.jpg\" 2x)",
 				"background-image: image-set(url(\"$commons/i1.jpg\") 1x, url(\"$commons/i2.jpg\") 2x)",
 				"background-image: image-set( url(\"$commons/i1.avif\") type(\"image/avif\"), " .
@@ -643,6 +649,10 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	 * improvement turns a test red rather than passing unnoticed.
 	 */
 	public static function provideNotYetImplemented(): array {
+		// URLs here must pass the default allowlist, or a case is refused for its host and
+		// says nothing about the gap it is meant to document.
+		$commons = self::COMMONS;
+
 		return array_merge(
 			// A fallback inside a fallback: the inner var() is admitted, but not with a
 			// fallback of its own, since only one level goes through rawOrCustomProp().
@@ -666,6 +676,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: light-dark(var(--l), var(--d))',
 				'color: rgb(from light-dark(var(--l), var(--d)) r g b)',
 				'color: rgb(from var(--c, light-dark(red, blue)) r g b)',
+			] ),
+			// image-set() per CSS Images 4: the density is optional, and a resolution and a
+			// type() may both appear. Predates #62 and unrelated to it.
+			self::cases( 'Images 4', [
+				"background-image: image-set(\"$commons/i1.jpg\")",
+				"background-image: image-set(\"$commons/i1.jpg\" 1x type(\"image/avif\"))",
 			] ),
 			// rawNumber()'s var() wrapper takes no fallback. Unlike the colour channels,
 			// this is not a narrowing -- upstream's ratio() admits no var() at all.

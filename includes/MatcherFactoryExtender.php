@@ -414,10 +414,11 @@ class MatcherFactoryExtender extends MatcherFactory {
 
 	/** @inheritDoc */
 	public function resolution(): Matcher {
-		$this->cache[__METHOD__]
-			??= new TokenMatcher( Token::T_DIMENSION, static function ( Token $t ) {
-				return preg_match( '/^(dpi|dpcm|dppx|x)$/i', $t->unit() );
-			} );
+		// parent::mathFunction(), not $this->: the override adds a bare var(), and
+		// image-set() reads a bare string as a URL -- so `--r: 2x, "https://evil/x.png" 1x`
+		// would substitute into a second entry, past $wgTemplateStylesAllowedUrls.
+		// addVarSelector() also calls this, unaffected: it already offers a bare var().
+		$this->cache[__METHOD__] ??= parent::mathFunction( $this->rawResolution() );
 
 		return $this->cache[__METHOD__];
 	}
