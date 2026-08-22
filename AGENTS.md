@@ -150,6 +150,12 @@ Corpus cases are split two ways: **accepted** (a failure is a regression) and **
 implemented** (a failure means someone implemented it and the case should move). When you
 add a matcher, add its declarations in the same commit.
 
+A `var()` case covers `addVarSelector()` only if the property's own grammar refuses the
+value. `mathFunction()` puts a bare `var()` in every numeric slot but `resolution()`, so
+`width: var(--x)` still passes with `addVarSelector()` deleted; `width: var(--x, 100%)`
+does not, because that `var()` has no fallback slot. Check a new case against both states
+before trusting it.
+
 ### Testing anything that depends on configuration
 
 The corpus deliberately uses URLs the default `$wgTemplateStylesAllowedUrls` permits, so it
