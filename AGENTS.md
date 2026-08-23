@@ -170,6 +170,11 @@ Corpus cases are split two ways: **accepted** (a failure is a regression) and **
 implemented** (a failure means someone implemented it and the case should move). When you
 add a matcher, add its declarations in the same commit.
 
+A property that combines values needs a combination in the corpus, and a refusal beside it.
+The `contain` cases tested one keyword at a time, which its single-keyword matcher accepted
+anyway; a combination on its own would have passed a matcher taking any of those keywords
+any number of times, which is just as wrong.
+
 A `var()` case covers `addVarSelector()` only if the property's own grammar refuses the
 value. `mathFunction()` puts a bare `var()` in every numeric slot but `resolution()`, so
 `width: var(--x)` still passes with `addVarSelector()` deleted; `width: var(--x, 100%)`
