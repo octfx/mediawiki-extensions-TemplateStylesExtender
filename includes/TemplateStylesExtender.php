@@ -36,6 +36,7 @@ use Wikimedia\CSS\Grammar\KeywordMatcher;
 use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\ComponentValueList;
 use Wikimedia\CSS\Objects\Token;
 use Wikimedia\CSS\Sanitizer\StylePropertySanitizer;
@@ -223,11 +224,16 @@ class TemplateStylesExtender {
 	public function addCssContainment3( StylePropertySanitizerExtender $sanitizer ): void {
 		try {
 			$sanitizer->addKnownProperties( [
-				'contain' => new KeywordMatcher( [
-					// Level 1
-					'none', 'strict', 'content', 'size', 'layout', 'paint',
-					// Level 3
-					'style', 'inline-size'
+				// none | strict | content | [ [size | inline-size] || layout || style || paint ]
+				'contain' => new Alternative( [
+					new KeywordMatcher( [ 'none', 'strict', 'content' ] ),
+					UnorderedGroup::someOf( [
+						// Level 3 adds inline-size, an alternative to size rather than a sibling
+						new KeywordMatcher( [ 'size', 'inline-size' ] ),
+						new KeywordMatcher( 'layout' ),
+						new KeywordMatcher( 'style' ),
+						new KeywordMatcher( 'paint' ),
+					] ),
 				] ),
 				'content-visibility' => new KeywordMatcher( [ 'visible', 'hidden', 'auto' ] ),
 			] );
