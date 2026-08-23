@@ -78,6 +78,19 @@ class CustomPropertyValuesConfigTest extends MediaWikiIntegrationTestCase {
 			'origin var()' => [ 'color: rgb(from var(--c) r g b)', false ],
 			'origin var() carrying a fallback' => [ 'color: rgb(from var(--c, red) r g b)', false ],
 
+			// A color-mix() colour argument is the origin's matcher, so its var() is the
+			// same gated slot. The percentage beside it is a colour channel and is not.
+			'color-mix() colour var()' => [ 'color: color-mix(in srgb, var(--c), blue)', false ],
+			'color-mix() colour var() carrying a fallback' => [
+				'color: color-mix(in srgb, var(--c, red), blue)',
+				false,
+			],
+			'color-mix() percentage var()' => [
+				'color: color-mix(in srgb, red var(--pct), blue)',
+				true,
+			],
+			'color-mix() with no var() in it' => [ 'color: color-mix(in srgb, red, blue)', true ],
+
 			// The rest of the origin is not this option's business.
 			'origin colour word' => [ 'color: rgb(from red r g b)', true ],
 			'origin colour function' => [ 'color: rgb(from rgb(1 2 3) r g b)', true ],
