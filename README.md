@@ -13,7 +13,7 @@ Extends [Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:Temp
 | [Basic User Interface Module Level 4](https://www.w3.org/TR/css-ui-4/) | Added property: [`pointer-events`](https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events) | [T342271](https://phabricator.wikimedia.org/T342271)
 | [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added value: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer) | - |
 | [Color Module Level 4](https://www.w3.org/TR/css-color-4/) | Added colorspaces to [`color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color): `rec2100-pq`, `rec2100-hlg`, `rec2100-linear` | [T265675](https://phabricator.wikimedia.org/T265675), [T351500](https://phabricator.wikimedia.org/T351500)
-| [Color Module Level 5](https://www.w3.org/TR/css-color-5/) | Added: [Relative color](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) | - |
+| [Color Module Level 5](https://www.w3.org/TR/css-color-5/) | Added: [Relative color](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors), [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) | - |
 | [Containment Module Level 3](https://www.w3.org/TR/css-contain-3/) | Added properties: [`contain`](https://developer.mozilla.org/en-US/docs/Web/CSS/contain), [`content-visibility`](https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility) | - |
 | [Filter Effects Module Level 2](https://drafts.fxtf.org/filter-effects-2) | Added property: [`backdrop-filter`](https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter) | - |
 | [Fonts Module Level 4](https://www.w3.org/TR/css-fonts-4/) | Added properties: [`font-optical-sizing`](https://developer.mozilla.org/en-US/docs/Web/CSS/font-optical-sizing), [`font-variation-settings`](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variation-settings), [`ascent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/ascent-override), [`descent-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/descent-override), [`font-display`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display), [`line-gap-override`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/line-gap-override) | - |
@@ -196,6 +196,42 @@ color: rgb(from var(--c, red) r g b);  /* likewise */
 The colour functions accepted there are the absolute ones only, so a relative colour cannot
 itself be an origin, directly or as a `light-dark()` argument. `calc()` on a channel is not
 implemented either. `CssCorpusTest` lists the gaps case by case.
+
+### `color-mix()`
+The interpolation method is optional and defaults to `oklab`, and the colour list takes one
+or more:
+
+```css
+color: color-mix(in oklch, #206484 88%, #000);
+color: color-mix(in hsl longer hue, red, blue);
+color: color-mix(in srgb, 25% red, blue);  /* the percentage may lead */
+color: color-mix(red, blue);               /* in oklab, implied */
+```
+
+Both of those are newer than the function itself, and are not as widely supported as it is.
+A browser that does not have them drops the declaration rather than the argument, so give
+either one an ordinary fallback ahead of it:
+
+```css
+color: #7f3f7f;
+color: color-mix(red, blue);
+```
+
+Naming the interpolation space and passing exactly two colours is the spelling with the
+longest reach.
+
+An argument may be any colour this extension accepts, including a relative colour and
+`light-dark()`, but not another `color-mix()`:
+
+```css
+color: color-mix(in srgb, rgb(from var(--c) r g b), white);       /* fine */
+color: color-mix(in srgb, color-mix(in srgb, red, blue), white);  /* rejected */
+color: rgb(from color-mix(in srgb, red, blue) r g b);             /* rejected */
+```
+
+A `var()` standing for a whole colour needs the config option in footnote 4; one in the
+percentage slot does not. The percentage is not range-checked here, so a browser is left to
+reject `150%` and `-10%` itself.
 
 
 ## Development

@@ -196,6 +196,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'scrollbar-color: red',
 				'scrollbar-width: 8px',
 			] ),
+			// `in <dashed-ident>` names an @color-profile, which is in the published
+			// draft but ships in no engine and has no at-rule sanitizer here to name --
+			// its src is an external ICC fetch with no URL policy over it.
+			self::cases( 'Color 5', [
+				'color: color-mix(in --swopc, red, blue)',
+			] ),
 			// The named half of the module is deliberately absent, so a timeline can be
 			// referred to only by one of the anonymous functions. `scroll` as a named range
 			// is editor's-draft-only and ships nowhere, like `chain` above.
@@ -292,6 +298,53 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				// upstream's own, kept so the origin is not the only place it is asserted
 				'color: light-dark(red, blue)',
 				'color: light-dark(rgb(from red r g b), blue)',
+			] ),
+			// color-mix() (#46). Two things about it are newer than the function, which
+			// has been interoperable since 2023, and neither is where a reader would look
+			// for it: the interpolation method became optional, defaulting to oklab (CSSWG
+			// 2025-08-19, shipped Safari 26.2 / Firefox 147 / Chrome 145), and the colour
+			// list went from exactly two to one or more (CSSWG 2025-04-01, Firefox 150).
+			self::cases( 'Color 5', [
+				// #46's own shape, and the same without a var(): the whole-value matcher
+				// refuses an arbitrary function, so only this grammar can accept either.
+				'background-color: color-mix(in oklch, var(--button-ground) 88%, #000)',
+				'background-color: color-mix(in srgb, #206484 88%, #000)',
+				'color: color-mix(in srgb, red, blue)',
+				// the method omitted, and its comma with it
+				'color: color-mix(red, blue)',
+				// a hue method follows a polar space, and `hue` closes it
+				'color: color-mix(in hsl shorter hue, red, blue)',
+				'color: color-mix(in oklch longer hue, red, blue)',
+				'color: color-mix(in lch increasing hue, red, blue)',
+				'color: color-mix(in hwb decreasing hue, red, blue)',
+				// the interpolation list is not color()'s
+				'color: color-mix(in lab, red, blue)',
+				'color: color-mix(in oklab, red, blue)',
+				'color: color-mix(in display-p3-linear, red, blue)',
+				'color: color-mix(in xyz-d65, red, blue)',
+				// `&&`, so the percentage may lead
+				'color: color-mix(in srgb, 25% red, blue)',
+				'color: color-mix(in srgb, red 40%, blue 60%)',
+				'color: color-mix(in srgb, red calc(50% / 2), blue)',
+				// an argument is any colour colorFuncs() makes, one level deep
+				'color: color-mix(in srgb, rgb(from #36c r g b), blue)',
+				'color: color-mix(in srgb, light-dark(red, blue), white)',
+				'color: color-mix(in hsl, currentcolor, blue)',
+				'color: color-mix(in srgb, transparent, blue)',
+				'color: color-mix(in oklab, var(--brand) 20%, transparent)',
+				// `#` is one or more, not two
+				'color: color-mix(in srgb, red)',
+				'color: color-mix(in srgb, red, green, blue)',
+				// <percentage [0,100]> is not enforced, and a browser refuses the whole
+				// declaration rather than clamping it: css-values-4 clamps the result of
+				// a math function, not a literal. Pinned as the gap it is.
+				'color: color-mix(in srgb, red 150%, blue)',
+				'color: color-mix(in srgb, red -10%, blue)',
+				// the slots colorFuncs() reaches through safeColor() and color()
+				'border-color: color-mix(in srgb, red, blue)',
+				'background: linear-gradient(color-mix(in srgb, red, blue), white)',
+				'color: light-dark(color-mix(in srgb, red, blue), white)',
+				'color: var(--c, color-mix(in srgb, red, blue))',
 			] ),
 			// Regress if mathFunction() is deleted. The whole-value matcher does not reach
 			// inside a function, so the first four and the last isolate it whatever that
@@ -796,6 +849,64 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * What color-mix() refuses is where its shape is actually pinned. Every row is a form
+	 * some plausible transcription of the production would take, and none carries a var().
+	 *
+	 * @dataProvider provideRejectedColorMix
+	 */
+	public function testColorMixShape( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideRejectedColorMix(): array {
+		return [
+			// The comma sits outside the `?` in the production, so a literal reading
+			// demands it. Juxtaposition's comma mode elides it with the empty match.
+			'a leading comma' => [ 'color: color-mix(, red, blue)' ],
+			'the method without its comma' => [ 'color: color-mix(in srgb red, blue)' ],
+			'the method last' => [ 'color: color-mix(red, blue, in oklab)' ],
+
+			// <hue-interpolation-method> is two keywords, and follows a polar space only
+			'a hue method without `hue`' => [ 'color: color-mix(in hsl shorter, red, blue)' ],
+			'`hue` without a hue method' => [ 'color: color-mix(in hsl hue, red, blue)' ],
+			'a hue method after a rectangular space' => [
+				'color: color-mix(in lab longer hue, red, blue)',
+			],
+			'a hue method after srgb' => [ 'color: color-mix(in srgb longer hue, red, blue)' ],
+			'a hue method after xyz' => [ 'color: color-mix(in xyz shorter hue, red, blue)' ],
+
+			// the interpolation slot is not color()'s keyword list
+			'a color() space that is not an interpolation space' => [
+				'color: color-mix(in rec2100-pq, red, blue)',
+			],
+			'an unknown space' => [ 'color: color-mix(in foo, red, blue)' ],
+
+			// `&&` takes both in either order, not either alone
+			'a percentage with no colour' => [ 'color: color-mix(in srgb, 50%, 50%)' ],
+			'something that is not a colour' => [ 'color: color-mix(in srgb, red, 10px)' ],
+
+			// `#` is comma-separated, and one argument holds one colour
+			'two colours in one argument' => [ 'color: color-mix(in srgb, red blue, white)' ],
+			'the whole list unseparated' => [ 'color: color-mix(in srgb, red 50% blue 50%)' ],
+			'no arguments at all' => [ 'color: color-mix()' ],
+			'a method and nothing to mix' => [ 'color: color-mix(in srgb)' ],
+
+			// the argument is a colour, so neither of these reaches a fetch
+			'a url where a colour goes' => [
+				'color: color-mix(in srgb, url("https://upload.wikimedia.org/wikipedia/commons/a/ab/x.png"), blue)',
+			],
+			'an attr() where a colour goes' => [ 'color: color-mix(in srgb, attr(data-x), blue)' ],
+
+			// Each `?` in the production is one or none. Quantifier::star in either place
+			// leaves every other row here green, so these are the two that pin them.
+			'two percentages on one argument' => [
+				'color: color-mix(in srgb, red 40% 60%, blue)',
+			],
+			'two interpolation methods' => [ 'color: color-mix(in srgb in oklab, red, blue)' ],
+		];
+	}
+
+	/**
 	 * A var() fallback is restricted to its slot's own type, so it cannot reach a value the
 	 * slot would otherwise refuse. The origin is the wider slot: it takes colour functions.
 	 *
@@ -1107,6 +1218,16 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: rgb(from rgb(from red r g b) r g b)',
 				'color: rgb(from var(--c, rgb(from red r g b)) r g b)',
 				'color: rgb(from light-dark(rgb(from red r g b), blue) r g b)',
+			] ),
+			// A color-mix() argument is every colour colorFuncs() makes except a
+			// color-mix(), which is the matcher being built -- and one is not a relative
+			// colour's origin either, since the origin is built from the absolute
+			// functions and predates it. The same bound as the two cases above.
+			self::cases( 'Color 5', [
+				'color: color-mix(in srgb, color-mix(in srgb, red, blue), white)',
+				'color: rgb(from color-mix(in srgb, red, blue) r g b)',
+				'color: rgb(from var(--c, color-mix(in srgb, red, blue)) r g b)',
+				'color: color-mix(in srgb, var(--c, color-mix(in srgb, red, blue)), white)',
 			] ),
 			// light-dark() admits no var() in its arguments and cannot be a var() fallback,
 			// in an origin as at the top level. Both mirror upstream.

@@ -33,6 +33,7 @@ use Wikimedia\CSS\Grammar\Matcher;
 use Wikimedia\CSS\Grammar\MatcherFactory;
 use Wikimedia\CSS\Grammar\Quantifier;
 use Wikimedia\CSS\Grammar\TokenMatcher;
+use Wikimedia\CSS\Grammar\UnorderedGroup;
 use Wikimedia\CSS\Objects\ComponentValueList;
 use Wikimedia\CSS\Objects\Token;
 
@@ -407,9 +408,46 @@ class MatcherFactoryExtender extends MatcherFactory {
 			),
 		];
 
+		// color-mix() = color-mix( <color-interpolation-method>? , [ <color> && <percentage [0,100]>? ]# )
+		//
+		// After $relativeColorFuncs, so an argument can be any colour this method makes.
+		// A color-mix() cannot be one: it is the matcher being built, the same bound the
+		// relative-colour origin is under.
+		$mixColor = new Alternative( [ $originColor, ...$relativeColorFuncs ] );
+
+		// Not $predefinedRgb, which is color()'s: it carries the rec2100-* spaces and
+		// lacks lab, oklab and the polar four. A hue method follows a polar space only.
+		$colorInterpolationMethod = new Juxtaposition( [
+			new KeywordMatcher( [ 'in' ] ),
+			new Alternative( [
+				new KeywordMatcher( [
+					'srgb', 'srgb-linear', 'display-p3', 'display-p3-linear', 'a98-rgb',
+					'prophoto-rgb', 'rec2020', 'lab', 'oklab'
+				] ),
+				$xyzSpace,
+				new Juxtaposition( [
+					new KeywordMatcher( [ 'hsl', 'hwb', 'lch', 'oklch' ] ),
+					Quantifier::optional( new Juxtaposition( [
+						new KeywordMatcher( [ 'shorter', 'longer', 'increasing', 'decreasing' ] ),
+						new KeywordMatcher( [ 'hue' ] )
+					] ) )
+				] )
+			] )
+		] );
+
+		// allOf(), not someOf(): someOf() yields on a partial match, taking a lone
+		// percentage for a whole argument. `#` is one or more, not two. The optional
+		// method takes its comma with it, which Juxtaposition's comma mode already does.
+		// An out-of-range percentage is left for the browser to refuse.
+		$colorMixSyntax = new Juxtaposition( [
+			Quantifier::optional( $colorInterpolationMethod ),
+			Quantifier::hash( UnorderedGroup::allOf( [ $mixColor, Quantifier::optional( $p ) ] ) )
+		], true );
+
 		$this->cache[__METHOD__] = [
 			...$absoluteColorFuncs,
-			...$relativeColorFuncs
+			...$relativeColorFuncs,
+			new FunctionMatcher( 'color-mix', $colorMixSyntax )
 		];
 
 		return $this->cache[__METHOD__];
