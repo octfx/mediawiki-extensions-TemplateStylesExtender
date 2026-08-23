@@ -504,10 +504,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			self::cases( 'Containment 3', [
 				'contain: content',
 				'contain: inline-size',
+				'contain: inline-size layout',
 				'contain: layout',
+				'contain: layout paint style',
 				'contain: none',
 				'contain: paint',
+				'contain: paint layout',
 				'contain: size',
+				'contain: size layout',
+				'contain: size layout paint style',
 				'contain: strict',
 				'contain: style',
 				'content-visibility: auto',
@@ -764,6 +769,30 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'right: calc((var(--var1) - var(--var2)) / var(--var3) * 100%)',
 			] )
 		);
+	}
+
+	/**
+	 * The accepted cases pin only that the combinations are taken. They pass just as well
+	 * against a matcher taking any of the eight keywords, any number of times, in any
+	 * order, which is wrong. These pin the other side.
+	 *
+	 * @dataProvider provideRejectedContainCombinations
+	 */
+	public function testContainKeywordsDoNotCombineFreely( string $declaration ): void {
+		$this->assertFalse( $this->isAccepted( $declaration ), $declaration );
+	}
+
+	public static function provideRejectedContainCombinations(): array {
+		return [
+			// none, strict and content stand alone
+			'none beside a feature' => [ 'contain: none layout' ],
+			'strict beside a feature' => [ 'contain: strict layout' ],
+			'content beside a feature' => [ 'contain: content paint' ],
+			// size and inline-size are alternatives to each other, not siblings
+			'both sizes' => [ 'contain: size inline-size' ],
+			// and each feature appears at most once
+			'a repeated feature' => [ 'contain: layout layout' ],
+		];
 	}
 
 	/**

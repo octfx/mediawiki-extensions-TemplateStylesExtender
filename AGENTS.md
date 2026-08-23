@@ -175,6 +175,11 @@ A rejected case needs no `var()` in it, and must not have one: the whole-value m
 answers for any known property whose own grammar refused, so a case carrying a `var()` is
 accepted whatever the grammar holds.
 
+A property that combines values needs a combination in the corpus, and a refusal beside it.
+The `contain` cases tested one keyword at a time, which its single-keyword matcher accepted
+anyway; a combination on its own would have passed a matcher taking any of those keywords
+any number of times, which is just as wrong.
+
 A `var()` case covers `addVarSelector()` only if the property's own grammar refuses the
 value. `mathFunction()` puts a bare `var()` in every numeric slot but `resolution()`, so
 `width: var(--x)` still passes with `addVarSelector()` deleted; `width: var(--x, 100%)`
