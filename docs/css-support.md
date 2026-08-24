@@ -186,8 +186,8 @@ Put the default in the custom property, not in the fallback.
 
 ## Images and filters
 
-An `image-set()` entry takes a resolution, a `type()`, both in either order, or neither. The
-resolution may be a math function, but no `var()` reaches it, not even inside `calc()`:
+An `image-set()` entry takes a resolution, a `type()`, both in either order, or neither. No
+`var()` reaches any of it, not even inside a `calc()`:
 
 ```css
 background-image: image-set(url(…));                       /* accepted */
@@ -195,7 +195,10 @@ background-image: image-set(url(…) 1x);                    /* accepted */
 background-image: image-set(url(…) calc(1x * 2));          /* accepted */
 background-image: image-set(url(…) 1x type("image/avif")); /* accepted */
 background-image: image-set(url(…) calc(1x * var(--s)));   /* rejected: no var() in a resolution */
+background-image: image-set(url(…) type(var(--t)));        /* rejected: nor in a type() */
 background-image: image-set(url(…) 1x 2x);                 /* rejected: each may appear once */
+background-image: image-set(var(--x));                     /* rejected: a var() is not a URL */
+background-image: image-set("…a.png" "…b.png");            /* rejected: one URL per entry */
 ```
 
 `-webkit-image-set()` is not accepted.

@@ -493,8 +493,8 @@ class MatcherFactoryExtender extends MatcherFactory {
 	 *
 	 * resolution() keeps a bare var() out; this keeps one inside calc() out too. That costs
 	 * `calc(1x * var(--d))` and buys not trusting the browser to reject the malformed calc
-	 * the payload above becomes. attr() is the other substitution to watch; it cannot reach
-	 * here today.
+	 * the payload above becomes. The check spans the whole group, so `type(var(--t))` goes
+	 * with it. attr() is the other substitution to watch; it cannot reach here today.
 	 */
 	private function imageSetOptions(): Matcher {
 		$this->cache[__METHOD__] ??= new CheckedMatcher(

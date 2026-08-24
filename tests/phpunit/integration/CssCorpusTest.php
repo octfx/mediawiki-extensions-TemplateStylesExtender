@@ -167,10 +167,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/**
 	 * Values the shipped sanitizer has to keep refusing.
 	 *
-	 * Every one is a value some draft or older spec offers, so the risk is a contributor
-	 * reading a newer document and "restoring" it. None carries a var(), which is what keeps
-	 * addVarSelector()'s whole-value matcher out of the way -- with one in, the matcher
-	 * answers for any known property and these would pass whatever the grammar held.
+	 * Most are a value some draft or older spec offers, so the risk is a contributor reading
+	 * a newer document and "restoring" it; the rest are simply malformed.
+	 *
+	 * None carries a var() at the top level of its value, which is what keeps
+	 * addVarSelector()'s whole-value matcher out of the way -- with one there, the matcher
+	 * answers for any known property and the case would pass whatever the grammar held. A
+	 * var() nested inside a function is safe, and several cases have one: the matcher has to
+	 * match that function whole, and only the property's own grammar can. provideRejectedFallbacks()
+	 * relies on the same thing.
 	 *
 	 * @dataProvider provideRejected
 	 */
@@ -182,6 +187,7 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public static function provideRejected(): array {
+		// Must stay a host the default allowlist permits, or these pass for the wrong reason.
 		$commons = self::COMMONS;
 
 		return array_merge(
@@ -205,6 +211,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				"background-image: image-set(\"$commons/i1.jpg\" type(\"image/avif\") type(\"image/jpeg\"))",
 				// a second bare string is not a second entry without a comma
 				"background-image: image-set(\"$commons/i1.jpg\" \"$commons/i2.jpg\")",
+				// the URL is still required, which is the question an optional slot raises
+				'background-image: image-set()',
+				'background-image: image-set(1x)',
 			] ),
 			// `light` and `dark` were dropped in favour of letting `auto` follow color-scheme.
 			self::cases( 'Scrollbars 1', [

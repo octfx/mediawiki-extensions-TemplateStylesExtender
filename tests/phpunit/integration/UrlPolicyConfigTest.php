@@ -199,6 +199,14 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 				"background-image: image-set(url(\"$blocked/i.png\") 1x)",
 				false,
 			],
+			// A complete entry only since the density became optional, so the first slot is
+			// now reachable with nothing after it.
+			'image-set, no density, allowed host' => [
+				"background-image: image-set(\"$allowed/i.png\")", true,
+			],
+			'image-set, no density, blocked host' => [
+				"background-image: image-set(\"$blocked/i.png\")", false,
+			],
 			'image-set, default-policy host is not special-cased' => [
 				"background-image: image-set(\"$default/x.png\" 1x)", false,
 			],

@@ -208,9 +208,11 @@ asserts the other direction: several classes here replace an upstream method who
 upstream improvement can be shadowed by an older, narrower copy that no test of this extension
 alone would notice.
 
-A rejected case needs no `var()` in it, and must not have one: the whole-value matcher
-answers for any known property whose own grammar refused, so a case carrying a `var()` is
-accepted whatever the grammar holds.
+A rejected case must carry no `var()` at the top level of its value: the whole-value matcher
+answers for any known property whose own grammar refused, so such a case is accepted whatever
+the grammar holds. A `var()` nested inside a function is fine, and `provideRejected()` and
+`provideRejectedFallbacks()` both have some -- the matcher must match that function whole, so
+only the property's own grammar can, and the case still pins what it claims to.
 
 A property that combines values needs a combination in the corpus, and a refusal beside it.
 The `contain` cases tested one keyword at a time, which its single-keyword matcher accepted
