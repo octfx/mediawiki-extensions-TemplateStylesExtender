@@ -97,6 +97,7 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addCssScrollDrivenAnimations1( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
+		TemplateStylesExtender::removeDisallowedProperties( $propertySanitizer );
 	}
 
 	/**

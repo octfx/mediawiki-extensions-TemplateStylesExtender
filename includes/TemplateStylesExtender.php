@@ -360,6 +360,25 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Re-apply `$wgTemplateStylesDisallowedProperties`.
+	 *
+	 * TemplateStyles narrows the property list before it fires either hook, so a sanitizer
+	 * built here starts from the full set again and hands back what an operator disallowed.
+	 * Every path that calls setKnownProperties() has to come through here after it.
+	 */
+	public static function removeDisallowedProperties( StylePropertySanitizer $sanitizer ): void {
+		$disallowed = self::getConfigValue( 'TemplateStylesDisallowedProperties', [] );
+		if ( !is_array( $disallowed ) || $disallowed === [] ) {
+			return;
+		}
+
+		$sanitizer->setKnownProperties( array_diff_key(
+			$sanitizer->getKnownProperties(),
+			array_flip( $disallowed )
+		) );
+	}
+
+	/**
 	 * Loads a config value for a given key from this extension's config
 	 *
 	 * Returns $default if the lookup throws a ConfigException, as a missing key does.
