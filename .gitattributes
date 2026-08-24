@@ -4,7 +4,7 @@
 # `git archive` (used to build Composer/Packagist release tarballs) honours
 # `export-ignore`, so none of the development-only files below ship to users.
 #
-# Kept in the archive (production): includes/, i18n/, extension.json,
+# Kept in the archive (production): includes/, i18n/, docs/, extension.json,
 # composer.json, README.md and COPYING.
 
 # PHPUnit tests

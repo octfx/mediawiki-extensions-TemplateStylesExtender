@@ -417,10 +417,10 @@ class MainHooksTest extends MediaWikiIntegrationTestCase {
 
 	/**
 	 * The revision consulted is the one for the frame's title, which inside a transclusion
-	 * is the template rather than the article. That is the behaviour the README footnote
-	 * describes and the one #18 raises: the permission belongs to whoever last edited the
-	 * page carrying the tag, who need not be whoever added it and need not have edited the
-	 * page being viewed at all.
+	 * is the template rather than the article. That is the behaviour README.md's "Unscoping
+	 * with `wrapclass`" section describes and the one #18 raises: the permission belongs to
+	 * whoever last edited the page carrying the tag, who need not be whoever added it and
+	 * need not have edited the page being viewed at all.
 	 */
 	public function testTransclusionChecksTheTemplatesLastEditorNotTheArticles(): void {
 		$this->savePage( self::WRAPPER_PAGE, $this->selfClosingTag(), $this->privilegedUser() );
