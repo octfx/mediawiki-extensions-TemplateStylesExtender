@@ -115,6 +115,18 @@ it matches nothing:
 
 ## Colours
 
+`light-dark()` takes a `var()` in either argument, which plain TemplateStyles does not. The
+fallback is held to the same colour type as the slot:
+
+```css
+color: light-dark(var(--l), var(--d));             /* accepted */
+color: light-dark(var(--l, red), var(--d, blue));  /* accepted */
+color: light-dark(var(--l, 10px), blue);           /* rejected: the fallback must be a colour */
+```
+
+A relative colour's origin takes no `var()` inside a `light-dark()`, and neither does a
+`color-mix()` argument.
+
 ### Relative colours
 
 The origin (the value after `from`) accepts a colour word or hex, an absolute colour
@@ -150,7 +162,7 @@ color: color-mix(red, blue);               /* accepted: method optional, oklab i
 ```
 
 An argument may be any colour this extension accepts, including a relative colour and
-`light-dark()`, but not another `color-mix()`:
+`light-dark()`, though a `light-dark()` there takes no `var()`. Not another `color-mix()`:
 
 ```css
 color: color-mix(in srgb, rgb(from var(--c) r g b), white);       /* accepted */
@@ -262,7 +274,7 @@ initial value. Write the shorthand first:
 | [Basic User Interface Module Level 4](https://www.w3.org/TR/css-ui-4/) | Added property: [`pointer-events`](https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events). Upstream: [T342271](https://phabricator.wikimedia.org/T342271) |
 | [Cascading and Inheritance Level 5](https://www.w3.org/TR/css-cascade-5/) | Added value: [`revert-layer`](https://developer.mozilla.org/en-US/docs/Web/CSS/revert-layer). There is no `@layer` to declare a layer with, so it acts as `revert` |
 | [Color Module Level 4](https://www.w3.org/TR/css-color-4/) | Added colorspaces to [`color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color): `rec2100-pq`, `rec2100-hlg`, `rec2100-linear`; added a `var()` with an `<angle>` fallback in a hue channel. Upstream: [T265675](https://phabricator.wikimedia.org/T265675), [T351500](https://phabricator.wikimedia.org/T351500) |
-| [Color Module Level 5](https://www.w3.org/TR/css-color-5/) | Added: [Relative color](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) including [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) as an origin, [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) |
+| [Color Module Level 5](https://www.w3.org/TR/css-color-5/) | Added: [Relative color](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors) including [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark) as an origin; a `var()` in a top-level `light-dark()`'s arguments; [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) |
 | [Containment Module Level 3](https://www.w3.org/TR/css-contain-3/) | Added properties: [`contain`](https://developer.mozilla.org/en-US/docs/Web/CSS/contain), [`content-visibility`](https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility) |
 | [Custom Properties Level 1](https://www.w3.org/TR/css-variables-1/) | Added: `--*` declarations, and [`var()`](https://developer.mozilla.org/en-US/docs/Web/CSS/var) in properties whose own grammar has no slot for it |
 | [Filter Effects Module Level 2](https://drafts.fxtf.org/filter-effects-2) | Added property: [`backdrop-filter`](https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter) |

@@ -453,6 +453,65 @@ class MatcherFactoryExtender extends MatcherFactory {
 		return $this->cache[__METHOD__];
 	}
 
+	/**
+	 * @inheritDoc
+	 *
+	 * Widens the arguments of light-dark(), which upstream builds from safeColor() and so
+	 * takes no var() -- though the whole-colour var() sitting beside it in this very
+	 * alternative does.
+	 *
+	 * Wrapped, not rebuilt: Alternative dedupes on GrammarMatch::getUniqueID() and
+	 * FunctionMatcher returns after its first whole-content match, so the narrow copy
+	 * beside this one costs an attempt and yields nothing extra. Replicating the parent
+	 * instead would silently refuse any branch upstream adds to color().
+	 *
+	 * The fallback stays the same colour type as the slot, which is what keeps
+	 * `light-dark( var( --l, url( ... ) ), blue )` out.
+	 */
+	public function color(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		// Gated: upstream accepts no var() here, so gating rejects nothing it takes.
+		if ( !$this->varEnabled ) {
+			$this->cache[__METHOD__] = parent::color();
+
+			return $this->cache[__METHOD__];
+		}
+
+		$this->cache[__METHOD__] = new Alternative( [
+			parent::color(),
+			$this->lightDark(),
+		] );
+
+		return $this->cache[__METHOD__];
+	}
+
+	/**
+	 * light-dark(), with a var() in either argument where the option allows one.
+	 *
+	 * Not an override: upstream builds this inline inside color(), so there is nothing to
+	 * extend. Exposed because border-color needs the same matcher without the rest of
+	 * color() -- see StylePropertySanitizerExtender::cssBackgrounds3().
+	 */
+	public function lightDark(): Matcher {
+		if ( isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+
+		$arg = $this->varEnabled
+			? $this->rawOrCustomProp( $this->safeColor() )
+			: $this->safeColor();
+
+		$this->cache[__METHOD__] = new FunctionMatcher( 'light-dark', new Juxtaposition( [
+			$arg,
+			$arg,
+		], true ) );
+
+		return $this->cache[__METHOD__];
+	}
+
 	/** @inheritDoc */
 	public function resolution(): Matcher {
 		// parent::mathFunction(), not $this->: the override adds a bare var(), and

@@ -31,6 +31,7 @@ class OverrideIntegrityTest extends MediaWikiUnitTestCase {
 	private const INTENDED_OVERRIDES = [
 		MatcherFactoryExtender::class => [
 			'cssWideKeywords',
+			'color',
 			'colorFuncs',
 			'cssNegation',
 			'cssPseudo',

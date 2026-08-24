@@ -81,9 +81,17 @@ class CustomPropertyValuesConfigTest extends MediaWikiIntegrationTestCase {
 			// A color-mix() colour argument is the origin's matcher, so its var() is the
 			// same gated slot. The percentage beside it is a colour channel and is not.
 			'color-mix() colour var()' => [ 'color: color-mix(in srgb, var(--c), blue)', false ],
+
 			'color-mix() colour var() carrying a fallback' => [
 				'color: color-mix(in srgb, var(--c, red), blue)',
 				false,
+			],
+
+			// Upstream's light-dark() takes safeColor(), which has no var() slot, so a
+			// var() in one is this extension's and goes with the option.
+			'light-dark() var()' => [ 'color: light-dark(var(--l), var(--d))', false ],
+			'light-dark() var() with a fallback' => [
+				'color: light-dark(var(--l, red), var(--d, blue))', false,
 			],
 			'color-mix() percentage var()' => [
 				'color: color-mix(in srgb, red var(--pct), blue)',
