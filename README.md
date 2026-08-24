@@ -40,15 +40,14 @@ settings below opt out of one each.
 | `$wgTemplateStylesExtenderEnableUnscopingSupport` | Allow CSS to be [unscoped](#unscoping-with-wrapclass) by setting a `wrapclass` attribute. | `false` |
 | `$wgTemplateStylesExtenderUnscopingPermission` | The right a user must hold to [unscope](#unscoping-with-wrapclass) CSS. Must name a right that already exists on the wiki; this extension defines none. | `editinterface` |
 
-Two TemplateStyles settings stop taking effect once this extension is installed:
-`$wgTemplateStylesDisallowedProperties`, and `@font-face` in
-`$wgTemplateStylesDisallowedAtRules`. This extension replaces the sanitizers those lists have
-been applied to.
+`$wgTemplateStylesDisallowedProperties` and `$wgTemplateStylesDisallowedAtRules` still apply,
+including to the properties this extension adds, so either list can narrow the grammar back
+per property or per at-rule.
 
-No setting narrows the grammar back; removing the extension is the only lever. That needs no
-database change, and neither does turning a setting off: pages already rendered keep their CSS
-until they are re-parsed, and a stylesheet page that used the widened CSS still renders with
-the refused rules dropped. It cannot be saved again until they are removed.
+Nothing here narrows it wholesale; removing the extension is that lever. It needs no database
+change, and neither does turning a setting off: pages already rendered keep their CSS until
+they are re-parsed, and a stylesheet page that used the widened CSS still renders with the
+refused rules dropped. It cannot be saved again until they are removed.
 
 ## Unscoping with `wrapclass`
 

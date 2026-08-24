@@ -78,12 +78,16 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 				$newRules['styles'], $factory
 			);
 		}
-		$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender(
-			$factory,
-			(bool)TemplateStylesExtender::getConfigValue(
-				'TemplateStylesExtenderRequireFontFamilyPrefix'
-			)
-		);
+		// Only where TemplateStyles still has it. A disallowed at-rule is gone from this
+		// list before the hook runs, and assigning the key back would re-enable it.
+		if ( isset( $newRules['@font-face'] ) ) {
+			$newRules['@font-face'] = new FontFaceAtRuleSanitizerExtender(
+				$factory,
+				(bool)TemplateStylesExtender::getConfigValue(
+					'TemplateStylesExtenderRequireFontFamilyPrefix'
+				)
+			);
+		}
 		$sanitizer->setRuleSanitizers( $newRules );
 		self::propagateToNestedAtRules( $sanitizer );
 
@@ -97,6 +101,7 @@ class StylesheetSanitizerHook implements TemplateStylesStylesheetSanitizerHook {
 		$extended->addCssScrollDrivenAnimations1( $extender, $factory );
 
 		$propertySanitizer->setKnownProperties( $extender->getKnownProperties() );
+		TemplateStylesExtender::removeDisallowedProperties( $propertySanitizer );
 	}
 
 	/**

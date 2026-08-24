@@ -52,5 +52,9 @@ class PropertySanitizerHook implements TemplateStylesPropertySanitizerHook {
 				'TemplateStylesExtenderAllowExternalResourcesInCustomProperties'
 			) === true
 		);
+
+		// This replaced the sanitizer TemplateStyles had already narrowed, so the
+		// narrowing has to be put back.
+		TemplateStylesExtender::removeDisallowedProperties( $propertySanitizer );
 	}
 }

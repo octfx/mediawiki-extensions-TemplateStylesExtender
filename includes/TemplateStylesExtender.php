@@ -360,6 +360,40 @@ class TemplateStylesExtender {
 	}
 
 	/**
+	 * Re-apply `$wgTemplateStylesDisallowedProperties`.
+	 *
+	 * TemplateStyles narrows the property list before it fires either hook, so a sanitizer
+	 * built here starts from the full set again and hands back what an operator disallowed.
+	 * Every path that overwrites the *style* property list has to come through here after it.
+	 * `@font-face` descriptors are a separate list that upstream does not narrow.
+	 *
+	 * A `-webkit-` alias goes with its target: `-webkit-mask-image` is `mask-image` under
+	 * another name, so disallowing one has to take the other.
+	 */
+	public static function removeDisallowedProperties( StylePropertySanitizer $sanitizer ): void {
+		// TemplateStyles' own setting, read from its config registry so a failure is not
+		// reported against this extension's.
+		$disallowed = MediaWikiServices::getInstance()
+			->getConfigFactory()
+			->makeConfig( 'templatestyles' )
+			->get( 'TemplateStylesDisallowedProperties' );
+
+		if ( !$disallowed ) {
+			return;
+		}
+
+		$disallowed = array_merge(
+			$disallowed,
+			array_map( static fn ( $property ) => '-webkit-' . $property, $disallowed )
+		);
+
+		$sanitizer->setKnownProperties( array_diff_key(
+			$sanitizer->getKnownProperties(),
+			array_flip( $disallowed )
+		) );
+	}
+
+	/**
 	 * Loads a config value for a given key from this extension's config
 	 *
 	 * Returns $default if the lookup throws a ConfigException, as a missing key does.

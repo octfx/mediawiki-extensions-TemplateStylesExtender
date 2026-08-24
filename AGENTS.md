@@ -101,6 +101,22 @@ the whole stylesheet with it. `propagateToNestedAtRules()` pushes the replacemen
 anything added to `$newRules` in future needs to go through it too. This is why `@font-face`
 inside `@media` did not get this extension's descriptors for several releases.
 
+### TemplateStyles narrows before it hands anything over
+
+Both `$wgTemplateStylesDisallowedProperties` and `$wgTemplateStylesDisallowedAtRules` are
+applied *before* the hooks here run, so a narrowed property list and a rule-sanitizer list
+missing an at-rule are what arrive. Anything that rebuilds either one puts back what an
+operator removed, and nothing upstream complains.
+
+`TemplateStylesExtender::removeDisallowedProperties()` re-applies the property list; call it
+after any `setKnownProperties()` on the style property sanitizer. For at-rules the key's
+presence is the signal, so replace an entry only where it is already set -- assigning
+`$newRules['@font-face']` unconditionally is what re-enabled it.
+
+Only the config half is restored. `PropertySanitizerHook` still replaces the object it is
+given, so a narrowing another extension made through the same hook is discarded, load-order
+dependent. Carrying that forward means carrying its matchers forward too.
+
 ### The whole-value matcher answers for every property
 
 `addVarSelector()` installs a matcher TemplateStyles consults for any *known* property whose
