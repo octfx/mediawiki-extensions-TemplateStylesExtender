@@ -124,6 +124,10 @@ color: light-dark(var(--l, red), var(--d, blue));  /* accepted */
 color: light-dark(var(--l, 10px), blue);           /* rejected: the fallback must be a colour */
 ```
 
+`border-color` takes a `light-dark()` too, which plain TemplateStyles refuses: it keeps
+`var()` out because the property concatenates up to four colours, and a `light-dark()` was
+caught by that. A bare `var()` there is still refused.
+
 A relative colour's origin takes no `var()` inside a `light-dark()`, and neither does a
 `color-mix()` argument.
 

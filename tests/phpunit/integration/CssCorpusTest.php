@@ -328,6 +328,12 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: light-dark(var(--l), var(--d))',
 				'color: light-dark(var(--l, red), var(--d, blue))',
 				'color: light-dark(var(--l), blue)',
+				// border-color concatenates, so upstream keeps var() out of it and takes
+				// light-dark() with it. A light-dark() is one value and cannot concatenate.
+				'border-color: light-dark(red, blue)',
+				'border-color: light-dark(red, blue) light-dark(#123456, #654321)',
+				'border-color: red light-dark(red, blue) blue',
+				'border-color: light-dark(var(--l), var(--d))',
 			] ),
 			// color-mix() (#46). Two things about it are newer than the function, which
 			// has been interoperable since 2023, and neither is where a reader would look

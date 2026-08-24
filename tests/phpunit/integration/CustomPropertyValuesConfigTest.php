@@ -112,6 +112,8 @@ class CustomPropertyValuesConfigTest extends MediaWikiIntegrationTestCase {
 			'colour channel var() carrying a fallback' => [ 'color: rgb(var(--r, 0) 0 0)', true ],
 			'var() as a whole colour' => [ 'color: var(--c, red)', true ],
 			'light-dark() outside an origin' => [ 'color: light-dark(red, blue)', true ],
+			// No var() in it, so a var() option must not gate it.
+			'light-dark() in border-color' => [ 'border-color: light-dark(red, blue)', true ],
 			// border takes a <color>, so upstream's color() admits the var() here too
 			'var() where a shorthand takes a colour' => [ 'border: var(--shorthand)', true ],
 			// upstream's calcSum() admits var(); UrlPolicyConfigTest pins where that stops
