@@ -122,19 +122,22 @@ class DisallowedListsConfigTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
-	 * The nested copy is a separate list, so disallowing an at-rule has to reach inside
-	 * `@media` as well -- the same path that made this extension's descriptors miss it.
+	 * `-webkit-mask-image` is `mask-image` under another name, added only here. Removing the
+	 * target by exact key leaves the alias behind, which is the same widening this test
+	 * class exists to close.
 	 */
-	public function testDisallowedFontFaceStaysDisallowedInsideMedia(): void {
-		$this->overrideConfigValue( 'TemplateStylesDisallowedAtRules', [ '@font-face' ] );
+	public function testDisallowingAPropertyTakesItsWebkitAlias(): void {
+		$this->assertTrue(
+			$this->survives( '.a { -webkit-mask-image: none }', '-webkit-mask-image' ),
+			'-webkit-mask-image is added by this extension and must be allowed by default'
+		);
+
+		$this->overrideConfigValue( 'TemplateStylesDisallowedProperties', [ 'mask-image' ] );
 		self::resetTemplateStylesCaches();
 
 		$this->assertFalse(
-			$this->survives(
-				"@media screen { @font-face { font-family: 'TemplateStylesX'; src: local(Foo) } }",
-				'font-family'
-			),
-			'@font-face must stay disallowed inside @media too'
+			$this->survives( '.a { -webkit-mask-image: none }', '-webkit-mask-image' ),
+			'disallowing mask-image must take the -webkit- alias with it'
 		);
 	}
 }
