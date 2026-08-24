@@ -56,6 +56,7 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	private static bool $extendedCss1Masking = false;
 	private static bool $extendedCss3Grid = false;
+	private static bool $extendedCss3Backgrounds = false;
 
 	public function __construct( MatcherFactory $matcherFactory ) {
 		$extendedMatcherFactory = $matcherFactory instanceof MatcherFactoryExtender
@@ -76,6 +77,42 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	 */
 	public function setAllowExternalResources( bool $allow ): void {
 		$this->allowExternalResources = $allow;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * Let border-color take a light-dark().
+	 *
+	 * Upstream builds it from safeColor() rather than color(), because the property
+	 * concatenates up to four colours and a var() could expand to more than one of them.
+	 * That reasoning does not reach light-dark(), which is a single function and yields
+	 * exactly one colour whatever it holds, so it is refused here only as a side effect of
+	 * keeping var() out. The per-side longhands, which do not concatenate, take it already.
+	 */
+	protected function cssBackgrounds3( MatcherFactory $matcherFactory ) {
+		// @codeCoverageIgnoreStart
+		if ( self::$extendedCss3Backgrounds && isset( $this->cache[__METHOD__] ) ) {
+			return $this->cache[__METHOD__];
+		}
+		// @codeCoverageIgnoreEnd
+
+		$props = parent::cssBackgrounds3( $matcherFactory );
+
+		$factory = $matcherFactory instanceof MatcherFactoryExtender
+			? $matcherFactory
+			: new MatcherFactoryExtender( $matcherFactory );
+
+		// Still no bare var(), which is the part of upstream's caution that holds.
+		$props['border-color'] = Quantifier::count( new Alternative( [
+			$factory->safeColor(),
+			$factory->lightDark(),
+		] ), 1, 4 );
+
+		$this->cache[__METHOD__] = $props;
+		self::$extendedCss3Backgrounds = true;
+
+		return $props;
 	}
 
 	/**

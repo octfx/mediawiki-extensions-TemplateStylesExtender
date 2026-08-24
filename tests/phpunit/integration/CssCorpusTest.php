@@ -323,6 +323,17 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				// upstream's own, kept so the origin is not the only place it is asserted
 				'color: light-dark(red, blue)',
 				'color: light-dark(rgb(from red r g b), blue)',
+				// upstream builds light-dark() from safeColor(), which has no var() slot,
+				// though the whole-colour var() beside it in color() does
+				'color: light-dark(var(--l), var(--d))',
+				'color: light-dark(var(--l, red), var(--d, blue))',
+				'color: light-dark(var(--l), blue)',
+				// border-color concatenates, so upstream keeps var() out of it and takes
+				// light-dark() with it. A light-dark() is one value and cannot concatenate.
+				'border-color: light-dark(red, blue)',
+				'border-color: light-dark(red, blue) light-dark(#123456, #654321)',
+				'border-color: red light-dark(red, blue) blue',
+				'border-color: light-dark(var(--l), var(--d))',
 			] ),
 			// color-mix() (#46). Two things about it are newer than the function, which
 			// has been interoperable since 2023, and neither is where a reader would look
@@ -968,6 +979,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 			],
 			'string fallback in an origin' => [ 'color: rgb(from var(--c, "red") r g b)' ],
 			'length fallback in an origin' => [ 'color: rgb(from var(--c, 10px) r g b)' ],
+
+			// a light-dark() argument is a colour slot too, and its var() is this
+			// extension's, so the same rule has to hold there
+			'url fallback in a light-dark() argument' => [
+				"color: light-dark(var(--l, url(\"$commons/x.png\")), blue)",
+			],
+			'length fallback in a light-dark() argument' => [
+				'color: light-dark(var(--l, 10px), blue)',
+			],
 			'number fallback in an origin' => [ 'color: rgb(from var(--c, 0) r g b)' ],
 			'unknown keyword fallback in an origin' => [ 'color: rgb(from var(--c, notacolor) r g b)' ],
 			// one <color>, not a list: a fallback cannot supply the channels as well
@@ -1261,12 +1281,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: rgb(from var(--c, color-mix(in srgb, red, blue)) r g b)',
 				'color: color-mix(in srgb, var(--c, color-mix(in srgb, red, blue)), white)',
 			] ),
-			// light-dark() admits no var() in its arguments and cannot be a var() fallback,
-			// in an origin as at the top level. Both mirror upstream.
+			// An origin's light-dark() stays narrower than a top-level one: it takes a
+			// colour word, a hex or an absolute colour function, and no var(). light-dark()
+			// is also not a var() fallback, which mirrors upstream.
 			self::cases( 'Color 4/5', [
-				'color: light-dark(var(--l), var(--d))',
 				'color: rgb(from light-dark(var(--l), var(--d)) r g b)',
 				'color: rgb(from var(--c, light-dark(red, blue)) r g b)',
+				// color-mix() builds its colour arguments from the origin's matcher, so a
+				// light-dark() there is the narrow one even at the top level
+				'color: color-mix(in srgb, light-dark(var(--l), var(--d)), blue)',
 			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',
