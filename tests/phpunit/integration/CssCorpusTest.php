@@ -220,7 +220,7 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/**
 	 * Declarations the extension does not support yet. These are documented rather than
 	 * silently missing, so implementing one turns this test red and prompts moving the
-	 * case into provideAccepted() -- see the note on relative colours in README.md.
+	 * case into provideAccepted() -- see the note on relative colours in docs/css-support.md.
 	 *
 	 * @dataProvider provideNotYetImplemented
 	 */
