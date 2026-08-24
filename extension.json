@@ -17,27 +17,27 @@
 	},
 	"config": {
 		"TemplateStylesExtenderCustomPropertiesDeclaration": {
-			"description": "Allow CSS custom properties (CSS variables) to be declared as properties",
+			"description": "Allow CSS custom properties (--*) to be declared.",
 			"value": true
 		},
 		"TemplateStylesExtenderExtendCustomPropertiesValues": {
-			"description": "Allow the CSS custom properties (CSS variables) to be used as values in all properties. Not every var() depends on this. css-sanitizer accepts var() as a whole colour and inside a colour function, so color: var(--c, red) and color: rgb(var(--r) 0 0) keep working whatever this is set to. Turning it off removes var() from everywhere else, including width: var(--w), transform: translateX(var(--x)), and the colour a relative colour starts from, color: rgb(from var(--c) r g b).",
+			"description": "Allow var() in properties whose own grammar has no slot for it, such as width, transform, and the colour a relative colour starts from. Turning this off does not remove var() from the places css-sanitizer accepts it on its own, such as a whole colour or a colour channel.",
 			"value": true
 		},
 		"TemplateStylesExtenderEnableUnscopingSupport": {
-			"description": "Allow to unscope css by changing '.mw-parser-output' to a custom class",
+			"description": "Allow a templatestyles tag to scope its CSS to a class of its own, set with a wrapclass attribute, instead of .mw-parser-output. Takes effect only for a page whose last editor holds the right named by $wgTemplateStylesExtenderUnscopingPermission. Each such tag costs a lookup of that user.",
 			"value": false
 		},
 		"TemplateStylesExtenderRequireFontFamilyPrefix": {
-			"description": "Require @font-face family names to start with 'TemplateStyles', as TemplateStyles itself does. Off by default, which is this extension's long-standing behaviour. Note that @font-face is not scoped to .mw-parser-output, so a family declared in a TemplateStyles page applies to the whole rendered page, including skin chrome; enabling this restores TemplateStyles' namespacing. Changing this does not invalidate already-rendered pages, which keep their previous CSS until purged.",
+			"description": "Require @font-face family names to start with 'TemplateStyles', as TemplateStyles itself does. Off by default. @font-face is not scoped to .mw-parser-output, so a family declared on a TemplateStyles page applies to the whole rendered page, including skin chrome. Changing this does not invalidate already-rendered pages, which keep their previous CSS until purged.",
 			"value": false
 		},
 		"TemplateStylesExtenderUnscopingPermission": {
-			"description": "Specify the permission a user must have to use unscoping. Defaults to 'editinterface'.",
+			"description": "The right a user must hold to unscope CSS with a wrapclass attribute. Defaults to 'editinterface'.",
 			"value": "editinterface"
 		},
 		"TemplateStylesExtenderAllowExternalResourcesInCustomProperties": {
-			"description": "Allow url(), image-set() and the other external-resource functions inside custom property (--*) values. False by default, which keeps the security-advisory behaviour of rejecting them (a var()-composed URL cannot be checked against $wgTemplateStylesAllowedUrls at parse time). Enable only on a wiki whose enforced Content-Security-Policy restricts these fetches to trusted hosts: a custom property is substituted into the fetching property at render time (e.g. mask-image: var(--x)), so with the flag on that fetch is never checked against the allowlist and CSP is the sole guard for it. That is the point of the flag, so do not enable it without such a CSP. A URL written directly in a typed property (background-image: url(...)) stays allowlist-checked whatever the flag holds, but that is not the path the flag opens.",
+			"description": "Allow url(), image-set() and the other external-resource functions inside custom property (--*) values. Off by default: a custom property is substituted into the fetching property at render time (e.g. mask-image: var(--x)), so its URL cannot be checked against $wgTemplateStylesAllowedUrls. Enable this only on a wiki whose enforced Content-Security-Policy restricts such fetches to trusted hosts, because with it on that CSP is the only guard. A URL written directly in a typed property stays allowlist-checked either way.",
 			"value": false
 		}
 	},
