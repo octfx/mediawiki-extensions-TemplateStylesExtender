@@ -478,7 +478,7 @@ class MatcherFactoryExtender extends MatcherFactory {
 			$image,
 			new FunctionMatcher( 'image-set', Quantifier::hash( new Juxtaposition( [
 				new Alternative( [ $image, $this->urlstring( 'image' ) ] ),
-				$this->imageSetDensity(),
+				Quantifier::optional( $this->imageSetOptions() ),
 			] ) ) ),
 		] );
 
@@ -486,16 +486,19 @@ class MatcherFactoryExtender extends MatcherFactory {
 	}
 
 	/**
-	 * The second argument of image-set(): a resolution or a type(), with no var() in it.
+	 * What may follow the URL in an image-set() entry: `[ <resolution> || type(<string>) ]`,
+	 * so either, both, in either order -- and no var() in any of it.
+	 *
+	 * The caller makes the whole group optional, per CSS Images 4.
 	 *
 	 * resolution() keeps a bare var() out; this keeps one inside calc() out too. That costs
 	 * `calc(1x * var(--d))` and buys not trusting the browser to reject the malformed calc
-	 * the payload above becomes. attr() is the other substitution to watch; it cannot reach
-	 * here today.
+	 * the payload above becomes. The check spans the whole group, so `type(var(--t))` goes
+	 * with it. attr() is the other substitution to watch; it cannot reach here today.
 	 */
-	private function imageSetDensity(): Matcher {
+	private function imageSetOptions(): Matcher {
 		$this->cache[__METHOD__] ??= new CheckedMatcher(
-			new Alternative( [
+			UnorderedGroup::someOf( [
 				$this->resolution(),
 				new FunctionMatcher( 'type', $this->string() ),
 			] ),

@@ -167,10 +167,15 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	/**
 	 * Values the shipped sanitizer has to keep refusing.
 	 *
-	 * Every one is a value some draft or older spec offers, so the risk is a contributor
-	 * reading a newer document and "restoring" it. None carries a var(), which is what keeps
-	 * addVarSelector()'s whole-value matcher out of the way -- with one in, the matcher
-	 * answers for any known property and these would pass whatever the grammar held.
+	 * Most are a value some draft or older spec offers, so the risk is a contributor reading
+	 * a newer document and "restoring" it; the rest are simply malformed.
+	 *
+	 * None carries a var() at the top level of its value, which is what keeps
+	 * addVarSelector()'s whole-value matcher out of the way -- with one there, the matcher
+	 * answers for any known property and the case would pass whatever the grammar held. A
+	 * var() nested inside a function is safe, and several cases have one: the matcher has to
+	 * match that function whole, and only the property's own grammar can. provideRejectedFallbacks()
+	 * relies on the same thing.
 	 *
 	 * @dataProvider provideRejected
 	 */
@@ -182,6 +187,9 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public static function provideRejected(): array {
+		// Must stay a host the default allowlist permits, or these pass for the wrong reason.
+		$commons = self::COMMONS;
+
 		return array_merge(
 			// `chain` is in the editor's draft only, and ships in no engine but Blink,
 			// where it is still experimental.
@@ -189,6 +197,23 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'overscroll-behavior-x: contain none',
 				'overscroll-behavior: auto contain none',
 				'overscroll-behavior: chain',
+			] ),
+			// An optional slot must not become a second URL slot, nor let a var() in.
+			// image-set() reads a bare string as a URL, so a substituted entry would be
+			// fetched without ever meeting $wgTemplateStylesAllowedUrls.
+			self::cases( 'Images 4', [
+				'background-image: image-set(var(--x))',
+				"background-image: image-set(\"$commons/i1.jpg\" var(--d))",
+				"background-image: image-set(\"$commons/i1.jpg\" calc(1x * var(--d)))",
+				"background-image: image-set(\"$commons/i1.jpg\" type(var(--t)))",
+				// each of the two may appear once
+				"background-image: image-set(\"$commons/i1.jpg\" 1x 2x)",
+				"background-image: image-set(\"$commons/i1.jpg\" type(\"image/avif\") type(\"image/jpeg\"))",
+				// a second bare string is not a second entry without a comma
+				"background-image: image-set(\"$commons/i1.jpg\" \"$commons/i2.jpg\")",
+				// the URL is still required, which is the question an optional slot raises
+				'background-image: image-set()',
+				'background-image: image-set(1x)',
 			] ),
 			// `light` and `dark` were dropped in favour of letting `auto` follow color-scheme.
 			self::cases( 'Scrollbars 1', [
@@ -456,6 +481,13 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				"background-image: image-set(url(\"$commons/i1.jpg\") 1x, url(\"$commons/i2.jpg\") 2x)",
 				"background-image: image-set( url(\"$commons/i1.avif\") type(\"image/avif\"), " .
 					"url(\"$commons/i2.jpg\") type(\"image/jpeg\") )",
+				// `[ <resolution> || type(<string>) ]?`: neither, either, or both in either
+				// order. The density was required here until CSS Images 4 made it optional.
+				"background-image: image-set(\"$commons/i1.jpg\")",
+				"background-image: image-set(url(\"$commons/i1.jpg\"))",
+				"background-image: image-set(\"$commons/i1.jpg\" 1x type(\"image/avif\"))",
+				"background-image: image-set(\"$commons/i1.jpg\" type(\"image/avif\") 1x)",
+				"background-image: image-set(\"$commons/i1.jpg\", \"$commons/i2.jpg\" 2x)",
 			] ),
 			self::cases( 'UI 4', [
 				'pointer-events: all',
@@ -1235,12 +1267,6 @@ class CssCorpusTest extends MediaWikiIntegrationTestCase {
 				'color: light-dark(var(--l), var(--d))',
 				'color: rgb(from light-dark(var(--l), var(--d)) r g b)',
 				'color: rgb(from var(--c, light-dark(red, blue)) r g b)',
-			] ),
-			// image-set() per CSS Images 4: the density is optional, and a resolution and a
-			// type() may both appear. Predates #62 and unrelated to it.
-			self::cases( 'Images 4', [
-				"background-image: image-set(\"$commons/i1.jpg\")",
-				"background-image: image-set(\"$commons/i1.jpg\" 1x type(\"image/avif\"))",
 			] ),
 			self::cases( 'Color 4/5', [
 				'background: color(from #0000FF xyz calc(x + 0.75) y calc(z - 0.35))',

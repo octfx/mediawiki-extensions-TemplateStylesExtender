@@ -88,7 +88,7 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 	 *
 	 * Two things prevent it. resolution() calls parent::mathFunction() rather than this
 	 * extension's override, which is what would put a bare var() in the slot; and
-	 * imageSetDensity() refuses a var() anywhere in the matched value, calc() included.
+	 * imageSetOptions() refuses a var() anywhere in the matched value, calc() included.
 	 * doSanitize() does not help: the payload is a bare string, which is neither a url()
 	 * token nor an external-resource function -- and is exactly what image-set()'s first
 	 * argument accepts as a URL.
@@ -198,6 +198,14 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 			'image-set, url() form, blocked host' => [
 				"background-image: image-set(url(\"$blocked/i.png\") 1x)",
 				false,
+			],
+			// A complete entry only since the density became optional, so the first slot is
+			// now reachable with nothing after it.
+			'image-set, no density, allowed host' => [
+				"background-image: image-set(\"$allowed/i.png\")", true,
+			],
+			'image-set, no density, blocked host' => [
+				"background-image: image-set(\"$blocked/i.png\")", false,
 			],
 			'image-set, default-policy host is not special-cased' => [
 				"background-image: image-set(\"$default/x.png\" 1x)", false,

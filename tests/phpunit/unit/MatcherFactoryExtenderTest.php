@@ -37,7 +37,7 @@ class MatcherFactoryExtenderTest extends MediaWikiUnitTestCase {
 	 *
 	 * It is public, and image-set()'s density slot is the consumer that sits next to a URL;
 	 * a var() there substitutes textually into a second entry, past the URL allowlist.
-	 * Asserted here rather than through image-set(), because imageSetDensity() refuses a
+	 * Asserted here rather than through image-set(), because imageSetOptions() refuses a
 	 * var() too -- so production wiring hides whether this guard is doing anything.
 	 */
 	public function testResolutionRefusesABareVar(): void {
