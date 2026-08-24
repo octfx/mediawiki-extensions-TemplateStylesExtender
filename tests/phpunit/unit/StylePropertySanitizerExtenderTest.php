@@ -125,6 +125,95 @@ class StylePropertySanitizerExtenderTest extends MediaWikiUnitTestCase {
 	}
 
 	/**
+	 * With the opt-in on (#45), a custom property may hold any external-resource function:
+	 * the a9043c4 rejection is lifted wholesale and CSP is relied on instead.
+	 *
+	 * @dataProvider provideAllowedInCustomProperties
+	 */
+	public function testAllowExternalResourcesInCustomProperties(
+		string $declarationText,
+		bool $allowed
+	): void {
+		$baseFactory = new TemplateStylesMatcherFactory( [
+			'image' => [
+				'<^https://allowed\\.example/>',
+			],
+		] );
+		$sanitizer = new StylePropertySanitizerExtender(
+			new MatcherFactoryExtender( $baseFactory )
+		);
+		$sanitizer->setVarEnabled( true );
+		$sanitizer->setAllowExternalResources( true );
+		$declaration = Parser::newFromString( $declarationText )->parseDeclaration();
+
+		$this->assertSame( $allowed, $sanitizer->sanitize( $declaration ) !== null );
+	}
+
+	public static function provideAllowedInCustomProperties(): array {
+		return [
+			// The mask-icon bridge the flag exists for.
+			'image-set over a var()' => [ '--m: image-set(var(--u) 1x)', true ],
+			// The rejection is lifted whole, so every external-resource form now passes --
+			// including a bare url() and a raw url token. CSP is the guard for all of them.
+			'image-set string' => [ '--m: image-set("https://blocked.example/probe.png" 1x)', true ],
+			'url function' => [ '--remote: url("https://blocked.example/probe.png")', true ],
+			'raw url token' => [ '--remote: url(https://blocked.example/probe.png)', true ],
+			'src function' => [ '--remote: src("https://blocked.example/probe.png")', true ],
+			'image function' => [ '--remote: image("https://blocked.example/probe.png")', true ],
+			'typed attr function' => [ '--remote: attr(data-image type(<url>))', true ],
+			'prefixed image-set' => [ '--m: -webkit-image-set(var(--u) 1x)', true ],
+			// A non-resource value is unaffected either way.
+			'plain length' => [ '--spacing: 1rem', true ],
+		];
+	}
+
+	/**
+	 * A URL written directly in a typed property stays bound by $wgTemplateStylesAllowedUrls
+	 * whatever the flag holds -- the opt-in only lifts the check on custom-property values.
+	 * (A URL routed through a custom property into a fetching property is a different lane,
+	 * which the flag does open; see AllowExternalResourcesConfigTest.) Pins the literal-typed
+	 * boundary against a refactor that hoists the scan above the '--' guard.
+	 *
+	 * @dataProvider provideTypedPropertyUnaffected
+	 */
+	public function testFlagDoesNotLeakIntoTypedProperties(
+		string $declarationText,
+		bool $allowed
+	): void {
+		$baseFactory = new TemplateStylesMatcherFactory( [
+			'image' => [
+				'<^https://allowed\\.example/>',
+			],
+		] );
+		$sanitizer = new StylePropertySanitizerExtender(
+			new MatcherFactoryExtender( $baseFactory )
+		);
+		$sanitizer->setVarEnabled( true );
+		$sanitizer->setAllowExternalResources( true );
+		$declaration = Parser::newFromString( $declarationText )->parseDeclaration();
+
+		$this->assertSame( $allowed, $sanitizer->sanitize( $declaration ) !== null );
+	}
+
+	public static function provideTypedPropertyUnaffected(): array {
+		return [
+			// Even with the flag on, the allowlist still governs a typed property.
+			'blocked host in a typed image-set' => [
+				'background-image: image-set("https://blocked.example/probe.png" 1x)',
+				false,
+			],
+			'allowed host in a typed image-set' => [
+				'background-image: image-set("https://allowed.example/image.png" 1x)',
+				true,
+			],
+			'blocked host in a typed url' => [
+				'background-image: url("https://blocked.example/probe.png")',
+				false,
+			],
+		];
+	}
+
+	/**
 	 * @dataProvider provideGridDeclarations
 	 */
 	public function testExtendedGridProperties( string $declarationText, bool $allowed ): void {

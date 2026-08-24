@@ -47,6 +47,7 @@ wfLoadExtension( 'TemplateStylesExtender' );
 | `$wgTemplateStylesExtenderEnableUnscopingSupport` | Allows users with unscope permissions to unscope CSS by setting a `wrapclass` attribute.[^1][^2] | `false` |
 | `$wgTemplateStylesExtenderRequireFontFamilyPrefix` | Require `@font-face` family names to start with `TemplateStyles`, as TemplateStyles itself does.[^3] | `false` |
 | `$wgTemplateStylesExtenderUnscopingPermission` | Specify a permission group that is allowed to unscope CSS. | `editinterface` |
+| `$wgTemplateStylesExtenderAllowExternalResourcesInCustomProperties` | Allow `url()`, `image-set()` and the other external-resource functions inside custom property (`--*`) values.[^5] | `false` |
 
 [^4]: Not every `var()` depends on this. `css-sanitizer` accepts `var()` as a whole colour and inside a colour function, so `color: var(--c, red)` and `color: rgb(var(--r) 0 0)` keep working whatever this is set to. Turning it off removes `var()` from everywhere else:
 
@@ -57,6 +58,8 @@ wfLoadExtension( 'TemplateStylesExtender' );
     color: rgb(var(--r) 0 0);         /* kept */
     color: var(--c, red);             /* kept */
     ```
+
+[^5]: Lets a `--*` custom property hold a URL (`url()`, `image-set()`, etc.), which is otherwise refused because a `var()`-composed URL cannot be checked against `$wgTemplateStylesAllowedUrls` at parse time. Only enable it on a wiki whose enforced Content-Security-Policy restricts these fetches to trusted hosts, since with it on those URLs are no longer checked and CSP is the guard.
 
 [^3]: `@font-face` is not scoped to `.mw-parser-output`, so a family declared on a TemplateStyles page applies to the whole rendered page, including skin chrome. Leaving this off keeps this extension's long-standing behaviour of allowing any family name. Changing it does not invalidate already-rendered pages, which keep their previous CSS until purged.
 

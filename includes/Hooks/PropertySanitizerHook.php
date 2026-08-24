@@ -46,5 +46,11 @@ class PropertySanitizerHook implements TemplateStylesPropertySanitizerHook {
 		) {
 			$propertySanitizer->setVarEnabled( true );
 		}
+
+		$propertySanitizer->setAllowExternalResources(
+			TemplateStylesExtender::getConfigValue(
+				'TemplateStylesExtenderAllowExternalResourcesInCustomProperties'
+			) === true
+		);
 	}
 }
