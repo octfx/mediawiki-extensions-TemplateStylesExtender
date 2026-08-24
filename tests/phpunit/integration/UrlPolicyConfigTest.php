@@ -88,7 +88,7 @@ class UrlPolicyConfigTest extends MediaWikiIntegrationTestCase {
 	 *
 	 * Two things prevent it. resolution() calls parent::mathFunction() rather than this
 	 * extension's override, which is what would put a bare var() in the slot; and
-	 * imageSetDensity() refuses a var() anywhere in the matched value, calc() included.
+	 * imageSetOptions() refuses a var() anywhere in the matched value, calc() included.
 	 * doSanitize() does not help: the payload is a bare string, which is neither a url()
 	 * token nor an external-resource function -- and is exactly what image-set()'s first
 	 * argument accepts as a URL.

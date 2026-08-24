@@ -186,18 +186,19 @@ Put the default in the custom property, not in the fallback.
 
 ## Images and filters
 
-`image-set()`'s density argument is required here, and it takes a resolution or a math
-function but no `var()`, not even inside `calc()`:
+An `image-set()` entry takes a resolution, a `type()`, both in either order, or neither. The
+resolution may be a math function, but no `var()` reaches it, not even inside `calc()`:
 
 ```css
-background-image: image-set(url(…) 1x);                  /* accepted */
-background-image: image-set(url(…) calc(1x * 2));        /* accepted */
-background-image: image-set(url(…));                     /* rejected: the density is required here */
-background-image: image-set(url(…) calc(1x * var(--s))); /* rejected: no var() in a resolution */
+background-image: image-set(url(…));                       /* accepted */
+background-image: image-set(url(…) 1x);                    /* accepted */
+background-image: image-set(url(…) calc(1x * 2));          /* accepted */
+background-image: image-set(url(…) 1x type("image/avif")); /* accepted */
+background-image: image-set(url(…) calc(1x * var(--s)));   /* rejected: no var() in a resolution */
+background-image: image-set(url(…) 1x 2x);                 /* rejected: each may appear once */
 ```
 
-A single entry carries a resolution or a `type()`, not both. `-webkit-image-set()` is not
-accepted.
+`-webkit-image-set()` is not accepted.
 
 `backdrop-filter` takes the same value as `filter`. A `url()` in it must point at an SVG
 filter on a host the wiki allows **for SVG**; the hosts allowed for images do not apply, so a
