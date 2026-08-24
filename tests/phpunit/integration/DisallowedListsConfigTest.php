@@ -122,6 +122,51 @@ class DisallowedListsConfigTest extends MediaWikiIntegrationTestCase {
 	}
 
 	/**
+	 * This one holds without either fix, because propagateToNestedAtRules() copies into keys
+	 * the nested list already has and never adds one, and a disallowed at-rule is absent from
+	 * that list too. It is here to keep that true: giving the propagation an `else` that
+	 * inserts missing keys would put `@font-face` back inside `@media` alone.
+	 */
+	public function testNestedPropagationDoesNotAddMissingAtRules(): void {
+		$css = "@media screen { @font-face { font-family: 'TemplateStylesX'; src: local(Foo) } }";
+
+		$this->assertTrue(
+			$this->survives( $css, 'font-family' ),
+			'@font-face inside @media must work when nothing disallows it'
+		);
+
+		$this->overrideConfigValue( 'TemplateStylesDisallowedAtRules', [ '@font-face' ] );
+		self::resetTemplateStylesCaches();
+
+		$this->assertFalse(
+			$this->survives( $css, 'font-family' ),
+			'@font-face must stay disallowed inside @media too'
+		);
+	}
+
+	/**
+	 * The property list is one object shared by the nested at-rule sanitizers, so restoring
+	 * the narrowing has to reach inside them. A refactor that gave them their own list would
+	 * fail here rather than silently widen one level down.
+	 */
+	public function testDisallowedPropertyStaysDisallowedInsideAtRules(): void {
+		$css = '@media screen { .a { float: left } }';
+
+		$this->assertTrue(
+			$this->survives( $css, 'float' ),
+			'float inside @media must work when nothing disallows it'
+		);
+
+		$this->overrideConfigValue( 'TemplateStylesDisallowedProperties', [ 'float' ] );
+		self::resetTemplateStylesCaches();
+
+		$this->assertFalse(
+			$this->survives( $css, 'float' ),
+			'a disallowed property must stay disallowed inside @media'
+		);
+	}
+
+	/**
 	 * `-webkit-mask-image` is `mask-image` under another name, added only here. Removing the
 	 * target by exact key leaves the alias behind, which is the same widening this test
 	 * class exists to close.
