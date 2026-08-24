@@ -47,6 +47,13 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 	];
 
 	private bool $varEnabled = false;
+
+	/**
+	 * When true, the a9043c4 external-resource rejection below is skipped, so a custom
+	 * property may hold url()/image-set()/etc. and CSP is relied on instead. See #45.
+	 */
+	private bool $allowExternalResources = false;
+
 	private static bool $extendedCss1Masking = false;
 	private static bool $extendedCss3Grid = false;
 
@@ -60,6 +67,15 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 
 	public function setVarEnabled( bool $varEnabled ): void {
 		$this->varEnabled = $varEnabled;
+	}
+
+	/**
+	 * Permit external-resource functions (url, image-set, ...) inside custom-property
+	 * values, lifting the rejection wholesale. Only for deployments whose CSP governs
+	 * these fetches -- see the config documentation.
+	 */
+	public function setAllowExternalResources( bool $allow ): void {
+		$this->allowExternalResources = $allow;
 	}
 
 	/**
@@ -207,17 +223,19 @@ class StylePropertySanitizerExtender extends StylePropertySanitizer {
 			return parent::doSanitize( $object );
 		}
 
-		foreach ( $object->toTokenArray() as $token ) {
-			if (
-				$token->type() === Token::T_URL ||
-				$token->type() === Token::T_BAD_URL ||
-				(
-					$token->type() === Token::T_FUNCTION &&
-					in_array( strtolower( (string)$token->value() ), self::EXTERNAL_RESOURCE_FUNCTIONS, true )
-				)
-			) {
-				$this->sanitizationError( 'bad-value-for-property', $token, [ $name ] );
-				return null;
+		if ( !$this->allowExternalResources ) {
+			foreach ( $object->toTokenArray() as $token ) {
+				if (
+					$token->type() === Token::T_URL ||
+					$token->type() === Token::T_BAD_URL ||
+					(
+						$token->type() === Token::T_FUNCTION &&
+						in_array( strtolower( (string)$token->value() ), self::EXTERNAL_RESOURCE_FUNCTIONS, true )
+					)
+				) {
+					$this->sanitizationError( 'bad-value-for-property', $token, [ $name ] );
+					return null;
+				}
 			}
 		}
 

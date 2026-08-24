@@ -35,6 +35,10 @@
 		"TemplateStylesExtenderUnscopingPermission": {
 			"description": "Specify the permission a user must have to use unscoping. Defaults to 'editinterface'.",
 			"value": "editinterface"
+		},
+		"TemplateStylesExtenderAllowExternalResourcesInCustomProperties": {
+			"description": "Allow url(), image-set() and the other external-resource functions inside custom property (--*) values. False by default, which keeps the security-advisory behaviour of rejecting them (a var()-composed URL cannot be checked against $wgTemplateStylesAllowedUrls at parse time). Enable only on a wiki whose enforced Content-Security-Policy restricts these fetches to trusted hosts: a custom property is substituted into the fetching property at render time (e.g. mask-image: var(--x)), so with the flag on that fetch is never checked against the allowlist and CSP is the sole guard for it. That is the point of the flag, so do not enable it without such a CSP. A URL written directly in a typed property (background-image: url(...)) stays allowlist-checked whatever the flag holds, but that is not the path the flag opens.",
+			"value": false
 		}
 	},
 	"ConfigRegistry": {
