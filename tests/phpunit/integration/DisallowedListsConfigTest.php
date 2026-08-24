@@ -14,9 +14,9 @@ use Wikimedia\CSS\Parser\Parser as CSSParser;
  * `$wgTemplateStylesDisallowedAtRules` before it fires the hooks this extension implements,
  * so both narrowings arrive already applied and must survive being extended.
  *
- * The property list did not survive: the hook replaced the sanitizer object wholesale, so a
- * wiki that had disallowed a property got it back by installing this extension, silently and
- * in the direction that widens.
+ * They did not. The property hook replaced the sanitizer object wholesale and the stylesheet
+ * hook re-added `@font-face` unconditionally, so a wiki that had disallowed either got it
+ * back by installing this extension -- silently, and in the direction that widens.
  *
  * @group TemplateStylesExtender
  * @covers \MediaWiki\Extension\TemplateStylesExtender\Hooks\PropertySanitizerHook
@@ -97,6 +97,44 @@ class DisallowedListsConfigTest extends MediaWikiIntegrationTestCase {
 		$this->assertFalse(
 			$this->survives( '.a { pointer-events: none }', 'pointer-events' ),
 			'a property this extension adds must be disallowable like any other'
+		);
+	}
+
+	/**
+	 * `@font-face` is the one at-rule this extension replaces, and replacing it is what
+	 * put it back after TemplateStyles had removed it.
+	 */
+	public function testDisallowedFontFaceStaysDisallowed(): void {
+		$css = "@font-face { font-family: 'TemplateStylesX'; src: local(Foo) }";
+
+		$this->assertTrue(
+			$this->survives( $css, 'font-family' ),
+			'@font-face must be allowed when nothing disallows it, or this test proves nothing'
+		);
+
+		$this->overrideConfigValue( 'TemplateStylesDisallowedAtRules', [ '@font-face' ] );
+		self::resetTemplateStylesCaches();
+
+		$this->assertFalse(
+			$this->survives( $css, 'font-family' ),
+			'$wgTemplateStylesDisallowedAtRules must still be honoured for @font-face'
+		);
+	}
+
+	/**
+	 * The nested copy is a separate list, so disallowing an at-rule has to reach inside
+	 * `@media` as well -- the same path that made this extension's descriptors miss it.
+	 */
+	public function testDisallowedFontFaceStaysDisallowedInsideMedia(): void {
+		$this->overrideConfigValue( 'TemplateStylesDisallowedAtRules', [ '@font-face' ] );
+		self::resetTemplateStylesCaches();
+
+		$this->assertFalse(
+			$this->survives(
+				"@media screen { @font-face { font-family: 'TemplateStylesX'; src: local(Foo) } }",
+				'font-family'
+			),
+			'@font-face must stay disallowed inside @media too'
 		);
 	}
 }
